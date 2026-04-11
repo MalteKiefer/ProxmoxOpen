@@ -1,49 +1,68 @@
 package app.proxmoxopen.ui.nav
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import app.proxmoxopen.ui.addserver.AddServerScreen
+import app.proxmoxopen.ui.dashboard.DashboardScreen
+import app.proxmoxopen.ui.guestdetail.GuestDetailScreen
+import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
+import app.proxmoxopen.ui.serverlist.ServerListScreen
+import app.proxmoxopen.ui.settings.SettingsScreen
+import app.proxmoxopen.ui.tasklog.TaskLogScreen
 
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Route.ServerList) {
-        composable<Route.ServerList> { Placeholder("Server list") }
-        composable<Route.AddServer> { Placeholder("Add server") }
-        composable<Route.Login> { entry ->
-            val args = entry.toRoute<Route.Login>()
-            Placeholder("Login: server ${args.serverId}")
+        composable<Route.ServerList> {
+            ServerListScreen(
+                onAddServer = { navController.navigate(Route.AddServer) },
+                onOpenServer = { server -> navController.navigate(Route.Dashboard(server.id)) },
+            )
         }
-        composable<Route.Dashboard> { entry ->
-            val args = entry.toRoute<Route.Dashboard>()
-            Placeholder("Dashboard: server ${args.serverId}")
+        composable<Route.AddServer> {
+            AddServerScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = { serverId ->
+                    navController.popBackStack()
+                    navController.navigate(Route.Dashboard(serverId))
+                },
+            )
         }
-        composable<Route.NodeDetail> { entry ->
-            val args = entry.toRoute<Route.NodeDetail>()
-            Placeholder("Node ${args.node} on server ${args.serverId}")
+        composable<Route.Dashboard> { backStackEntry ->
+            val route = backStackEntry.toRoute<Route.Dashboard>()
+            DashboardScreen(
+                onBack = { navController.popBackStack() },
+                onOpenNode = { nodeName ->
+                    navController.navigate(Route.NodeDetail(route.serverId, nodeName))
+                },
+                onOpenGuest = { guest ->
+                    navController.navigate(
+                        Route.GuestDetail(
+                            serverId = route.serverId,
+                            node = guest.node,
+                            vmid = guest.vmid,
+                            type = guest.type.apiPath,
+                        ),
+                    )
+                },
+            )
         }
-        composable<Route.GuestDetail> { entry ->
-            val args = entry.toRoute<Route.GuestDetail>()
-            Placeholder("Guest ${args.type}/${args.vmid} on ${args.node}")
+        composable<Route.NodeDetail> {
+            NodeDetailScreen(onBack = { navController.popBackStack() })
         }
-        composable<Route.Settings> { Placeholder("Settings") }
-        composable<Route.TaskLog> { entry ->
-            val args = entry.toRoute<Route.TaskLog>()
-            Placeholder("Tasks: server ${args.serverId}")
+        composable<Route.GuestDetail> {
+            GuestDetailScreen(onBack = { navController.popBackStack() })
         }
-    }
-}
-
-@Composable
-private fun Placeholder(label: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(label)
+        composable<Route.Settings> {
+            SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable<Route.TaskLog> {
+            TaskLogScreen(onBack = { navController.popBackStack() })
+        }
+        composable<Route.Login> { Unit }
     }
 }

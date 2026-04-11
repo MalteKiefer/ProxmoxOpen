@@ -3,8 +3,9 @@ package app.proxmoxopen.domain.usecase
 import app.proxmoxopen.domain.model.Realm
 import app.proxmoxopen.domain.model.Server
 import app.proxmoxopen.domain.repository.ServerRepository
+import javax.inject.Inject
 
-class AddServerUseCase(
+class AddServerUseCase @Inject constructor(
     private val servers: ServerRepository,
 ) {
     suspend operator fun invoke(

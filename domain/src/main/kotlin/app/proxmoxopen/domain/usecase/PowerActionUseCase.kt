@@ -4,8 +4,9 @@ import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.domain.model.PowerAction
 import app.proxmoxopen.domain.repository.PowerRepository
 import app.proxmoxopen.domain.result.ApiResult
+import javax.inject.Inject
 
-class PowerActionUseCase(
+class PowerActionUseCase @Inject constructor(
     private val power: PowerRepository,
 ) {
     suspend operator fun invoke(

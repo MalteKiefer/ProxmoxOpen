@@ -6,8 +6,9 @@ import app.proxmoxopen.domain.repository.AuthRepository
 import app.proxmoxopen.domain.repository.ServerRepository
 import app.proxmoxopen.domain.result.ApiError
 import app.proxmoxopen.domain.result.ApiResult
+import javax.inject.Inject
 
-class LoginUseCase(
+class LoginUseCase @Inject constructor(
     private val servers: ServerRepository,
     private val auth: AuthRepository,
 ) {

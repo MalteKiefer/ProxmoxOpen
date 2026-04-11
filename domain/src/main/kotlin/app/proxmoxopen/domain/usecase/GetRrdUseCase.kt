@@ -6,8 +6,9 @@ import app.proxmoxopen.domain.model.RrdTimeframe
 import app.proxmoxopen.domain.repository.ClusterRepository
 import app.proxmoxopen.domain.repository.GuestRepository
 import app.proxmoxopen.domain.result.ApiResult
+import javax.inject.Inject
 
-class GetNodeRrdUseCase(
+class GetNodeRrdUseCase @Inject constructor(
     private val cluster: ClusterRepository,
 ) {
     suspend operator fun invoke(
@@ -17,7 +18,7 @@ class GetNodeRrdUseCase(
     ): ApiResult<List<RrdPoint>> = cluster.getNodeRrd(serverId, node, timeframe)
 }
 
-class GetGuestRrdUseCase(
+class GetGuestRrdUseCase @Inject constructor(
     private val guests: GuestRepository,
 ) {
     suspend operator fun invoke(
