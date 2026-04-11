@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import app.proxmoxopen.ui.addserver.AddServerScreen
 import app.proxmoxopen.ui.dashboard.DashboardScreen
 import app.proxmoxopen.ui.guestdetail.GuestDetailScreen
+import app.proxmoxopen.ui.login.LoginScreen
 import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
 import app.proxmoxopen.ui.serverlist.ServerListScreen
 import app.proxmoxopen.ui.settings.SettingsScreen
@@ -20,13 +21,22 @@ fun NavGraph() {
         composable<Route.ServerList> {
             ServerListScreen(
                 onAddServer = { navController.navigate(Route.AddServer) },
-                onOpenServer = { server -> navController.navigate(Route.Dashboard(server.id)) },
+                onOpenServer = { server -> navController.navigate(Route.Login(server.id)) },
             )
         }
         composable<Route.AddServer> {
             AddServerScreen(
                 onBack = { navController.popBackStack() },
                 onSaved = { serverId ->
+                    navController.popBackStack()
+                    navController.navigate(Route.Login(serverId))
+                },
+            )
+        }
+        composable<Route.Login> {
+            LoginScreen(
+                onBack = { navController.popBackStack() },
+                onSignedIn = { serverId ->
                     navController.popBackStack()
                     navController.navigate(Route.Dashboard(serverId))
                 },
@@ -63,6 +73,5 @@ fun NavGraph() {
         composable<Route.TaskLog> {
             TaskLogScreen(onBack = { navController.popBackStack() })
         }
-        composable<Route.Login> { Unit }
     }
 }

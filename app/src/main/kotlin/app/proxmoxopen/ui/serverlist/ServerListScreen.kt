@@ -33,7 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.proxmoxopen.R
 import app.proxmoxopen.domain.model.Server
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerListScreen(
     onAddServer: () -> Unit,
@@ -41,34 +40,50 @@ fun ServerListScreen(
     viewModel: ServerListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    StatelessServerList(
+        servers = state.servers,
+        onAdd = onAddServer,
+        onOpen = onOpenServer,
+        onDelete = viewModel::delete,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StatelessServerList(
+    servers: List<Server>,
+    onAdd: () -> Unit,
+    onOpen: (Server) -> Unit,
+    onDelete: (Server) -> Unit = {},
+) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.server_list_title)) }) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 text = { Text(stringResource(R.string.add_server)) },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                onClick = onAddServer,
+                onClick = onAdd,
             )
         },
     ) { padding ->
-        if (state.servers.isEmpty() && !state.isLoading) {
+        if (servers.isEmpty()) {
             EmptyServers(padding)
         } else {
             LazyColumn(contentPadding = padding) {
-                items(state.servers, key = { it.id }) { server ->
+                items(servers, key = { it.id }) { server ->
                     ListItem(
                         headlineContent = { Text(server.name) },
                         supportingContent = { Text("${server.host}:${server.port}") },
                         leadingContent = { Icon(Icons.Default.Storage, contentDescription = null) },
                         trailingContent = {
-                            IconButton(onClick = { viewModel.delete(server) }) {
+                            IconButton(onClick = { onDelete(server) }) {
                                 Icon(
                                     Icons.Default.Delete,
                                     contentDescription = stringResource(R.string.delete_server),
                                 )
                             }
                         },
-                        modifier = Modifier.clickable { onOpenServer(server) },
+                        modifier = Modifier.clickable { onOpen(server) },
                     )
                 }
             }
@@ -95,4 +110,3 @@ private fun EmptyServers(padding: PaddingValues) {
         }
     }
 }
-

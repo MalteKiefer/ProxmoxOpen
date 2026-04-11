@@ -3,17 +3,14 @@ package app.proxmoxopen.ui.dashboard
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import app.proxmoxopen.domain.model.Cluster
-import app.proxmoxopen.domain.model.Credentials
 import app.proxmoxopen.domain.model.Guest
-import app.proxmoxopen.domain.model.Realm
 import app.proxmoxopen.domain.repository.ServerRepository
 import app.proxmoxopen.domain.result.ApiError
 import app.proxmoxopen.domain.result.ApiResult
 import app.proxmoxopen.domain.usecase.GetClusterUseCase
 import app.proxmoxopen.domain.usecase.ListGuestsUseCase
-import app.proxmoxopen.domain.usecase.LoginUseCase
-import androidx.navigation.toRoute
 import app.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,7 +32,6 @@ class DashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getCluster: GetClusterUseCase,
     private val listGuests: ListGuestsUseCase,
-    private val login: LoginUseCase,
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
 
@@ -59,30 +55,6 @@ class DashboardViewModel @Inject constructor(
                 return@launch
             }
             _state.update { it.copy(serverName = server.name) }
-
-            // Token-based servers: login is a smoke-test with the token header.
-            if (server.realm == Realm.PVE_TOKEN) {
-                val tokenSecret = serverRepository.getTokenSecret(serverId)
-                if (tokenSecret == null) {
-                    _state.update {
-                        it.copy(isLoading = false, error = ApiError.Auth("token missing"))
-                    }
-                    return@launch
-                }
-                val creds = Credentials.ApiToken(
-                    username = server.username ?: "root",
-                    realm = server.realm,
-                    tokenId = server.tokenId ?: "",
-                    tokenSecret = tokenSecret,
-                )
-                when (val result = login(serverId, creds)) {
-                    is ApiResult.Failure -> {
-                        _state.update { it.copy(isLoading = false, error = result.error) }
-                        return@launch
-                    }
-                    is ApiResult.Success -> Unit
-                }
-            }
 
             val clusterResult = getCluster(serverId)
             val guestsResult = listGuests(serverId)
