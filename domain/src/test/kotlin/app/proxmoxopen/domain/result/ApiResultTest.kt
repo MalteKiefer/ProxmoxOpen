@@ -1,4 +1,4 @@
-package app.proxmoxopen.core.common
+package app.proxmoxopen.domain.result
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

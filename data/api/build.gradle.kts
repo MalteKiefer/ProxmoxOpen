@@ -20,6 +20,8 @@ android {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":core:common"))
+    implementation(project(":data:db"))
+    implementation(project(":data:secrets"))
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
