@@ -65,3 +65,13 @@ secrets.properties
 # docs/ is tracked — contains design specs and documentation
 !docs/
 !docs/**
+local.properties
+/schemas/
+
+# Unignore our :data:secrets module (global gitignore has *secret*)
+!data/secrets/
+!data/secrets/src/
+!data/secrets/src/**
+!data/secrets/build.gradle.kts
+!data/secrets/proguard-rules.pro
+!data/secrets/consumer-rules.pro
