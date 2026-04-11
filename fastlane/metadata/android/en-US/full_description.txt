@@ -1,0 +1,20 @@
+ProxMoxOpen is a free, open-source Android client for Proxmox VE. It connects to one or many Proxmox servers over HTTPS, verifies every certificate with Trust-On-First-Use pinning, and stores every credential in the hardware-backed Android Keystore.
+
+Features
+- Multi-server support with a drawer-based switcher
+- Cluster, node, VM and container dashboards with live charts
+- Power actions for virtual machines and containers: start, stop, shutdown, reboot, suspend, resume, reset
+- Authentication with API tokens, Proxmox PVE users or Linux PAM, including TOTP two-factor
+- Material 3 UI with dynamic color on Android 12+
+- Offline-friendly server metadata, encrypted secrets
+
+Privacy and security
+- No trackers, no analytics, no crash reporters
+- All network traffic goes directly from your phone to your Proxmox server
+- Certificate fingerprints are pinned; a hard dialog blocks you when they change
+- Reproducible builds for verification via F-Droid
+
+Open and transparent
+- Licensed GPLv3
+- Community translations via Weblate
+- Contributions welcome on the source repository

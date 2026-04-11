@@ -1,0 +1,1 @@
+Initial development release. Multi-server dashboard with read-only cluster, node and guest views plus power actions. TOFU certificate pinning and hardware-backed credential storage.

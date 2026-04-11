@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ProxMoxOpen</string>
+
+    <!-- Server list -->
+    <string name="server_list_title">Servers</string>
+    <string name="server_list_empty">No servers yet. Tap + to add your first Proxmox server.</string>
+    <string name="add_server">Add server</string>
+    <string name="delete_server">Delete server</string>
+    <string name="last_connected">Last connected: %1$s</string>
+    <string name="never_connected">Never connected</string>
+
+    <!-- Add server -->
+    <string name="add_server_title">Add Proxmox server</string>
+    <string name="field_server_name">Display name</string>
+    <string name="field_host">Host or IP</string>
+    <string name="field_port">Port</string>
+    <string name="field_realm">Realm</string>
+    <string name="realm_pam">Linux PAM</string>
+    <string name="realm_pve">Proxmox VE authentication</string>
+    <string name="realm_pve_token">API token</string>
+    <string name="connect">Connect</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+
+    <!-- Trust certificate -->
+    <string name="trust_title">Verify server certificate</string>
+    <string name="trust_subject">Subject</string>
+    <string name="trust_issuer">Issuer</string>
+    <string name="trust_valid_from">Valid from</string>
+    <string name="trust_valid_to">Valid to</string>
+    <string name="trust_sha256">SHA-256 fingerprint</string>
+    <string name="trust_sha1">SHA-1 fingerprint</string>
+    <string name="trust_button">Trust this server</string>
+    <string name="trust_warning">Verify the fingerprint matches what your Proxmox server shows before trusting.</string>
+
+    <!-- Fingerprint mismatch -->
+    <string name="fp_mismatch_title">Certificate changed</string>
+    <string name="fp_mismatch_body">The server certificate no longer matches the one you trusted. This could indicate a man-in-the-middle attack. Remove and re-add the server if you are sure the change is legitimate.</string>
+    <string name="fp_mismatch_old">Previously trusted</string>
+    <string name="fp_mismatch_new">Now presented</string>
+    <string name="fp_mismatch_close">Close</string>
+
+    <!-- Login -->
+    <string name="login_title">Sign in</string>
+    <string name="field_username">Username</string>
+    <string name="field_password">Password</string>
+    <string name="field_token_id">Token ID</string>
+    <string name="field_token_secret">Token secret</string>
+    <string name="field_totp">One-time code (TOTP)</string>
+    <string name="sign_in">Sign in</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="tab_nodes">Nodes</string>
+    <string name="tab_vms">Virtual machines</string>
+    <string name="tab_containers">Containers</string>
+    <string name="pull_to_refresh">Pull to refresh</string>
+
+    <!-- Node detail -->
+    <string name="node_status_online">Online</string>
+    <string name="node_status_offline">Offline</string>
+    <string name="node_status_unknown">Unknown</string>
+    <string name="metric_cpu">CPU</string>
+    <string name="metric_memory">Memory</string>
+    <string name="metric_disk">Disk</string>
+    <string name="metric_network">Network</string>
+    <string name="metric_uptime">Uptime</string>
+    <string name="metric_load">Load average</string>
+    <string name="timeframe_1h">Last hour</string>
+    <string name="timeframe_24h">Last 24 hours</string>
+    <string name="timeframe_7d">Last 7 days</string>
+    <string name="timeframe_30d">Last 30 days</string>
+
+    <!-- Guest detail / power -->
+    <string name="guest_type_qemu">VM</string>
+    <string name="guest_type_lxc">Container</string>
+    <string name="vm_id">VMID %1$d</string>
+    <string name="power_start">Start</string>
+    <string name="power_stop">Stop</string>
+    <string name="power_shutdown">Shutdown</string>
+    <string name="power_reboot">Reboot</string>
+    <string name="power_suspend">Suspend</string>
+    <string name="power_resume">Resume</string>
+    <string name="power_reset">Reset</string>
+    <string name="power_confirm_title">Confirm action</string>
+    <string name="power_confirm_body">Run “%1$s” on %2$s?</string>
+    <string name="power_task_running">Running %1$s…</string>
+    <string name="power_task_done">Completed %1$s</string>
+
+    <!-- Tasks -->
+    <string name="task_log_title">Tasks</string>
+    <string name="task_status_running">Running</string>
+    <string name="task_status_ok">OK</string>
+    <string name="task_status_failed">Failed</string>
+
+    <!-- Errors -->
+    <string name="error_network">Network error. Please check the connection to your Proxmox server.</string>
+    <string name="error_auth">Authentication failed. Please verify your credentials.</string>
+    <string name="error_tls">TLS error: %1$s</string>
+    <string name="error_fingerprint_changed">Server fingerprint has changed.</string>
+    <string name="error_unknown">Something went wrong.</string>
+    <string name="error_parse">The server responded with unexpected data.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="setting_dynamic_color">Dynamic color</string>
+    <string name="setting_dynamic_color_desc">Use the system color palette (Android 12+).</string>
+    <string name="setting_biometric_lock">App lock</string>
+    <string name="setting_biometric_lock_desc">Require biometric authentication to open the app.</string>
+    <string name="setting_flag_secure">Hide from recents</string>
+    <string name="setting_flag_secure_desc">Blur screenshots and the recents thumbnail.</string>
+    <string name="setting_auto_refresh">Auto-refresh interval</string>
+    <string name="setting_language">Language</string>
+    <string name="setting_language_system">System</string>
+    <string name="about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">License</string>
+    <string name="about_source">Source code</string>
+    <string name="about_translate">Help translate</string>
+</resources>

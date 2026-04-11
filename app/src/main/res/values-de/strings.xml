@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ProxMoxOpen</string>
+
+    <string name="server_list_title">Server</string>
+    <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>
+    <string name="add_server">Server hinzufügen</string>
+    <string name="delete_server">Server löschen</string>
+    <string name="last_connected">Zuletzt verbunden: %1$s</string>
+    <string name="never_connected">Noch nie verbunden</string>
+
+    <string name="add_server_title">Proxmox-Server hinzufügen</string>
+    <string name="field_server_name">Anzeigename</string>
+    <string name="field_host">Host oder IP</string>
+    <string name="field_port">Port</string>
+    <string name="field_realm">Realm</string>
+    <string name="realm_pam">Linux PAM</string>
+    <string name="realm_pve">Proxmox VE-Authentifizierung</string>
+    <string name="realm_pve_token">API-Token</string>
+    <string name="connect">Verbinden</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="retry">Erneut versuchen</string>
+
+    <string name="trust_title">Server-Zertifikat prüfen</string>
+    <string name="trust_subject">Inhaber</string>
+    <string name="trust_issuer">Aussteller</string>
+    <string name="trust_valid_from">Gültig ab</string>
+    <string name="trust_valid_to">Gültig bis</string>
+    <string name="trust_sha256">SHA-256-Fingerabdruck</string>
+    <string name="trust_sha1">SHA-1-Fingerabdruck</string>
+    <string name="trust_button">Diesem Server vertrauen</string>
+    <string name="trust_warning">Vergleiche den Fingerabdruck mit dem, den dein Proxmox-Server anzeigt, bevor du vertraust.</string>
+
+    <string name="fp_mismatch_title">Zertifikat geändert</string>
+    <string name="fp_mismatch_body">Das Server-Zertifikat stimmt nicht mehr mit dem vertrauten überein. Das könnte auf einen Man-in-the-Middle-Angriff hinweisen. Entferne den Server und füge ihn neu hinzu, wenn du sicher bist, dass die Änderung legitim ist.</string>
+    <string name="fp_mismatch_old">Bisher vertraut</string>
+    <string name="fp_mismatch_new">Jetzt präsentiert</string>
+    <string name="fp_mismatch_close">Schließen</string>
+
+    <string name="login_title">Anmelden</string>
+    <string name="field_username">Benutzername</string>
+    <string name="field_password">Passwort</string>
+    <string name="field_token_id">Token-ID</string>
+    <string name="field_token_secret">Token-Secret</string>
+    <string name="field_totp">Einmalcode (TOTP)</string>
+    <string name="sign_in">Anmelden</string>
+
+    <string name="dashboard_title">Übersicht</string>
+    <string name="tab_nodes">Nodes</string>
+    <string name="tab_vms">Virtuelle Maschinen</string>
+    <string name="tab_containers">Container</string>
+    <string name="pull_to_refresh">Zum Aktualisieren ziehen</string>
+
+    <string name="node_status_online">Online</string>
+    <string name="node_status_offline">Offline</string>
+    <string name="node_status_unknown">Unbekannt</string>
+    <string name="metric_cpu">CPU</string>
+    <string name="metric_memory">Arbeitsspeicher</string>
+    <string name="metric_disk">Festplatte</string>
+    <string name="metric_network">Netzwerk</string>
+    <string name="metric_uptime">Laufzeit</string>
+    <string name="metric_load">Systemlast</string>
+    <string name="timeframe_1h">Letzte Stunde</string>
+    <string name="timeframe_24h">Letzte 24 Stunden</string>
+    <string name="timeframe_7d">Letzte 7 Tage</string>
+    <string name="timeframe_30d">Letzte 30 Tage</string>
+
+    <string name="guest_type_qemu">VM</string>
+    <string name="guest_type_lxc">Container</string>
+    <string name="vm_id">VMID %1$d</string>
+    <string name="power_start">Starten</string>
+    <string name="power_stop">Stoppen</string>
+    <string name="power_shutdown">Herunterfahren</string>
+    <string name="power_reboot">Neu starten</string>
+    <string name="power_suspend">Anhalten</string>
+    <string name="power_resume">Fortsetzen</string>
+    <string name="power_reset">Zurücksetzen</string>
+    <string name="power_confirm_title">Aktion bestätigen</string>
+    <string name="power_confirm_body">„%1$s“ auf %2$s ausführen?</string>
+    <string name="power_task_running">%1$s läuft…</string>
+    <string name="power_task_done">%1$s abgeschlossen</string>
+
+    <string name="task_log_title">Tasks</string>
+    <string name="task_status_running">Läuft</string>
+    <string name="task_status_ok">OK</string>
+    <string name="task_status_failed">Fehlgeschlagen</string>
+
+    <string name="error_network">Netzwerkfehler. Bitte prüfe die Verbindung zu deinem Proxmox-Server.</string>
+    <string name="error_auth">Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.</string>
+    <string name="error_tls">TLS-Fehler: %1$s</string>
+    <string name="error_fingerprint_changed">Der Server-Fingerabdruck hat sich geändert.</string>
+    <string name="error_unknown">Etwas ist schiefgelaufen.</string>
+    <string name="error_parse">Der Server hat unerwartete Daten zurückgegeben.</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="setting_dynamic_color">Dynamische Farben</string>
+    <string name="setting_dynamic_color_desc">Systemfarbpalette verwenden (Android 12+).</string>
+    <string name="setting_biometric_lock">App-Sperre</string>
+    <string name="setting_biometric_lock_desc">Biometrische Entsperrung zum Öffnen der App erfordern.</string>
+    <string name="setting_flag_secure">Aus zuletzt geöffnet ausblenden</string>
+    <string name="setting_flag_secure_desc">Screenshots und Recents-Vorschau verbergen.</string>
+    <string name="setting_auto_refresh">Auto-Aktualisierungsintervall</string>
+    <string name="setting_language">Sprache</string>
+    <string name="setting_language_system">System</string>
+    <string name="about">Über</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">Lizenz</string>
+    <string name="about_source">Quellcode</string>
+    <string name="about_translate">Beim Übersetzen helfen</string>
+</resources>

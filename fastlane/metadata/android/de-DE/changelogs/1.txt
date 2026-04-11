@@ -1,0 +1,1 @@
+Erste Entwicklungs-Version. Multi-Server-Übersicht mit schreibgeschützten Cluster-, Node- und Guest-Ansichten sowie Power-Aktionen. TOFU-Zertifikats-Pinning und hardware-gestützte Speicherung der Zugangsdaten.
