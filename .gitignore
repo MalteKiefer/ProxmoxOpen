@@ -1,0 +1,67 @@
+# ---------- Android / Gradle / Kotlin ----------
+*.iml
+.gradle/
+.kotlin/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+
+# Gradle wrapper JAR is checked in intentionally (F-Droid reproducible builds)
+!gradle-wrapper.jar
+
+# Keystore / signing — NEVER commit
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# ---------- Logs ----------
+*.log
+hs_err_pid*
+
+# ---------- OS ----------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------- IDE ----------
+*.swp
+*.swo
+*~
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ---------- Test / coverage ----------
+/test-results/
+/reports/
+coverage/
+*.exec
+
+# ---------- Node / Weblate tooling (if used) ----------
+node_modules/
+
+# ---------- Secrets / env ----------
+.env
+.env.*
+!.env.example
+secrets.properties
+
+# ---------- Explicitly tracked ----------
+# docs/ is tracked — contains design specs and documentation
+!docs/
+!docs/**
