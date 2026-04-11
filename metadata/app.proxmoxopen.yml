@@ -1,0 +1,40 @@
+Categories:
+  - System
+  - Internet
+License: GPL-3.0-or-later
+WebSite: https://proxmoxopen.app
+SourceCode: https://github.com/placeholder/proxmoxopen
+IssueTracker: https://github.com/placeholder/proxmoxopen/issues
+Changelog: https://github.com/placeholder/proxmoxopen/blob/main/CHANGELOG.md
+
+AutoName: ProxMoxOpen
+Summary: Open, secure, F-Droid-first Android client for Proxmox VE.
+Description: |
+    ProxMoxOpen is a native Android client for Proxmox VE. It pins
+    certificates on first use, keeps all credentials in the Android
+    Keystore, ships zero trackers, and aims to meet F-Droid's main-repo
+    reproducibility requirements from day one.
+
+    Features:
+    - Multi-server management with fast switching
+    - Cluster, node, VM and container dashboards with live charts
+    - Power actions for VMs and containers
+    - API-token, PAM and PVE authentication with TOTP two-factor
+    - Material 3 with dynamic color on Android 12+
+
+RepoType: git
+Repo: https://github.com/placeholder/proxmoxopen
+
+Builds:
+  - versionName: "0.1.0-dev"
+    versionCode: 1
+    commit: HEAD
+    subdir: app
+    gradle:
+      - yes
+    output: build/outputs/apk/release/app-release-unsigned.apk
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: "0.1.0-dev"
+CurrentVersionCode: 1
