@@ -15,6 +15,7 @@ import de.kiefer_networks.proxmoxopen.ui.main.MainScreen
 import de.kiefer_networks.proxmoxopen.ui.nodedetail.NodeDetailScreen
 import de.kiefer_networks.proxmoxopen.ui.serverlist.EditServerScreen
 import de.kiefer_networks.proxmoxopen.ui.settings.SettingsScreen
+import de.kiefer_networks.proxmoxopen.ui.about.AboutScreen
 import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
 // Console removed — will be reimplemented with native xterm.js WebSocket
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
@@ -32,6 +33,7 @@ fun NavGraph() {
                 onAddServer = { nav.navigate(Route.AddServer) },
                 onOpenServer = { server -> nav.navigate(Route.Login(server.id)) },
                 onEditServer = { id -> nav.navigate(Route.EditServer(id)) },
+                onAbout = { nav.navigate(Route.About) },
             )
         }
         composable<Route.AddServer> {
@@ -151,8 +153,12 @@ fun NavGraph() {
         composable<Route.Settings> {
             SettingsScreen(
                 onBack = { nav.popBackStack() },
+                onAbout = { nav.navigate(Route.About) },
                 showBackButton = true,
             )
+        }
+        composable<Route.About> {
+            AboutScreen(onBack = { nav.popBackStack() })
         }
         composable<Route.Activity> {
             ActivityScreen(

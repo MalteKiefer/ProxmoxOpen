@@ -49,6 +49,7 @@ fun MainScreen(
     onAddServer: () -> Unit,
     onOpenServer: (Server) -> Unit,
     onEditServer: (Long) -> Unit,
+    onAbout: () -> Unit = {},
 ) {
     val tabNav = rememberNavController()
     val backStackEntry by tabNav.currentBackStackEntryAsState()
@@ -94,7 +95,7 @@ fun MainScreen(
                 )
             }
             composable<TabRoute.Activity> { ActivityScreen() }
-            composable<TabRoute.Settings> { SettingsScreen() }
+            composable<TabRoute.Settings> { SettingsScreen(onAbout = onAbout) }
         }
     }
 }

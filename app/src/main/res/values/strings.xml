@@ -236,6 +236,8 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_license">License</string>
     <string name="about_source">Source code</string>
+    <string name="donate_title">Support development</string>
+    <string name="donate_subtitle">Donate via Liberapay or PayPal</string>
     <string name="about_translate">Help translate</string>
 
     <!-- Clone -->

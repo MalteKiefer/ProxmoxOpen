@@ -16,6 +16,7 @@ sealed interface Route {
         val serverId: Long, val node: String, val upid: String,
     ) : Route
     @Serializable data object Settings : Route
+    @Serializable data object About : Route
     @Serializable data object Activity : Route
     @Serializable data class GuestConfig(
         val serverId: Long, val node: String, val vmid: Int, val type: String,

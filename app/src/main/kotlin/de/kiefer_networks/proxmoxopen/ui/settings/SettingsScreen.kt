@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
@@ -58,6 +59,7 @@ import de.kiefer_networks.proxmoxopen.ui.main.MainViewModel
 fun SettingsScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onBack: (() -> Unit)? = null,
+    onAbout: (() -> Unit)? = null,
     showBackButton: Boolean = false,
 ) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
@@ -100,9 +102,9 @@ fun SettingsScreen(
             SettingsCard { SettingsToggle(Icons.Outlined.Fingerprint, stringResource(R.string.setting_biometric_lock), stringResource(R.string.setting_biometric_lock_desc), prefs.appLockEnabled, viewModel::setAppLock) }
             SectionTitle(stringResource(R.string.settings_section_about))
             SettingsCard {
-                SettingsRow(Icons.Outlined.Info, stringResource(R.string.about), stringResource(R.string.about_version, BuildConfig.VERSION_NAME))
+                SettingsRow(Icons.Outlined.Info, stringResource(R.string.about), stringResource(R.string.about_version, BuildConfig.VERSION_NAME)) { onAbout?.invoke() }
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                SettingsRow(Icons.Outlined.Code, stringResource(R.string.about_source), "github.com/proxmoxopen")
+                SettingsRow(Icons.Outlined.Favorite, stringResource(R.string.donate_title), stringResource(R.string.donate_subtitle)) { onAbout?.invoke() }
             }
         }
     }
