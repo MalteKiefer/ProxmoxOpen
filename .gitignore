@@ -75,3 +75,5 @@ local.properties
 !data/secrets/build.gradle.kts
 !data/secrets/proguard-rules.pro
 !data/secrets/consumer-rules.pro
+*.jks
+keystore.properties
