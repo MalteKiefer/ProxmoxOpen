@@ -16,7 +16,7 @@ import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
 import app.proxmoxopen.ui.serverlist.EditServerScreen
 import app.proxmoxopen.ui.settings.SettingsScreen
 import app.proxmoxopen.ui.activity.ActivityScreen
-import app.proxmoxopen.ui.console.ConsoleScreen
+// Console removed — will be reimplemented with native xterm.js WebSocket
 import app.proxmoxopen.ui.taskdetail.TaskDetailScreen
 
 @Composable
@@ -82,9 +82,7 @@ fun NavGraph() {
                 onBack = { nav.popBackStack() },
                 onSettings = { nav.navigate(Route.Settings) },
                 onActivity = { nav.navigate(Route.Activity) },
-                onConsole = {
-                    nav.navigate(Route.Console(route.serverId, route.node, type = "node"))
-                },
+                onConsole = { /* coming soon */ },
             )
         }
         composable<Route.GuestDetail> { entry ->
@@ -96,11 +94,7 @@ fun NavGraph() {
                 VmDetailScreen(
                     onBack = { nav.popBackStack() },
                     onSettings = { nav.navigate(Route.Settings) },
-                    onConsole = {
-                        nav.navigate(
-                            Route.Console(route.serverId, route.node, route.vmid, route.type),
-                        )
-                    },
+                    onConsole = { /* coming soon */ },
                     onOpenTask = onOpenTask,
                 )
             } else {
@@ -113,11 +107,7 @@ fun NavGraph() {
                             Route.GuestConfig(route.serverId, route.node, route.vmid, route.type),
                         )
                     },
-                    onConsole = {
-                        nav.navigate(
-                            Route.Console(route.serverId, route.node, route.vmid, route.type),
-                        )
-                    },
+                    onConsole = { /* coming soon */ },
                     onOpenTask = onOpenTask,
                 )
             }
@@ -125,9 +115,7 @@ fun NavGraph() {
         composable<Route.GuestConfig> {
             GuestConfigScreen(onBack = { nav.popBackStack() })
         }
-        composable<Route.Console> {
-            ConsoleScreen(onBack = { nav.popBackStack() })
-        }
+        // Console: coming soon — will use native xterm.js WebSocket
         composable<Route.TaskDetail> {
             TaskDetailScreen(onBack = { nav.popBackStack() })
         }
