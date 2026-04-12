@@ -79,6 +79,8 @@ import app.proxmoxopen.core.ui.component.ErrorState
 import app.proxmoxopen.core.ui.component.LoadingState
 import app.proxmoxopen.core.ui.component.SectionLabel
 import app.proxmoxopen.core.ui.component.StatusBadge
+import app.proxmoxopen.domain.result.ApiError
+import app.proxmoxopen.ui.common.FingerprintMismatchDialog
 import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.GuestStatus
 import app.proxmoxopen.domain.model.ProxmoxTask
@@ -143,6 +145,10 @@ fun VmDetailScreen(
             if (state.isRefreshing) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp), color = MaterialTheme.colorScheme.primary)
             when {
                 state.isLoading && state.status == null -> LoadingState()
+                state.error is ApiError.FingerprintMismatch && state.status == null -> {
+                    val fpError = state.error as ApiError.FingerprintMismatch
+                    FingerprintMismatchDialog(expected = fpError.expected, actual = fpError.actual, onDismiss = onBack)
+                }
                 state.error != null && state.status == null -> ErrorState(state.error?.message ?: "", stringResource(R.string.retry), viewModel::refresh)
                 else -> Box(Modifier.fillMaxSize()) {
                     when (selectedTab) {
@@ -156,7 +162,7 @@ fun VmDetailScreen(
             }
         }
     }
-    if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
+    if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", guestType = "qemu", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
     if (createSnapDialog) { var n by remember { mutableStateOf("") }; var d by remember { mutableStateOf("") }; AlertDialog(onDismissRequest = { createSnapDialog = false }, title = { Text(stringResource(R.string.snap_create)) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(n, { n = it }, label = { Text(stringResource(R.string.snap_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth()); OutlinedTextField(d, { d = it }, label = { Text(stringResource(R.string.config_description)) }, modifier = Modifier.fillMaxWidth()) } }, confirmButton = { TextButton(onClick = { createSnapDialog = false; viewModel.createSnapshot(n, d.ifBlank { null }) }, enabled = n.isNotBlank()) { Text(stringResource(R.string.snap_create)) } }, dismissButton = { TextButton(onClick = { createSnapDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
     if (backupDialog) { var s by remember { mutableStateOf(state.backupStorages.firstOrNull() ?: "local") }; var m by remember { mutableStateOf("snapshot") }; var c by remember { mutableStateOf("zstd") }; var p by remember { mutableStateOf(false) }; var notes by remember { mutableStateOf("{{guestname}}") }; AlertDialog(onDismissRequest = { backupDialog = false }, title = { Text(stringResource(R.string.backup_dialog_title)) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(s, { s = it }, label = { Text("Storage") }, singleLine = true, modifier = Modifier.fillMaxWidth()); OutlinedTextField(m, { m = it }, label = { Text("Mode") }, singleLine = true, modifier = Modifier.fillMaxWidth()); OutlinedTextField(c, { c = it }, label = { Text("Compression") }, singleLine = true, modifier = Modifier.fillMaxWidth()); Row(Modifier.fillMaxWidth().clickable { p = !p }, verticalAlignment = Alignment.CenterVertically) { Checkbox(p, { p = it }); Text("Protected") }; OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth()) } }, confirmButton = { TextButton(onClick = { backupDialog = false; viewModel.createBackup(s, m, c, p, notes.ifBlank { null }) }) { Text(stringResource(R.string.backup_now)) } }, dismissButton = { TextButton(onClick = { backupDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
     if (deleteDialog) DeleteGuestDialog(

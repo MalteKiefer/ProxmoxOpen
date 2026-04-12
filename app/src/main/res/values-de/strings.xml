@@ -85,6 +85,7 @@
     <string name="backup_empty">Keine Backups auf diesem Storage gefunden.</string>
     <string name="app_lock_prompt">Authentifiziere dich, um ProxMoxOpen zu öffnen</string>
     <string name="app_lock_retry">Erneut versuchen</string>
+    <string name="task_live">Live</string>
     <string name="search_hint">VMs und Container suchen…</string>
     <string name="node_reboot">Node neu starten</string>
     <string name="node_shutdown">Node herunterfahren</string>

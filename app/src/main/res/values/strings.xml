@@ -90,6 +90,7 @@
     <string name="backup_empty">No backups found on this storage.</string>
     <string name="app_lock_prompt">Authenticate to open ProxMoxOpen</string>
     <string name="app_lock_retry">Try again</string>
+    <string name="task_live">Live</string>
     <string name="search_hint">Search VMs and containers…</string>
     <string name="node_reboot">Reboot node</string>
     <string name="node_shutdown">Shutdown node</string>

@@ -45,11 +45,17 @@ import app.proxmoxopen.domain.model.PowerAction
 @Composable
 fun PowerActionSheet(
     guestName: String,
+    guestType: String,
     onDismiss: () -> Unit,
     onSelect: (PowerAction) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
     var pendingConfirm by remember { mutableStateOf<PowerAction?>(null) }
+    val actions = if (guestType == "lxc") {
+        PowerAction.entries.filter { it != PowerAction.RESET }
+    } else {
+        PowerAction.entries
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -74,7 +80,7 @@ fun PowerActionSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
-            PowerAction.entries.forEach { action ->
+            actions.forEach { action ->
                 ActionRow(
                     action = action,
                     onClick = {

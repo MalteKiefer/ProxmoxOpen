@@ -13,6 +13,8 @@ import app.proxmoxopen.domain.result.ApiResult
 import app.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -22,6 +24,7 @@ data class TaskDetailUiState(
     val task: ProxmoxTask? = null,
     val logLines: List<TaskLogLine> = emptyList(),
     val isLoading: Boolean = true,
+    val isPolling: Boolean = false,
     val error: ApiError? = null,
 )
 
@@ -39,6 +42,8 @@ class TaskDetailViewModel @Inject constructor(
     private val _state = MutableStateFlow(TaskDetailUiState())
     val state = _state.asStateFlow()
 
+    private var pollingJob: Job? = null
+
     init { refresh() }
 
     fun refresh() {
@@ -54,6 +59,47 @@ class TaskDetailViewModel @Inject constructor(
                     error = (taskResult as? ApiResult.Failure)?.error ?: (logResult as? ApiResult.Failure)?.error,
                 )
             }
+            // Start polling if task is still running
+            val task = (taskResult as? ApiResult.Success)?.value
+            if (task?.state == TaskState.RUNNING) {
+                startPolling()
+            } else {
+                stopPolling()
+            }
         }
+    }
+
+    private fun startPolling() {
+        if (pollingJob?.isActive == true) return
+        _state.update { it.copy(isPolling = true) }
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                delay(2000L)
+                val taskResult = taskRepo.getTask(serverId, node, upid)
+                val logResult = taskRepo.getTaskLog(serverId, node, upid, start = 0, limit = 1000)
+                _state.update {
+                    it.copy(
+                        task = (taskResult as? ApiResult.Success)?.value ?: it.task,
+                        logLines = (logResult as? ApiResult.Success)?.value ?: it.logLines,
+                    )
+                }
+                val task = (taskResult as? ApiResult.Success)?.value
+                if (task != null && task.state != TaskState.RUNNING) {
+                    stopPolling()
+                    break
+                }
+            }
+        }
+    }
+
+    private fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+        _state.update { it.copy(isPolling = false) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopPolling()
     }
 }

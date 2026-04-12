@@ -62,6 +62,8 @@ import app.proxmoxopen.core.ui.component.HeroHeader
 import app.proxmoxopen.core.ui.component.LoadingState
 import app.proxmoxopen.core.ui.component.StatusBadge
 import app.proxmoxopen.domain.model.Guest
+import app.proxmoxopen.domain.result.ApiError
+import app.proxmoxopen.ui.common.FingerprintMismatchDialog
 import app.proxmoxopen.domain.model.GuestStatus
 import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.domain.model.Node
@@ -124,6 +126,14 @@ fun DashboardScreen(
     ) { padding ->
         when {
             state.isLoading && state.cluster == null -> LoadingState(Modifier.padding(padding))
+            state.error is ApiError.FingerprintMismatch && state.cluster == null -> {
+                val fpError = state.error as ApiError.FingerprintMismatch
+                FingerprintMismatchDialog(
+                    expected = fpError.expected,
+                    actual = fpError.actual,
+                    onDismiss = onBack,
+                )
+            }
             state.error != null && state.cluster == null ->
                 ErrorState(
                     message = state.error?.message ?: "",

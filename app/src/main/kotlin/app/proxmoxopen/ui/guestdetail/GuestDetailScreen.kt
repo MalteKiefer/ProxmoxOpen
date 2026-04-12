@@ -79,6 +79,8 @@ import app.proxmoxopen.core.ui.component.ErrorState
 import app.proxmoxopen.core.ui.component.LoadingState
 import app.proxmoxopen.core.ui.component.SectionLabel
 import app.proxmoxopen.core.ui.component.StatusBadge
+import app.proxmoxopen.domain.result.ApiError
+import app.proxmoxopen.ui.common.FingerprintMismatchDialog
 import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.GuestStatus
@@ -159,6 +161,10 @@ fun GuestDetailScreen(
 
             when {
                 state.isLoading && state.status == null -> LoadingState()
+                state.error is ApiError.FingerprintMismatch && state.status == null -> {
+                    val fpError = state.error as ApiError.FingerprintMismatch
+                    FingerprintMismatchDialog(expected = fpError.expected, actual = fpError.actual, onDismiss = onBack)
+                }
                 state.error != null && state.status == null -> ErrorState(state.error?.message ?: "", stringResource(R.string.retry), viewModel::refresh)
                 else -> Box(Modifier.fillMaxSize()) {
                     when (selectedTab) {
@@ -173,7 +179,7 @@ fun GuestDetailScreen(
         }
     }
 
-    if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
+    if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", guestType = "lxc", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
     if (createSnapDialog) CreateSnapshotDialog(onDismiss = { createSnapDialog = false }, onCreate = { n, d -> createSnapDialog = false; viewModel.createSnapshot(n, d) })
     if (backupDialog) BackupDialog(storages = state.backupStorages, onDismiss = { backupDialog = false }, onBackup = { s, m, c, p, n -> backupDialog = false; viewModel.createBackup(s, m, c, p, n) })
     if (deleteDialog) DeleteGuestDialog(
