@@ -5,7 +5,7 @@
 If you believe you have found a security vulnerability in ProxMoxOpen, please report it **privately** before disclosing it publicly.
 
 - Open a private security advisory on the source repository (GitHub "Security" tab → "Report a vulnerability"), or
-- Email the maintainers at `security@proxmoxopen.app` (placeholder — will be updated when the infrastructure is in place).
+- Email the maintainers at `info@kiefer-networks.de` (placeholder — will be updated when the infrastructure is in place).
 
 Please include:
 

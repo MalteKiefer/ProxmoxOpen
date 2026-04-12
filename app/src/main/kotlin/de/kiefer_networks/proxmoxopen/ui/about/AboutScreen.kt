@@ -103,7 +103,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 LinkRow(Icons.Outlined.Language, "kiefer-networks.de", "Website") { openUrl("https://kiefer-networks.de") }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                LinkRow(Icons.Outlined.Email, "malte@kiefer-networks.de", "Email") { openUrl("mailto:malte@kiefer-networks.de") }
+                LinkRow(Icons.Outlined.Email, "malte.kiefer@kiefer-networks.de", "Email") { openUrl("mailto:malte@kiefer-networks.de") }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 LinkRow(Icons.Outlined.Code, "github.com/MalteKiefer", "GitHub") { openUrl("https://github.com/MalteKiefer") }
             }
