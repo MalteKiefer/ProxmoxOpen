@@ -9,6 +9,7 @@ import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.repository.ServerRepository
 import app.proxmoxopen.domain.result.ApiError
 import app.proxmoxopen.domain.result.ApiResult
+import app.proxmoxopen.domain.repository.ClusterRepository
 import app.proxmoxopen.domain.usecase.GetClusterUseCase
 import app.proxmoxopen.domain.usecase.ListGuestsUseCase
 import app.proxmoxopen.preferences.RefreshInterval
@@ -38,6 +39,7 @@ class DashboardViewModel @Inject constructor(
     private val getCluster: GetClusterUseCase,
     private val listGuests: ListGuestsUseCase,
     private val serverRepository: ServerRepository,
+    private val clusterRepository: ClusterRepository,
     private val prefsRepo: UserPreferencesRepository,
 ) : ViewModel() {
 
@@ -69,12 +71,18 @@ class DashboardViewModel @Inject constructor(
 
     private fun refreshSilent() {
         viewModelScope.launch {
-            val server = serverRepository.getById(serverId) ?: return@launch
+            serverRepository.getById(serverId) ?: return@launch
             val clusterResult = getCluster(serverId)
             val guestsResult = listGuests(serverId)
+            val cluster = (clusterResult as? ApiResult.Success)?.value
+            val detailedNodes = cluster?.nodes?.map { node ->
+                val d = clusterRepository.getNode(serverId, node.name)
+                (d as? ApiResult.Success)?.value ?: node
+            }
+            val enrichedCluster = cluster?.copy(nodes = detailedNodes ?: cluster.nodes)
             _state.update {
                 it.copy(
-                    cluster = (clusterResult as? ApiResult.Success)?.value ?: it.cluster,
+                    cluster = enrichedCluster ?: it.cluster,
                     guests = (guestsResult as? ApiResult.Success)?.value ?: it.guests,
                 )
             }
@@ -95,10 +103,17 @@ class DashboardViewModel @Inject constructor(
 
             val clusterResult = getCluster(serverId)
             val guestsResult = listGuests(serverId)
+            // Fetch detailed status for each node (CPU model, kernel, swap, etc.)
+            val cluster = (clusterResult as? ApiResult.Success)?.value
+            val detailedNodes = cluster?.nodes?.map { node ->
+                val detail = clusterRepository.getNode(serverId, node.name)
+                (detail as? ApiResult.Success)?.value ?: node
+            }
+            val enrichedCluster = cluster?.copy(nodes = detailedNodes ?: cluster.nodes)
             _state.update {
                 it.copy(
                     isLoading = false,
-                    cluster = (clusterResult as? ApiResult.Success)?.value,
+                    cluster = enrichedCluster,
                     guests = (guestsResult as? ApiResult.Success)?.value ?: emptyList(),
                     error = (clusterResult as? ApiResult.Failure)?.error
                         ?: (guestsResult as? ApiResult.Failure)?.error,

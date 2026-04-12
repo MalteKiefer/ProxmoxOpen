@@ -64,6 +64,7 @@ import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.domain.model.Node
 import app.proxmoxopen.domain.model.NodeStatus
 import app.proxmoxopen.ui.format.formatBytes
+import app.proxmoxopen.ui.format.formatUptime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,15 +203,27 @@ private fun NodesList(nodes: List<Node>, onOpen: (String) -> Unit) {
 private fun NodeRow(node: Node, onOpen: () -> Unit) {
     val tone = when (node.status) { NodeStatus.ONLINE -> BadgeTone.Running; NodeStatus.OFFLINE -> BadgeTone.Error; NodeStatus.UNKNOWN -> BadgeTone.Neutral }
     Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(40.dp)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer) } }
-                Text(node.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp).weight(1f))
+                Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                    Text(node.name, style = MaterialTheme.typography.titleMedium)
+                    Text("${stringResource(R.string.metric_uptime)}: ${formatUptime(node.uptimeSeconds)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 StatusBadge(label = node.status.name.lowercase().replaceFirstChar { it.titlecase() }, tone = tone)
             }
             MetricRow(stringResource(R.string.metric_cpu), node.cpuUsage.toFloat(), "${(node.cpuUsage * 100).toInt()}% · ${node.cpuCount} cores")
             val memF = if (node.memTotal > 0) node.memUsed.toFloat() / node.memTotal else 0f
             MetricRow(stringResource(R.string.metric_memory), memF, "${formatBytes(node.memUsed)} / ${formatBytes(node.memTotal)}")
+            val diskF = if (node.diskTotal > 0) node.diskUsed.toFloat() / node.diskTotal else 0f
+            MetricRow("HD", diskF, "${formatBytes(node.diskUsed)} / ${formatBytes(node.diskTotal)}")
+            val swapF = if (node.swapTotal > 0) node.swapUsed.toFloat() / node.swapTotal else 0f
+            MetricRow("Swap", swapF, "${formatBytes(node.swapUsed)} / ${formatBytes(node.swapTotal)}")
+            // Info rows
+            node.cpuModel?.let { InfoR("CPU(s)", "${node.cpuCount} x $it") }
+            InfoR("Load", node.loadAverage.joinToString(", ") { "%.2f".format(it) }.ifBlank { "—" })
+            node.kernelVersion?.let { InfoR("Kernel", it) }
+            node.pveVersion?.let { InfoR("Manager", it) }
         }
     }
 }
@@ -239,6 +252,14 @@ private fun GuestRow(guest: Guest, onOpen: () -> Unit) {
                 MetricRow(stringResource(R.string.metric_memory), memF, "${formatBytes(guest.memUsed)} / ${formatBytes(guest.memTotal)}")
             }
         }
+    }
+}
+
+@Composable
+private fun InfoR(l: String, v: String) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(l, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Text(v, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
