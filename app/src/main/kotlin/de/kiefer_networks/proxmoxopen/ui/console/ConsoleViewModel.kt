@@ -39,6 +39,11 @@ data class ConsoleUiState(
     val sessionReady: Boolean = false,
 )
 
+/**
+ * Proxmox WebSocket terminal protocol:
+ * - Channel 0: stdin/stdout data → format "0:LENGTH:DATA"
+ * - Channel 1: resize → format "1:COLS:ROWS:"
+ */
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -86,17 +91,15 @@ class ConsoleViewModel @Inject constructor(
         _state.update { it.copy(isConnecting = true, error = null) }
         viewModelScope.launch {
             try {
-                // Create TerminalSession on Main thread (needs Looper)
+                // Create TerminalSession on Main thread
                 val ts = TerminalSession("/bin/true", "/", arrayOfNulls(0), arrayOfNulls(0), null, sessionClient)
                 ts.updateTerminalSessionClient(sessionClient)
                 terminalSession = ts
                 _state.update { it.copy(sessionReady = true) }
 
-                // Now do network stuff on IO
                 withContext(Dispatchers.IO) {
                     val server = serverRepository.getById(serverId)
                         ?: run { _state.update { it.copy(isConnecting = false, error = "Server not found") }; return@withContext }
-
                     val session = sessionManager.getSession(serverId)
                         ?: run { _state.update { it.copy(isConnecting = false, error = "Not authenticated") }; return@withContext }
 
@@ -128,7 +131,7 @@ class ConsoleViewModel @Inject constructor(
                     val okClient = OkHttpClient.Builder()
                         .sslSocketFactory(sslContext.socketFactory, trustManager)
                         .hostnameVerifier { _, _ -> true }
-                        .pingInterval(10, TimeUnit.SECONDS)
+                        .pingInterval(5, TimeUnit.SECONDS)
                         .readTimeout(0, TimeUnit.MILLISECONDS)
                         .build()
 
@@ -137,22 +140,39 @@ class ConsoleViewModel @Inject constructor(
                     webSocket = okClient.newWebSocket(request, object : WebSocketListener() {
                         override fun onOpen(ws: WebSocket, response: Response) {
                             _state.update { it.copy(isConnecting = false, isConnected = true) }
+                            // Send initial resize immediately — Proxmox needs this!
+                            val cols = ts.emulator?.mColumns ?: 80
+                            val rows = ts.emulator?.mRows ?: 24
+                            ws.send("1:${cols}:${rows}:")
                         }
+
                         override fun onMessage(ws: WebSocket, text: String) {
-                            val bytes = text.toByteArray(Charsets.UTF_8)
-                            viewModelScope.launch(Dispatchers.Main) {
-                                ts.emulator?.append(bytes, bytes.size)
+                            // Proxmox framing: "CHANNEL:LENGTH:DATA"
+                            val parsed = parseProxmoxFrame(text)
+                            if (parsed != null && parsed.first == 0) {
+                                val bytes = parsed.second.toByteArray(Charsets.UTF_8)
+                                viewModelScope.launch(Dispatchers.Main) {
+                                    ts.emulator?.append(bytes, bytes.size)
+                                }
                             }
                         }
+
                         override fun onMessage(ws: WebSocket, bytes: ByteString) {
-                            val data = bytes.toByteArray()
-                            viewModelScope.launch(Dispatchers.Main) {
-                                ts.emulator?.append(data, data.size)
+                            // Binary frames — try parsing as text
+                            val text = bytes.utf8()
+                            val parsed = parseProxmoxFrame(text)
+                            if (parsed != null && parsed.first == 0) {
+                                val data = parsed.second.toByteArray(Charsets.UTF_8)
+                                viewModelScope.launch(Dispatchers.Main) {
+                                    ts.emulator?.append(data, data.size)
+                                }
                             }
                         }
+
                         override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
                             _state.update { it.copy(isConnecting = false, isConnected = false, error = t.message ?: "Connection failed") }
                         }
+
                         override fun onClosed(ws: WebSocket, code: Int, reason: String) {
                             _state.update { it.copy(isConnected = false) }
                         }
@@ -164,8 +184,32 @@ class ConsoleViewModel @Inject constructor(
         }
     }
 
-    fun sendInput(text: String) { webSocket?.send(text) }
-    fun updateSize(rows: Int, cols: Int) { terminalSession?.updateSize(cols, rows, 0, 0) }
+    /**
+     * Parse Proxmox WebSocket frame: "CHANNEL:LENGTH:DATA"
+     * Returns (channel, data) or null if unparseable.
+     */
+    private fun parseProxmoxFrame(frame: String): Pair<Int, String>? {
+        val firstColon = frame.indexOf(':')
+        if (firstColon < 0) return null
+        val channel = frame.substring(0, firstColon).toIntOrNull() ?: return null
+        val rest = frame.substring(firstColon + 1)
+        val secondColon = rest.indexOf(':')
+        if (secondColon < 0) return null
+        val data = rest.substring(secondColon + 1)
+        return channel to data
+    }
+
+    /** Send input to Proxmox using channel 0 framing. */
+    fun sendInput(text: String) {
+        val encoded = text.toByteArray(Charsets.UTF_8)
+        webSocket?.send("0:${encoded.size}:$text")
+    }
+
+    /** Send resize event using channel 1. */
+    fun updateSize(rows: Int, cols: Int) {
+        terminalSession?.updateSize(cols, rows, 0, 0)
+        webSocket?.send("1:${cols}:${rows}:")
+    }
 
     override fun onCleared() {
         super.onCleared()
