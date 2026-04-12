@@ -2,13 +2,18 @@ package app.proxmoxopen.ui.addserver
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import app.proxmoxopen.R
 import app.proxmoxopen.domain.repository.ServerProbe
@@ -23,28 +28,39 @@ fun TrustCertificateDialog(
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        },
         title = { Text(stringResource(R.string.trust_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 Text(
-                    stringResource(R.string.trust_warning),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(R.string.trust_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                LabeledValue(stringResource(R.string.trust_subject), probe.subject)
-                LabeledValue(stringResource(R.string.trust_issuer), probe.issuer)
-                LabeledValue(
+                Field(stringResource(R.string.trust_subject), probe.subject)
+                Field(stringResource(R.string.trust_issuer), probe.issuer)
+                Field(
                     stringResource(R.string.trust_valid_from),
                     DateFormat.getDateInstance().format(Date(probe.validFrom)),
                 )
-                LabeledValue(
+                Field(
                     stringResource(R.string.trust_valid_to),
                     DateFormat.getDateInstance().format(Date(probe.validTo)),
                 )
-                LabeledValue(
+                FieldMono(
                     stringResource(R.string.trust_sha256),
                     probe.sha256Fingerprint.chunked(2).joinToString(":").uppercase(),
                 )
-                LabeledValue(
+                FieldMono(
                     stringResource(R.string.trust_sha1),
                     probe.sha1Fingerprint.chunked(2).joinToString(":").uppercase(),
                 )
@@ -60,9 +76,31 @@ fun TrustCertificateDialog(
 }
 
 @Composable
-private fun LabeledValue(label: String, value: String) {
-    Column(Modifier) {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text(value, style = MaterialTheme.typography.bodySmall)
+private fun Field(label: String, value: String) {
+    Column {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun FieldMono(label: String, value: String) {
+    Column {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+        )
     }
 }

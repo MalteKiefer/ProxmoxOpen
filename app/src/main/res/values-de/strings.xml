@@ -21,6 +21,15 @@
     <string name="language_german">Deutsch</string>
     <string name="close">Schließen</string>
 
+    <string name="add_server_subtitle">Verbinde dich mit einem Proxmox-VE-Host oder Cluster.</string>
+    <string name="add_server_section_endpoint">Endpunkt</string>
+    <string name="add_server_section_token">API-Token</string>
+    <string name="add_server_section_credentials">Zugangsdaten</string>
+    <string name="login_using_token">Anmeldung mit API-Token läuft…</string>
+    <string name="dashboard_running">Laufend</string>
+    <string name="dashboard_no_guests">Keine Gäste auf diesem Server.</string>
+    <string name="power_actions">Power-Aktionen</string>
+
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>
     <string name="add_server">Server hinzufügen</string>

@@ -24,6 +24,15 @@
     <string name="language_german">Deutsch</string>
     <string name="close">Close</string>
 
+    <string name="add_server_subtitle">Connect to a Proxmox VE host or cluster.</string>
+    <string name="add_server_section_endpoint">Endpoint</string>
+    <string name="add_server_section_token">API token</string>
+    <string name="add_server_section_credentials">Credentials</string>
+    <string name="login_using_token">Signing in with API token…</string>
+    <string name="dashboard_running">Running</string>
+    <string name="dashboard_no_guests">No guests on this server.</string>
+    <string name="power_actions">Power actions</string>
+
     <!-- Server list -->
     <string name="server_list_title">Servers</string>
     <string name="server_list_empty">No servers yet. Tap + to add your first Proxmox server.</string>
