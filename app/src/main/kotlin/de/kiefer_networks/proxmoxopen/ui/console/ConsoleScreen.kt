@@ -1,11 +1,7 @@
 package de.kiefer_networks.proxmoxopen.ui.console
 
 import android.annotation.SuppressLint
-import android.net.http.SslError
-import android.webkit.CookieManager
-import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -27,7 +23,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -42,7 +37,6 @@ fun ConsoleScreen(
     viewModel: ConsoleViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val webViewRef = remember { arrayOfNulls<WebView>(1) }
 
     Scaffold(
         topBar = {
@@ -50,9 +44,7 @@ fun ConsoleScreen(
                 title = { Text(state.title, style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
-                    IconButton(onClick = { webViewRef[0]?.reload() ?: viewModel.load() }) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = null)
-                    }
+                    IconButton(onClick = viewModel::load) { Icon(Icons.Outlined.Refresh, contentDescription = null) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
@@ -66,17 +58,7 @@ fun ConsoleScreen(
                 state.error != null -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                     Text(state.error ?: "Error", color = MaterialTheme.colorScheme.error)
                 }
-                state.consoleUrl != null -> {
-                    ProxmoxWebView(
-                        url = state.consoleUrl!!,
-                        cookie = state.authCookie,
-                        csrfToken = state.csrfToken ?: "",
-                        username = state.username ?: "root@pam",
-                        host = state.serverHost ?: "",
-                        port = state.serverPort,
-                        ref = webViewRef,
-                    )
-                }
+                state.noVncUrl != null -> NoVncView(state.noVncUrl!!)
             }
         }
     }
@@ -84,116 +66,24 @@ fun ConsoleScreen(
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun ProxmoxWebView(
-    url: String,
-    cookie: String?,
-    csrfToken: String,
-    username: String,
-    host: String,
-    port: Int,
-    ref: Array<WebView?>,
-) {
+private fun NoVncView(url: String) {
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
-            // Inject PVEAuthCookie BEFORE loading the page
-            val cookieManager = CookieManager.getInstance()
-            cookieManager.setAcceptCookie(true)
-            // Set cookie for both https and http, with and without port
-            val cookieValue = "PVEAuthCookie=$cookie; path=/"
-            cookieManager.setCookie("https://$host", cookieValue)
-            cookieManager.setCookie("https://$host:$port", cookieValue)
-            cookieManager.setCookie("http://$host", cookieValue)
-            cookieManager.setCookie("http://$host:$port", cookieValue)
-            cookieManager.setCookie(host, cookieValue)
-            cookieManager.flush()
-
             WebView(context).apply {
-                CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                 setBackgroundColor(0xFF0B0B0C.toInt())
-
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
+                    allowFileAccess = true
+                    allowFileAccessFromFileURLs = true
+                    allowUniversalAccessFromFileURLs = true
                     mediaPlaybackRequiresUserGesture = false
-                    useWideViewPort = true
-                    loadWithOverviewMode = true
-                    builtInZoomControls = true
-                    displayZoomControls = false
                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                    userAgentString = "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36"
                 }
-
                 webChromeClient = WebChromeClient()
-
-                webViewClient = object : WebViewClient() {
-                    override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                        handler?.proceed()
-                    }
-
-                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
-
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        super.onPageFinished(view, url)
-                        // Inject auth into Proxmox's ExtJS framework via localStorage + JS
-                        view?.evaluateJavascript("""
-                            (function() {
-                                try {
-                                    // Set auth in Proxmox's expected format
-                                    var authCookie = '$cookie';
-                                    if (window.Proxmox) {
-                                        window.Proxmox.UserName = 'root@pam';
-                                        window.Proxmox.CSRFPreventionToken = '';
-                                    }
-                                    // Set cookie via JS as fallback
-                                    document.cookie = 'PVEAuthCookie=' + authCookie + '; path=/';
-
-                                    // Try to auto-login if login form is visible
-                                    if (document.querySelector('.x-window')) {
-                                        // Login dialog detected — inject credentials
-                                        var loginBtn = document.querySelector('button');
-                                        if (loginBtn) {
-                                            // Force reload with cookie set
-                                            location.reload();
-                                        }
-                                    }
-                                } catch(e) { console.log('Auth inject error: ' + e); }
-                            })();
-                        """.trimIndent(), null)
-                    }
-                }
-
-                ref[0] = this
-
-                // Escape single quotes in cookie/csrf for JS injection
-                val safeCookie = (cookie ?: "").replace("'", "\\'")
-                val safeCsrf = csrfToken.replace("'", "\\'")
-                val safeUser = username.replace("'", "\\'")
-                val safeUrl = url.replace("'", "\\'")
-
-                // Load a bootstrap page on the Proxmox origin that sets auth then redirects
-                val bootstrapHtml = """
-                    <html><head><script>
-                    document.cookie = 'PVEAuthCookie=$safeCookie; path=/';
-                    var loginData = {
-                        username: '$safeUser',
-                        CSRFPreventionToken: '$safeCsrf',
-                        cap: {"vms":1,"dc":1,"access":1,"nodes":1,"storage":1,"sdn":1}
-                    };
-                    localStorage.setItem('LoginData', JSON.stringify(loginData));
-                    window.location.replace('$safeUrl');
-                    </script></head><body style="background:#0B0B0C"></body></html>
-                """.trimIndent()
-
-                // loadDataWithBaseURL: sets the origin to the Proxmox server so
-                // localStorage and cookies are on the correct domain
-                loadDataWithBaseURL(
-                    "https://$host:$port/",
-                    bootstrapHtml,
-                    "text/html",
-                    "UTF-8",
-                    null,
-                )
+                webViewClient = WebViewClient()
+                loadUrl(url)
             }
         },
     )

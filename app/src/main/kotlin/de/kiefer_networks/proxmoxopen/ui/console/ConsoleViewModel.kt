@@ -21,21 +21,10 @@ import kotlinx.coroutines.withContext
 data class ConsoleUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
-    val consoleUrl: String? = null,
-    val authCookie: String? = null,
-    val csrfToken: String? = null,
-    val username: String? = null,
-    val serverHost: String? = null,
-    val serverPort: Int = 8006,
-    val fingerprint: String? = null,
+    val noVncUrl: String? = null,
     val title: String = "Console",
 )
 
-/**
- * Loads the Proxmox web console directly (same-origin approach).
- * The WebSocket works because it connects to the same host that served
- * the page — no cross-origin SSL issue.
- */
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -44,13 +33,14 @@ class ConsoleViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<Route.Console>()
-    val serverId = route.serverId
-    val node = route.node
-    val vmid = route.vmid
-    val type = route.type
+    private val node = route.node
+    private val vmid = route.vmid
+    private val type = route.type
 
     private val _state = MutableStateFlow(ConsoleUiState())
     val state = _state.asStateFlow()
+
+    private var proxy: LocalWebSocketProxy? = null
 
     init { load() }
 
@@ -59,19 +49,18 @@ class ConsoleViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    val server = serverRepository.getById(serverId)
+                    val server = serverRepository.getById(route.serverId)
                         ?: run { _state.update { it.copy(isLoading = false, error = "Server not found") }; return@withContext }
-                    val session = sessionManager.getSession(serverId)
+                    val session = sessionManager.getSession(route.serverId)
                         ?: run { _state.update { it.copy(isLoading = false, error = "Not authenticated") }; return@withContext }
 
-                    // Create proxy ticket first
                     val credentials: Credentials? = if (server.realm == Realm.PVE_TOKEN) {
-                        val secret = serverRepository.getTokenSecret(serverId)
+                        val secret = serverRepository.getTokenSecret(route.serverId)
                         if (secret != null) Credentials.ApiToken(server.username ?: "root", server.realm, server.tokenId ?: "", secret) else null
                     } else null
-                    val apiClient = sessionManager.apiClient(server, credentials)
 
-                    when (type) {
+                    val apiClient = sessionManager.apiClient(server, credentials)
+                    val proxyTicket = when (type) {
                         "node" -> apiClient.createNodeTermProxy(node)
                         "lxc" -> apiClient.createLxcTermProxy(node, vmid)
                         "qemu" -> apiClient.createVncProxy(node, "qemu", vmid)
@@ -79,44 +68,46 @@ class ConsoleViewModel @Inject constructor(
                     }
 
                     val title = when (type) {
-                        "node" -> "Shell: $node"
-                        "lxc" -> "CT $vmid"
-                        "qemu" -> "VM $vmid"
-                        else -> "Console"
+                        "node" -> "Shell: $node"; "lxc" -> "CT $vmid"; "qemu" -> "VM $vmid"; else -> "Console"
                     }
 
-                    // Proxmox native console URL (same-origin WebSocket)
-                    val consoleType = when (type) {
-                        "qemu" -> "kvm"
-                        "lxc" -> "lxc"
-                        "node" -> "shell"
-                        else -> "lxc"
+                    // Build upstream WebSocket URL
+                    val wsPath = when (type) {
+                        "node" -> "/api2/json/nodes/$node/vncwebsocket"
+                        "lxc" -> "/api2/json/nodes/$node/lxc/$vmid/vncwebsocket"
+                        "qemu" -> "/api2/json/nodes/$node/qemu/$vmid/vncwebsocket"
+                        else -> "/api2/json/nodes/$node/lxc/$vmid/vncwebsocket"
                     }
+                    val upstreamUrl = "wss://${server.host}:${server.port}$wsPath?port=${proxyTicket.port}&vncticket=${java.net.URLEncoder.encode(proxyTicket.ticket, "UTF-8")}"
 
-                    val baseUrl = "https://${server.host}:${server.port}"
-                    val url = if (type == "node") {
-                        "$baseUrl/?console=$consoleType&novnc=1&node=$node&resize=off&xtermjs=1"
-                    } else {
-                        "$baseUrl/?console=$consoleType&novnc=1&vmid=$vmid&vmname=&node=$node&resize=off&xtermjs=1"
-                    }
+                    // Start local WebSocket proxy
+                    proxy?.stop()
+                    val localProxy = LocalWebSocketProxy(
+                        targetUrl = upstreamUrl,
+                        cookie = session.ticket,
+                        fingerprint = server.fingerprintSha256,
+                    )
+                    val localPort = localProxy.start()
+                    proxy = localProxy
 
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            consoleUrl = url,
-                            authCookie = session.ticket,
-                            csrfToken = session.csrfToken,
-                            username = (server.username ?: "root") + "@" + server.realm.apiKey,
-                            serverHost = server.host,
-                            serverPort = server.port,
-                            fingerprint = server.fingerprintSha256,
-                            title = title,
-                        )
-                    }
+                    // Build noVNC URL pointing to local proxy (no SSL!)
+                    val noVncUrl = "file:///android_asset/novnc/console.html" +
+                        "?host=127.0.0.1" +
+                        "&port=$localPort" +
+                        "&path=" +
+                        "&encrypt=0" +
+                        "&password=${java.net.URLEncoder.encode(proxyTicket.ticket, "UTF-8")}"
+
+                    _state.update { it.copy(isLoading = false, noVncUrl = noVncUrl, title = title) }
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = e.message ?: "Error") }
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        proxy?.stop()
     }
 }
