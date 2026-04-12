@@ -11,7 +11,7 @@ import app.proxmoxopen.domain.result.ApiError
 import app.proxmoxopen.domain.result.ApiResult
 import app.proxmoxopen.domain.usecase.GetClusterUseCase
 import app.proxmoxopen.domain.usecase.ListGuestsUseCase
-import app.proxmoxopen.ui.nav.Route
+import app.proxmoxopen.ui.main.TabRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +35,7 @@ class DashboardViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
 
-    val serverId: Long = savedStateHandle.toRoute<Route.Dashboard>().serverId
+    val serverId: Long = savedStateHandle.toRoute<TabRoute.Dashboard>().serverId
 
     private val _state = MutableStateFlow(DashboardUiState())
     val state = _state.asStateFlow()

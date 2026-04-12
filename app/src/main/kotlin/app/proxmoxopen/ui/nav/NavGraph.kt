@@ -1,25 +1,32 @@
 package app.proxmoxopen.ui.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import app.proxmoxopen.ui.addserver.AddServerScreen
-import app.proxmoxopen.ui.dashboard.DashboardScreen
-import app.proxmoxopen.ui.guestdetail.GuestDetailScreen
 import app.proxmoxopen.ui.login.LoginScreen
 import app.proxmoxopen.ui.main.MainScreen
-import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
 
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
+
     NavHost(navController = navController, startDestination = Route.Main) {
-        composable<Route.Main> {
+        composable<Route.Main> { backStackEntry ->
+            // After login completes it writes the serverId into this entry's savedStateHandle.
+            val openDashboard = backStackEntry
+                .savedStateHandle
+                .get<Long>("openDashboard")
+
             MainScreen(
                 onAddServer = { navController.navigate(Route.AddServer) },
-                onOpenServer = { server -> navController.navigate(Route.Login(server.id)) },
+                onLogin = { serverId -> navController.navigate(Route.Login(serverId)) },
+                openDashboardServerId = openDashboard,
+                onDashboardOpened = {
+                    backStackEntry.savedStateHandle.remove<Long>("openDashboard")
+                },
             )
         }
         composable<Route.AddServer> {
@@ -35,35 +42,13 @@ fun NavGraph() {
             LoginScreen(
                 onBack = { navController.popBackStack() },
                 onSignedIn = { serverId ->
+                    // Pop Login and tell MainScreen to open the dashboard
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("openDashboard", serverId)
                     navController.popBackStack()
-                    navController.navigate(Route.Dashboard(serverId))
                 },
             )
-        }
-        composable<Route.Dashboard> { backStackEntry ->
-            val route = backStackEntry.toRoute<Route.Dashboard>()
-            DashboardScreen(
-                onBack = { navController.popBackStack() },
-                onOpenNode = { nodeName ->
-                    navController.navigate(Route.NodeDetail(route.serverId, nodeName))
-                },
-                onOpenGuest = { guest ->
-                    navController.navigate(
-                        Route.GuestDetail(
-                            serverId = route.serverId,
-                            node = guest.node,
-                            vmid = guest.vmid,
-                            type = guest.type.apiPath,
-                        ),
-                    )
-                },
-            )
-        }
-        composable<Route.NodeDetail> {
-            NodeDetailScreen(onBack = { navController.popBackStack() })
-        }
-        composable<Route.GuestDetail> {
-            GuestDetailScreen(onBack = { navController.popBackStack() })
         }
     }
 }

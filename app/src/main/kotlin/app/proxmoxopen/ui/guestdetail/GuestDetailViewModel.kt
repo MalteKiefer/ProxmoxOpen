@@ -14,7 +14,7 @@ import app.proxmoxopen.domain.result.ApiError
 import app.proxmoxopen.domain.result.ApiResult
 import app.proxmoxopen.domain.usecase.GetGuestRrdUseCase
 import app.proxmoxopen.domain.usecase.PowerActionUseCase
-import app.proxmoxopen.ui.nav.Route
+import app.proxmoxopen.ui.main.TabRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +40,7 @@ class GuestDetailViewModel @Inject constructor(
     private val powerAction: PowerActionUseCase,
 ) : ViewModel() {
 
-    private val route = savedStateHandle.toRoute<Route.GuestDetail>()
+    private val route = savedStateHandle.toRoute<TabRoute.GuestDetail>()
     val serverId: Long = route.serverId
     val node: String = route.node
     val vmid: Int = route.vmid

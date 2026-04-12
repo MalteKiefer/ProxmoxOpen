@@ -89,10 +89,10 @@
     <string name="metric_network">Netzwerk</string>
     <string name="metric_uptime">Laufzeit</string>
     <string name="metric_load">Systemlast</string>
-    <string name="timeframe_1h">Letzte Stunde</string>
-    <string name="timeframe_24h">Letzte 24 Stunden</string>
-    <string name="timeframe_7d">Letzte 7 Tage</string>
-    <string name="timeframe_30d">Letzte 30 Tage</string>
+    <string name="timeframe_1h">1h</string>
+    <string name="timeframe_24h">24h</string>
+    <string name="timeframe_7d">7d</string>
+    <string name="timeframe_30d">30d</string>
 
     <string name="guest_type_qemu">VM</string>
     <string name="guest_type_lxc">Container</string>

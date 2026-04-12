@@ -11,7 +11,7 @@ import app.proxmoxopen.domain.result.ApiError
 import app.proxmoxopen.domain.result.ApiResult
 import app.proxmoxopen.domain.usecase.GetNodeRrdUseCase
 import app.proxmoxopen.domain.repository.ClusterRepository
-import app.proxmoxopen.ui.nav.Route
+import app.proxmoxopen.ui.main.TabRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +34,7 @@ class NodeDetailViewModel @Inject constructor(
     private val getRrd: GetNodeRrdUseCase,
 ) : ViewModel() {
 
-    private val route = savedStateHandle.toRoute<Route.NodeDetail>()
+    private val route = savedStateHandle.toRoute<TabRoute.NodeDetail>()
     val serverId: Long = route.serverId
     val nodeName: String = route.node
 
