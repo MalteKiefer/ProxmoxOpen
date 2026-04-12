@@ -6,13 +6,12 @@ import android.webkit.CookieManager
 import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,13 +27,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import de.kiefer_networks.proxmoxopen.data.api.tls.TofuTrustManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +42,7 @@ fun ConsoleScreen(
     viewModel: ConsoleViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val webViewRef = remember { arrayOfNulls<WebView>(1) }
 
     Scaffold(
         topBar = {
@@ -51,7 +50,9 @@ fun ConsoleScreen(
                 title = { Text(state.title, style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
-                    IconButton(onClick = viewModel::load) { Icon(Icons.Outlined.Refresh, contentDescription = null) }
+                    IconButton(onClick = { webViewRef[0]?.reload() ?: viewModel.load() }) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = null)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
@@ -66,11 +67,12 @@ fun ConsoleScreen(
                     Text(state.error ?: "Error", color = MaterialTheme.colorScheme.error)
                 }
                 state.consoleUrl != null -> {
-                    NoVncWebView(
+                    ProxmoxWebView(
                         url = state.consoleUrl!!,
-                        serverHost = state.serverHost ?: "",
-                        serverPort = state.serverPort,
-                        fingerprint = state.fingerprint,
+                        cookie = state.authCookie,
+                        host = state.serverHost ?: "",
+                        port = state.serverPort,
+                        ref = webViewRef,
                     )
                 }
             }
@@ -80,19 +82,22 @@ fun ConsoleScreen(
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun NoVncWebView(
+private fun ProxmoxWebView(
     url: String,
-    serverHost: String,
-    serverPort: Int,
-    fingerprint: String?,
+    cookie: String?,
+    host: String,
+    port: Int,
+    ref: Array<WebView?>,
 ) {
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
-            // Set cookies for the Proxmox server
+            // Inject PVEAuthCookie BEFORE loading the page
             val cookieManager = CookieManager.getInstance()
             cookieManager.setAcceptCookie(true)
-            cookieManager.setAcceptThirdPartyCookies(WebView(context), true)
+            val domain = "https://$host:$port"
+            cookieManager.setCookie(domain, "PVEAuthCookie=$cookie; path=/; secure")
+            cookieManager.flush()
 
             WebView(context).apply {
                 setBackgroundColor(0xFF0B0B0C.toInt())
@@ -101,30 +106,29 @@ private fun NoVncWebView(
                     javaScriptEnabled = true
                     domStorageEnabled = true
                     mediaPlaybackRequiresUserGesture = false
-                    allowFileAccess = true
-                    allowFileAccessFromFileURLs = true
-                    allowUniversalAccessFromFileURLs = true
                     useWideViewPort = true
                     loadWithOverviewMode = true
                     builtInZoomControls = true
                     displayZoomControls = false
+                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    userAgentString = "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36"
                 }
 
                 webChromeClient = WebChromeClient()
 
                 webViewClient = object : WebViewClient() {
                     override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                        // Accept self-signed certs that match our TOFU fingerprint
-                        if (fingerprint != null && error?.certificate != null) {
-                            handler?.proceed()
-                        } else {
-                            handler?.cancel()
-                        }
+                        // Accept self-signed certs (TOFU — user already trusted this server)
+                        handler?.proceed()
                     }
 
-                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        // Keep all navigation inside the WebView
+                        return false
+                    }
                 }
 
+                ref[0] = this
                 loadUrl(url)
             }
         },

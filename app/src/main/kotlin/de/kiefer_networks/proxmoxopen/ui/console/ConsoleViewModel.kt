@@ -22,12 +22,18 @@ data class ConsoleUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val consoleUrl: String? = null,
+    val authCookie: String? = null,
     val serverHost: String? = null,
     val serverPort: Int = 8006,
     val fingerprint: String? = null,
     val title: String = "Console",
 )
 
+/**
+ * Loads the Proxmox web console directly (same-origin approach).
+ * The WebSocket works because it connects to the same host that served
+ * the page — no cross-origin SSL issue.
+ */
 @HiltViewModel
 class ConsoleViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -56,13 +62,14 @@ class ConsoleViewModel @Inject constructor(
                     val session = sessionManager.getSession(serverId)
                         ?: run { _state.update { it.copy(isLoading = false, error = "Not authenticated") }; return@withContext }
 
+                    // Create proxy ticket first
                     val credentials: Credentials? = if (server.realm == Realm.PVE_TOKEN) {
                         val secret = serverRepository.getTokenSecret(serverId)
                         if (secret != null) Credentials.ApiToken(server.username ?: "root", server.realm, server.tokenId ?: "", secret) else null
                     } else null
-
                     val apiClient = sessionManager.apiClient(server, credentials)
-                    val proxy = when (type) {
+
+                    when (type) {
                         "node" -> apiClient.createNodeTermProxy(node)
                         "lxc" -> apiClient.createLxcTermProxy(node, vmid)
                         "qemu" -> apiClient.createVncProxy(node, "qemu", vmid)
@@ -76,21 +83,26 @@ class ConsoleViewModel @Inject constructor(
                         else -> "Console"
                     }
 
-                    // Build URL for local noVNC HTML with parameters
-                    val url = "file:///android_asset/novnc/console.html" +
-                        "?host=${server.host}" +
-                        "&port=${server.port}" +
-                        "&node=$node" +
-                        "&vmid=$vmid" +
-                        "&type=$type" +
-                        "&wsport=${proxy.port}" +
-                        "&vncticket=${java.net.URLEncoder.encode(proxy.ticket, "UTF-8")}" +
-                        "&token=${java.net.URLEncoder.encode(session.ticket, "UTF-8")}"
+                    // Proxmox native console URL (same-origin WebSocket)
+                    val consoleType = when (type) {
+                        "qemu" -> "kvm"
+                        "lxc" -> "lxc"
+                        "node" -> "shell"
+                        else -> "lxc"
+                    }
+
+                    val baseUrl = "https://${server.host}:${server.port}"
+                    val url = if (type == "node") {
+                        "$baseUrl/?console=$consoleType&novnc=1&node=$node&resize=off&xtermjs=1"
+                    } else {
+                        "$baseUrl/?console=$consoleType&novnc=1&vmid=$vmid&vmname=&node=$node&resize=off&xtermjs=1"
+                    }
 
                     _state.update {
                         it.copy(
                             isLoading = false,
                             consoleUrl = url,
+                            authCookie = session.ticket,
                             serverHost = server.host,
                             serverPort = server.port,
                             fingerprint = server.fingerprintSha256,
