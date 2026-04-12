@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.proxmoxopen.BuildConfig
 import app.proxmoxopen.R
 import app.proxmoxopen.preferences.LanguageOption
+import app.proxmoxopen.preferences.RefreshInterval
 import app.proxmoxopen.preferences.ThemeMode
 import app.proxmoxopen.ui.main.MainViewModel
 
@@ -61,6 +63,7 @@ fun SettingsScreen(
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showRefreshDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -91,6 +94,8 @@ fun SettingsScreen(
             }
             SectionTitle(stringResource(R.string.settings_section_language))
             SettingsCard { SettingsRow(Icons.Outlined.Language, stringResource(R.string.setting_language), languageLabel(prefs.language)) { showLanguageDialog = true } }
+            SectionTitle(stringResource(R.string.settings_section_data))
+            SettingsCard { SettingsRow(Icons.Outlined.Refresh, stringResource(R.string.setting_refresh_interval), prefs.refreshInterval.label) { showRefreshDialog = true } }
             SectionTitle(stringResource(R.string.settings_section_security))
             SettingsCard { SettingsToggle(Icons.Outlined.Fingerprint, stringResource(R.string.setting_biometric_lock), stringResource(R.string.setting_biometric_lock_desc), prefs.appLockEnabled, viewModel::setAppLock) }
             SectionTitle(stringResource(R.string.settings_section_about))
@@ -103,6 +108,7 @@ fun SettingsScreen(
     }
     if (showThemeDialog) OptionDialog(stringResource(R.string.setting_theme), ThemeMode.entries.map { it to themeLabel(it) }, prefs.themeMode, { showThemeDialog = false }) { viewModel.setThemeMode(it); showThemeDialog = false }
     if (showLanguageDialog) OptionDialog(stringResource(R.string.setting_language), LanguageOption.entries.map { it to languageLabel(it) }, prefs.language, { showLanguageDialog = false }) { viewModel.setLanguage(it); showLanguageDialog = false }
+    if (showRefreshDialog) OptionDialog(stringResource(R.string.setting_refresh_interval), RefreshInterval.entries.map { it to it.label }, prefs.refreshInterval, { showRefreshDialog = false }) { viewModel.setRefreshInterval(it); showRefreshDialog = false }
 }
 
 @Composable private fun SectionTitle(text: String) { Text(text.uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 4.dp, top = 4.dp)) }

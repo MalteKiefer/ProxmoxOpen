@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.GuestType
+import app.proxmoxopen.preferences.RefreshInterval
+import app.proxmoxopen.preferences.UserPreferencesRepository
 import app.proxmoxopen.domain.model.PowerAction
 import app.proxmoxopen.domain.model.ProxmoxTask
 import app.proxmoxopen.domain.model.RrdPoint
@@ -20,8 +22,11 @@ import app.proxmoxopen.domain.usecase.PowerActionUseCase
 import app.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -45,6 +50,7 @@ class ContainerHubViewModel @Inject constructor(
     private val taskRepo: TaskRepository,
     private val getRrd: GetGuestRrdUseCase,
     private val powerAction: PowerActionUseCase,
+    private val prefsRepo: UserPreferencesRepository,
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<Route.GuestDetail>()
@@ -56,7 +62,26 @@ class ContainerHubViewModel @Inject constructor(
     private val _state = MutableStateFlow(ContainerHubUiState())
     val state = _state.asStateFlow()
 
-    init { refresh() }
+    private var autoRefreshJob: Job? = null
+
+    init {
+        refresh()
+        startAutoRefresh()
+    }
+
+    private fun startAutoRefresh() {
+        autoRefreshJob?.cancel()
+        autoRefreshJob = viewModelScope.launch {
+            prefsRepo.preferences.collectLatest { prefs ->
+                val interval = prefs.refreshInterval
+                if (interval == RefreshInterval.OFF) return@collectLatest
+                while (true) {
+                    delay(interval.seconds * 1000L)
+                    refresh(silent = true)
+                }
+            }
+        }
+    }
 
     fun refresh(silent: Boolean = false) {
         _state.update {

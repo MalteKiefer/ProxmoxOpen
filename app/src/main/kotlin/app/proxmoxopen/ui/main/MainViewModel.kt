@@ -3,6 +3,7 @@ package app.proxmoxopen.ui.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.proxmoxopen.preferences.LanguageOption
+import app.proxmoxopen.preferences.RefreshInterval
 import app.proxmoxopen.preferences.ThemeMode
 import app.proxmoxopen.preferences.UserPreferences
 import app.proxmoxopen.preferences.UserPreferencesRepository
@@ -35,5 +36,9 @@ class MainViewModel @Inject constructor(
 
     fun setAppLock(enabled: Boolean) {
         viewModelScope.launch { preferencesRepository.setAppLockEnabled(enabled) }
+    }
+
+    fun setRefreshInterval(interval: RefreshInterval) {
+        viewModelScope.launch { preferencesRepository.setRefreshInterval(interval) }
     }
 }

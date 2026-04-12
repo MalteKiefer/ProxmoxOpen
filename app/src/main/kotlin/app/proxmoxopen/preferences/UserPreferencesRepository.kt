@@ -31,6 +31,8 @@ class UserPreferencesRepository @Inject constructor(
             language = prefs[LANGUAGE_KEY]?.let { runCatching { LanguageOption.valueOf(it) }.getOrNull() }
                 ?: LanguageOption.SYSTEM,
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,
+            refreshInterval = prefs[REFRESH_KEY]?.let { runCatching { RefreshInterval.valueOf(it) }.getOrNull() }
+                ?: RefreshInterval.SEC_5,
         )
     }
 
@@ -50,10 +52,15 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { it[APP_LOCK_KEY] = enabled }
     }
 
+    suspend fun setRefreshInterval(interval: RefreshInterval) {
+        dataStore.edit { it[REFRESH_KEY] = interval.name }
+    }
+
     companion object {
         private val THEME_KEY = stringPreferencesKey("theme_mode")
         private val DYNAMIC_COLOR_KEY = booleanPreferencesKey("dynamic_color")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val APP_LOCK_KEY = booleanPreferencesKey("app_lock")
+        private val REFRESH_KEY = stringPreferencesKey("refresh_interval")
     }
 }
