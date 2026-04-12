@@ -77,6 +77,14 @@
     <string name="snap_delete">Delete</string>
     <string name="snap_empty">No snapshots yet.</string>
     <string name="backup_now">Backup now</string>
+    <string name="ct_tab_backup">Backup</string>
+    <string name="backup_title">Backup</string>
+    <string name="backup_description">Create a backup of this container using vzdump (snapshot mode, zstd compression).</string>
+    <string name="backup_list_todo">Listing existing backups is not yet implemented.</string>
+    <string name="config_add_interface">Add network interface</string>
+    <string name="config_stop_hint">Some changes require the container to be stopped first.</string>
+    <string name="config_options_todo">Console mode, TTY count, hookscript and features editing will be available in a future update.</string>
+    <string name="config_disks_todo">Rootfs and mount point editing will be available in a future update.</string>
 
     <!-- Server list -->
     <string name="server_list_title">Servers</string>

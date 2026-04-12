@@ -2,11 +2,14 @@ package app.proxmoxopen.ui.guestdetail
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -16,18 +19,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Restore
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material.icons.outlined.Speed
@@ -36,7 +36,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -63,7 +62,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,12 +70,10 @@ import app.proxmoxopen.core.ui.component.BadgeTone
 import app.proxmoxopen.core.ui.component.ChartCard
 import app.proxmoxopen.core.ui.component.ErrorState
 import app.proxmoxopen.core.ui.component.LoadingState
-import app.proxmoxopen.core.ui.component.MetricCard
 import app.proxmoxopen.core.ui.component.SectionLabel
 import app.proxmoxopen.core.ui.component.StatusBadge
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.GuestStatus
-import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.domain.model.ProxmoxTask
 import app.proxmoxopen.domain.model.RrdPoint
 import app.proxmoxopen.domain.model.RrdTimeframe
@@ -106,22 +102,25 @@ fun GuestDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.status?.name ?: "CT ${viewModel.vmid}") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                title = {
+                    Column {
+                        Text(state.status?.name ?: "CT ${viewModel.vmid}", style = MaterialTheme.typography.titleMedium)
+                        state.status?.let {
+                            Text(
+                                "${it.node} · LXC ${it.vmid}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+                },
                 actions = {
-                    IconButton(onClick = { sheetOpen = true }) {
-                        Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null)
-                    }
-                    IconButton(onClick = onEditConfig) {
-                        Icon(Icons.Outlined.Edit, contentDescription = null)
-                    }
-                    IconButton(onClick = onSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = null)
-                    }
+                    IconButton(onClick = { sheetOpen = true }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = onEditConfig) { Icon(Icons.Outlined.Edit, contentDescription = null) }
+                    IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
@@ -132,14 +131,15 @@ fun GuestDetailScreen(
                     Icons.Outlined.Info to R.string.ct_tab_summary,
                     Icons.Outlined.ShowChart to R.string.ct_tab_charts,
                     Icons.Outlined.PhotoCamera to R.string.ct_tab_snapshots,
+                    Icons.Outlined.Backup to R.string.ct_tab_backup,
                     Icons.Outlined.History to R.string.ct_tab_tasks,
                 )
-                tabs.forEachIndexed { index, (icon, labelRes) ->
+                tabs.forEachIndexed { i, (icon, labelRes) ->
                     NavigationBarItem(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        selected = selectedTab == i,
+                        onClick = { selectedTab = i },
                         icon = { Icon(icon, contentDescription = null) },
-                        label = { Text(stringResource(labelRes)) },
+                        label = { Text(stringResource(labelRes), style = MaterialTheme.typography.labelSmall) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -154,100 +154,59 @@ fun GuestDetailScreen(
             state.isLoading && state.status == null -> LoadingState(Modifier.padding(padding))
             state.error != null && state.status == null ->
                 ErrorState(state.error?.message ?: "", stringResource(R.string.retry), viewModel::refresh, Modifier.padding(padding))
-            else -> {
-                Column(Modifier.padding(padding).fillMaxSize()) {
-                    when (selectedTab) {
-                        0 -> SummaryTab(state.status, state.actionMessage)
-                        1 -> ChartsTab(state.rrd, state.status, state.timeframe, viewModel::setTimeframe)
-                        2 -> SnapshotsTab(
-                            state.snapshots,
-                            onCreateSnapshot = { createSnapDialog = true },
-                            onRollback = viewModel::rollbackSnapshot,
-                            onDelete = viewModel::deleteSnapshot,
-                            onBackup = { viewModel.createBackup(null, "snapshot", "zstd") },
-                        )
-                        3 -> TasksTab(state.tasks)
-                    }
+            else -> Box(Modifier.padding(padding).fillMaxSize()) {
+                when (selectedTab) {
+                    0 -> SummaryTab(state.status, state.actionMessage)
+                    1 -> ChartsTab(state.rrd, state.status, state.timeframe, viewModel::setTimeframe)
+                    2 -> SnapshotsTab(state.snapshots, onCreateSnapshot = { createSnapDialog = true }, onRollback = viewModel::rollbackSnapshot, onDelete = viewModel::deleteSnapshot)
+                    3 -> BackupTab(onBackup = { viewModel.createBackup(null, "snapshot", "zstd") }, message = state.actionMessage)
+                    4 -> TasksTab(state.tasks)
                 }
             }
         }
     }
 
-    if (sheetOpen) {
-        PowerActionSheet(
-            guestName = state.status?.name ?: "",
-            onDismiss = { sheetOpen = false },
-            onSelect = { sheetOpen = false; viewModel.triggerAction(it) },
-        )
-    }
-    if (createSnapDialog) {
-        CreateSnapshotDialog(
-            onDismiss = { createSnapDialog = false },
-            onCreate = { name, desc ->
-                createSnapDialog = false
-                viewModel.createSnapshot(name, desc)
-            },
-        )
-    }
+    if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
+    if (createSnapDialog) CreateSnapshotDialog(onDismiss = { createSnapDialog = false }, onCreate = { n, d -> createSnapDialog = false; viewModel.createSnapshot(n, d) })
 }
 
-// ---- Summary Tab ----
+// ---- Summary ----
 
 @Composable
 private fun SummaryTab(status: ContainerStatus?, message: String?) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         status?.let { ct ->
-            val tone = when (ct.status) {
-                GuestStatus.RUNNING -> BadgeTone.Running
-                GuestStatus.STOPPED -> BadgeTone.Stopped
-                else -> BadgeTone.Neutral
-            }
-            // Info card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val tone = when (ct.status) { GuestStatus.RUNNING -> BadgeTone.Running; GuestStatus.STOPPED -> BadgeTone.Stopped; else -> BadgeTone.Neutral }
+            // Compact info rows
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "${ct.name} (${stringResource(R.string.metric_uptime)}: ${formatUptime(ct.uptime)})",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f),
-                        )
+                        Text("${ct.name} (${formatUptime(ct.uptime)})", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
                         StatusBadge(ct.status.name.lowercase().replaceFirstChar { it.titlecase() }, tone)
                     }
                     InfoRow("Status", ct.status.name.lowercase())
                     InfoRow("HA State", ct.haState ?: "none")
                     InfoRow("Node", ct.node)
                     InfoRow("Unprivileged", if (ct.unprivileged) "Yes" else "No")
-                    ct.ostype?.let { InfoRow("OS", it) }
+                    ct.ostype?.let { InfoRow("OS Type", it) }
                 }
             }
-
-            // Resource bars
+            // Bars
             MetricBar2("CPU", ct.cpuUsage.toFloat(), "%.1f%% of %d CPU(s)".format(ct.cpuUsage * 100, ct.cpuCount))
             MetricBar2("Memory", if (ct.memTotal > 0) ct.memUsed.toFloat() / ct.memTotal else 0f, "${formatBytes(ct.memUsed)} / ${formatBytes(ct.memTotal)}")
             MetricBar2("Swap", if (ct.swapTotal > 0) ct.swapUsed.toFloat() / ct.swapTotal else 0f, "${formatBytes(ct.swapUsed)} / ${formatBytes(ct.swapTotal)}")
             MetricBar2("Bootdisk", if (ct.diskTotal > 0) ct.diskUsed.toFloat() / ct.diskTotal else 0f, "${formatBytes(ct.diskUsed)} / ${formatBytes(ct.diskTotal)}")
-
             // IPs
-            if (ct.ipAddresses.isNotEmpty()) {
+            if (ct.ipAddresses.any { it.name != "lo" }) {
                 SectionLabel("IPs")
                 ct.ipAddresses.filter { it.name != "lo" }.forEach { iface ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(iface.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            iface.inet?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                            iface.inet6?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(iface.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp).padding(end = 8.dp))
+                            Column {
+                                iface.inet?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                                iface.inet6?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            }
                         }
                     }
                 }
@@ -257,102 +216,58 @@ private fun SummaryTab(status: ContainerStatus?, message: String?) {
     }
 }
 
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyMedium)
-    }
-}
+@Composable private fun InfoRow(label: String, value: String) { Row(Modifier.fillMaxWidth()) { Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(value, style = MaterialTheme.typography.bodySmall) } }
 
 @Composable
 private fun MetricBar2(label: String, fraction: Float, caption: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Row { Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f)); Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(Modifier.padding(10.dp)) {
+            Row { Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f)); Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             LinearProgressIndicator(progress = { fraction.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
         }
     }
 }
 
-// ---- Charts Tab ----
+// ---- Charts ----
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChartsTab(rrd: List<RrdPoint>, status: ContainerStatus?, timeframe: RrdTimeframe, onTimeframe: (RrdTimeframe) -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RrdTimeframe.entries.take(4).forEach { tf ->
-                FilterChip(selected = tf == timeframe, onClick = { onTimeframe(tf) }, label = { Text(stringResource(when (tf) { RrdTimeframe.HOUR -> R.string.timeframe_1h; RrdTimeframe.DAY -> R.string.timeframe_24h; RrdTimeframe.WEEK -> R.string.timeframe_7d; RrdTimeframe.MONTH -> R.string.timeframe_30d; else -> R.string.timeframe_1h })) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
+                FilterChip(selected = tf == timeframe, onClick = { onTimeframe(tf) }, label = { Text(stringResource(when (tf) { RrdTimeframe.HOUR -> R.string.timeframe_1h; RrdTimeframe.DAY -> R.string.timeframe_24h; RrdTimeframe.WEEK -> R.string.timeframe_7d; RrdTimeframe.MONTH -> R.string.timeframe_30d; else -> R.string.timeframe_1h })) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer))
             }
         }
-        val cpu = rrd.mapNotNull { it.cpu }
-        val mem = rrd.mapNotNull { it.memUsed }
-        val netIn = rrd.mapNotNull { it.netIn }
-        val diskRead = rrd.mapNotNull { it.diskRead }
-        ChartCard(Icons.Outlined.Speed, stringResource(R.string.metric_cpu), "${((cpu.lastOrNull() ?: 0.0) * 100).toInt()}%", values = cpu)
-        ChartCard(Icons.Outlined.Memory, stringResource(R.string.metric_memory), formatBytes((mem.lastOrNull() ?: 0.0).toLong()), secondaryValue = status?.let { "of ${formatBytes(it.memTotal)}" }, values = mem)
-        ChartCard(Icons.Outlined.NetworkCheck, stringResource(R.string.metric_network), "${formatBytes((netIn.lastOrNull() ?: 0.0).toLong())}/s", values = netIn)
-        ChartCard(Icons.Outlined.Storage, stringResource(R.string.metric_disk), "${formatBytes((diskRead.lastOrNull() ?: 0.0).toLong())}/s", values = diskRead)
+        val cpu = rrd.mapNotNull { it.cpu }; val mem = rrd.mapNotNull { it.memUsed }; val netIn = rrd.mapNotNull { it.netIn }; val diskRead = rrd.mapNotNull { it.diskRead }
+        ChartCard(Icons.Outlined.Speed, "CPU", "${((cpu.lastOrNull() ?: 0.0) * 100).toInt()}%", values = cpu)
+        ChartCard(Icons.Outlined.Memory, "Memory", formatBytes((mem.lastOrNull() ?: 0.0).toLong()), secondaryValue = status?.let { "of ${formatBytes(it.memTotal)}" }, values = mem)
+        ChartCard(Icons.Outlined.NetworkCheck, "Network", "${formatBytes((netIn.lastOrNull() ?: 0.0).toLong())}/s", values = netIn)
+        ChartCard(Icons.Outlined.Storage, "Disk I/O", "${formatBytes((diskRead.lastOrNull() ?: 0.0).toLong())}/s", values = diskRead)
     }
 }
 
-// ---- Snapshots Tab ----
+// ---- Snapshots ----
 
 @Composable
-private fun SnapshotsTab(
-    snapshots: List<Snapshot>,
-    onCreateSnapshot: () -> Unit,
-    onRollback: (String) -> Unit,
-    onDelete: (String) -> Unit,
-    onBackup: () -> Unit,
-) {
+private fun SnapshotsTab(snapshots: List<Snapshot>, onCreateSnapshot: () -> Unit, onRollback: (String) -> Unit, onDelete: (String) -> Unit) {
     val dateFormat = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onCreateSnapshot) {
-                Icon(Icons.Outlined.CameraAlt, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.snap_create))
-            }
-            OutlinedButton(onClick = onBackup) {
-                Icon(Icons.Outlined.Backup, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.backup_now))
-            }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onCreateSnapshot, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Outlined.CameraAlt, contentDescription = null, modifier = Modifier.padding(end = 8.dp)); Text(stringResource(R.string.snap_create))
         }
-        if (snapshots.isEmpty()) {
-            Text(stringResource(R.string.snap_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        if (snapshots.isEmpty()) Text(stringResource(R.string.snap_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         snapshots.forEach { snap ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            ) {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(snap.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        Text(snap.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                         snap.snaptime?.let { Text(dateFormat.format(Date(it * 1000)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                     snap.description?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { onRollback(snap.name) }) {
-                            Icon(Icons.Outlined.Restore, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                            Text(stringResource(R.string.snap_rollback))
-                        }
-                        TextButton(onClick = { onDelete(snap.name) }) {
-                            Icon(Icons.Outlined.Delete, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                            Text(stringResource(R.string.snap_delete))
-                        }
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        TextButton(onClick = { onRollback(snap.name) }) { Icon(Icons.Outlined.Restore, contentDescription = null, modifier = Modifier.size(16.dp)); Text(stringResource(R.string.snap_rollback), modifier = Modifier.padding(start = 4.dp)) }
+                        TextButton(onClick = { onDelete(snap.name) }) { Icon(Icons.Outlined.Delete, contentDescription = null, modifier = Modifier.size(16.dp)); Text(stringResource(R.string.snap_delete), modifier = Modifier.padding(start = 4.dp)) }
                     }
                 }
             }
@@ -360,7 +275,23 @@ private fun SnapshotsTab(
     }
 }
 
-// ---- Tasks Tab ----
+// ---- Backup ----
+
+@Composable
+private fun BackupTab(onBackup: () -> Unit, message: String?) {
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.backup_title), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.backup_description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedButton(onClick = onBackup, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Outlined.Backup, contentDescription = null, modifier = Modifier.padding(end = 8.dp)); Text(stringResource(R.string.backup_now))
+        }
+        // TODO: List existing backups from storage content API
+        Text(stringResource(R.string.backup_list_todo), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+    }
+}
+
+// ---- Tasks ----
 
 @Composable
 private fun TasksTab(tasks: List<ProxmoxTask>) {
@@ -371,20 +302,19 @@ private fun TasksTab(tasks: List<ProxmoxTask>) {
         }
         return
     }
-    LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         items(tasks, key = { it.upid }) { task ->
             val tone = when (task.state) { TaskState.RUNNING -> BadgeTone.Running; TaskState.OK -> BadgeTone.Running; TaskState.FAILED -> BadgeTone.Error; TaskState.UNKNOWN -> BadgeTone.Neutral }
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            ) {
-                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(task.type, style = MaterialTheme.typography.titleSmall)
-                        Text("${task.user} · ${dateFormat.format(Date(task.startTime * 1000))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(task.type, style = MaterialTheme.typography.titleSmall)
+                            Text("${task.user} · ${dateFormat.format(Date(task.startTime * 1000))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        StatusBadge(task.state.name, tone)
                     }
-                    StatusBadge(task.state.name, tone)
+                    task.exitStatus?.let { Text("Exit: $it", style = MaterialTheme.typography.bodySmall, color = if (task.state == TaskState.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
         }

@@ -72,6 +72,14 @@
     <string name="snap_delete">Löschen</string>
     <string name="snap_empty">Noch keine Snapshots.</string>
     <string name="backup_now">Jetzt sichern</string>
+    <string name="ct_tab_backup">Backup</string>
+    <string name="backup_title">Backup</string>
+    <string name="backup_description">Erstelle ein Backup dieses Containers mit vzdump (Snapshot-Modus, zstd-Kompression).</string>
+    <string name="backup_list_todo">Die Anzeige vorhandener Backups ist noch nicht implementiert.</string>
+    <string name="config_add_interface">Netzwerkschnittstelle hinzufügen</string>
+    <string name="config_stop_hint">Einige Änderungen erfordern, dass der Container vorher gestoppt wird.</string>
+    <string name="config_options_todo">Konsolenmodus, TTY-Anzahl, Hookscript und Features-Bearbeitung folgen in einem zukünftigen Update.</string>
+    <string name="config_disks_todo">Rootfs- und Mountpoint-Bearbeitung folgen in einem zukünftigen Update.</string>
 
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>

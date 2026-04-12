@@ -125,6 +125,29 @@ class GuestConfigViewModel @Inject constructor(
         }
     }
 
+    fun addNetInterface() {
+        _state.update { s ->
+            val nextId = "net${s.nets.size}"
+            val newNet = NetworkInterface(
+                id = nextId, rawValue = "", name = "eth${s.nets.size}",
+                bridge = "vmbr0", hwaddr = null, ip = "dhcp", gw = null,
+                ip6 = null, gw6 = null, firewall = true, mtu = null,
+                rate = null, tag = null, type = "veth", linkDown = false,
+            )
+            s.copy(nets = s.nets + newNet)
+        }
+    }
+
+    fun deleteNetInterface(index: Int) {
+        _state.update { s ->
+            if (s.nets.size <= 1 || index !in s.nets.indices) return@update s
+            val updated = s.nets.toMutableList().apply { removeAt(index) }
+            // Re-number net IDs
+            val renumbered = updated.mapIndexed { i, net -> net.copy(id = "net$i") }
+            s.copy(nets = renumbered)
+        }
+    }
+
     fun onNetFirewall(index: Int, enabled: Boolean) {
         _state.update { s ->
             val updated = s.nets.toMutableList()
