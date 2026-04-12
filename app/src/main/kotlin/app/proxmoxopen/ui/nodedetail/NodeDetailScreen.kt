@@ -10,9 +10,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +54,8 @@ import app.proxmoxopen.ui.format.formatUptime
 @Composable
 fun NodeDetailScreen(
     onBack: () -> Unit,
+    onSettings: () -> Unit = {},
+    onActivity: () -> Unit = {},
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -62,6 +66,14 @@ fun NodeDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onActivity) {
+                        Icon(Icons.Outlined.History, contentDescription = null)
+                    }
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = null)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

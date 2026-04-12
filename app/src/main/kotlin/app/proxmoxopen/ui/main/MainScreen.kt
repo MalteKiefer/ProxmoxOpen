@@ -2,7 +2,6 @@ package app.proxmoxopen.ui.main
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Settings
@@ -14,7 +13,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,12 +24,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import app.proxmoxopen.R
+import app.proxmoxopen.domain.model.Server
 import app.proxmoxopen.ui.activity.ActivityScreen
-import app.proxmoxopen.ui.dashboard.DashboardScreen
-import app.proxmoxopen.ui.guestdetail.GuestDetailScreen
-import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
 import app.proxmoxopen.ui.serverlist.ServerListScreen
 import app.proxmoxopen.ui.settings.SettingsScreen
 import kotlin.reflect.KClass
@@ -52,48 +47,19 @@ private val TABS = listOf(
 @Composable
 fun MainScreen(
     onAddServer: () -> Unit,
-    onLogin: (Long) -> Unit,
-    openDashboardServerId: Long? = null,
-    onDashboardOpened: () -> Unit = {},
+    onOpenServer: (Server) -> Unit,
+    onEditServer: (Long) -> Unit,
 ) {
     val tabNav = rememberNavController()
     val backStackEntry by tabNav.currentBackStackEntryAsState()
-
-    // When login completes, navigate into Dashboard tab.
-    LaunchedEffect(openDashboardServerId) {
-        if (openDashboardServerId != null) {
-            tabNav.navigate(TabRoute.Dashboard(openDashboardServerId)) {
-                launchSingleTop = true
-            }
-            onDashboardOpened()
-        }
-    }
-
-    val inDashboard = backStackEntry?.destination?.let { dest ->
-        dest.hasRoute(TabRoute.Dashboard::class) ||
-            dest.hasRoute(TabRoute.NodeDetail::class) ||
-            dest.hasRoute(TabRoute.GuestDetail::class)
-    } ?: false
 
     Scaffold(
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                 TABS.forEach { tab ->
-                    val isServersTab = tab.routeClass == TabRoute.Servers::class
-                    val selected = if (isServersTab && inDashboard) {
-                        true
-                    } else {
-                        backStackEntry?.destination?.hierarchy?.any {
-                            it.hasRoute(tab.routeClass)
-                        } == true
-                    }
-                    val icon = if (isServersTab && inDashboard) Icons.Outlined.Dashboard else tab.icon
-                    val label = if (isServersTab && inDashboard) {
-                        stringResource(R.string.dashboard_title)
-                    } else {
-                        stringResource(tab.labelRes)
-                    }
-
+                    val selected = backStackEntry?.destination?.hierarchy?.any {
+                        it.hasRoute(tab.routeClass)
+                    } == true
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
@@ -103,8 +69,8 @@ fun MainScreen(
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(icon, contentDescription = null) },
-                        label = { Text(label) },
+                        icon = { Icon(tab.icon, contentDescription = null) },
+                        label = { Text(stringResource(tab.labelRes)) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -123,36 +89,12 @@ fun MainScreen(
             composable<TabRoute.Servers> {
                 ServerListScreen(
                     onAddServer = onAddServer,
-                    onOpenServer = { server -> onLogin(server.id) },
+                    onOpenServer = onOpenServer,
+                    onEditServer = onEditServer,
                 )
             }
             composable<TabRoute.Activity> { ActivityScreen() }
             composable<TabRoute.Settings> { SettingsScreen() }
-            composable<TabRoute.Dashboard> { entry ->
-                val route = entry.toRoute<TabRoute.Dashboard>()
-                DashboardScreen(
-                    onBack = { tabNav.popBackStack() },
-                    onOpenNode = { nodeName ->
-                        tabNav.navigate(TabRoute.NodeDetail(route.serverId, nodeName))
-                    },
-                    onOpenGuest = { guest ->
-                        tabNav.navigate(
-                            TabRoute.GuestDetail(
-                                serverId = route.serverId,
-                                node = guest.node,
-                                vmid = guest.vmid,
-                                type = guest.type.apiPath,
-                            ),
-                        )
-                    },
-                )
-            }
-            composable<TabRoute.NodeDetail> {
-                NodeDetailScreen(onBack = { tabNav.popBackStack() })
-            }
-            composable<TabRoute.GuestDetail> {
-                GuestDetailScreen(onBack = { tabNav.popBackStack() })
-            }
         }
     }
 }

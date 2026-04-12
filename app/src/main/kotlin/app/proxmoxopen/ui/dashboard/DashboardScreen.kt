@@ -18,9 +18,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Computer
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -69,6 +71,8 @@ fun DashboardScreen(
     onBack: () -> Unit,
     onOpenNode: (String) -> Unit,
     onOpenGuest: (Guest) -> Unit,
+    onSettings: () -> Unit = {},
+    onActivity: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,7 +86,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.dashboard_title)) },
+                title = { Text(state.serverName.ifBlank { stringResource(R.string.dashboard_title) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -91,6 +95,12 @@ fun DashboardScreen(
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Outlined.Refresh, contentDescription = null)
+                    }
+                    IconButton(onClick = onActivity) {
+                        Icon(Icons.Outlined.History, contentDescription = null)
+                    }
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = null)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -164,205 +174,69 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun QuickStat(
-    label: String,
-    value: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-) {
+private fun QuickStat(label: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 8.dp))
             }
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
-            )
+            Text(value, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold))
         }
     }
 }
 
 @Composable
 private fun NodesList(nodes: List<Node>, onOpen: (String) -> Unit) {
-    if (nodes.isEmpty()) {
-        Text(
-            stringResource(R.string.server_list_empty),
-            modifier = Modifier.padding(16.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        return
-    }
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(nodes, key = { it.name }) { node ->
-            NodeRow(node = node, onOpen = { onOpen(node.name) })
-        }
+    if (nodes.isEmpty()) { Text(stringResource(R.string.dashboard_no_guests), modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant); return }
+    LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(nodes, key = { it.name }) { node -> NodeRow(node) { onOpen(node.name) } }
     }
 }
 
 @Composable
 private fun NodeRow(node: Node, onOpen: () -> Unit) {
-    val tone = when (node.status) {
-        NodeStatus.ONLINE -> BadgeTone.Running
-        NodeStatus.OFFLINE -> BadgeTone.Error
-        NodeStatus.UNKNOWN -> BadgeTone.Neutral
-    }
-    val cpuFraction = node.cpuUsage.toFloat()
-    val memFraction = if (node.memTotal > 0) node.memUsed.toFloat() / node.memTotal else 0f
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+    val tone = when (node.status) { NodeStatus.ONLINE -> BadgeTone.Running; NodeStatus.OFFLINE -> BadgeTone.Error; NodeStatus.UNKNOWN -> BadgeTone.Neutral }
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Outlined.Storage,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                }
-                Text(
-                    text = node.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .padding(start = 12.dp)
-                        .weight(1f),
-                )
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(40.dp)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer) } }
+                Text(node.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp).weight(1f))
                 StatusBadge(label = node.status.name.lowercase().replaceFirstChar { it.titlecase() }, tone = tone)
             }
-            MetricRow(
-                label = stringResource(R.string.metric_cpu),
-                fraction = cpuFraction,
-                caption = "${(cpuFraction * 100).toInt()}% · ${node.cpuCount} cores",
-            )
-            MetricRow(
-                label = stringResource(R.string.metric_memory),
-                fraction = memFraction,
-                caption = "${formatBytes(node.memUsed)} / ${formatBytes(node.memTotal)}",
-            )
+            MetricRow(stringResource(R.string.metric_cpu), node.cpuUsage.toFloat(), "${(node.cpuUsage * 100).toInt()}% · ${node.cpuCount} cores")
+            val memF = if (node.memTotal > 0) node.memUsed.toFloat() / node.memTotal else 0f
+            MetricRow(stringResource(R.string.metric_memory), memF, "${formatBytes(node.memUsed)} / ${formatBytes(node.memTotal)}")
         }
     }
 }
 
 @Composable
 private fun GuestList(guests: List<Guest>, onOpen: (Guest) -> Unit) {
-    if (guests.isEmpty()) {
-        Text(
-            stringResource(R.string.dashboard_no_guests),
-            modifier = Modifier.padding(16.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        return
-    }
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(guests, key = { "${it.node}/${it.type}/${it.vmid}" }) { guest ->
-            GuestRow(guest = guest, onOpen = { onOpen(guest) })
-        }
+    if (guests.isEmpty()) { Text(stringResource(R.string.dashboard_no_guests), modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant); return }
+    LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(guests, key = { "${it.node}/${it.type}/${it.vmid}" }) { guest -> GuestRow(guest) { onOpen(guest) } }
     }
 }
 
 @Composable
 private fun GuestRow(guest: Guest, onOpen: () -> Unit) {
-    val tone = when (guest.status) {
-        GuestStatus.RUNNING -> BadgeTone.Running
-        GuestStatus.STOPPED -> BadgeTone.Stopped
-        GuestStatus.PAUSED, GuestStatus.SUSPENDED -> BadgeTone.Paused
-        GuestStatus.UNKNOWN -> BadgeTone.Neutral
-    }
-    val cpuFraction = guest.cpuUsage.toFloat()
-    val memFraction = if (guest.memTotal > 0) guest.memUsed.toFloat() / guest.memTotal else 0f
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+    val tone = when (guest.status) { GuestStatus.RUNNING -> BadgeTone.Running; GuestStatus.STOPPED -> BadgeTone.Stopped; GuestStatus.PAUSED, GuestStatus.SUSPENDED -> BadgeTone.Paused; GuestStatus.UNKNOWN -> BadgeTone.Neutral }
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = if (guest.type == GuestType.QEMU) Icons.Outlined.Computer else Icons.Outlined.Inventory2,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                }
-                Column(
-                    modifier = Modifier
-                        .padding(start = 12.dp)
-                        .weight(1f),
-                ) {
-                    Text(guest.name, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "${guest.node} · ${stringResource(R.string.vm_id, guest.vmid)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(40.dp)) { Box(contentAlignment = Alignment.Center) { Icon(if (guest.type == GuestType.QEMU) Icons.Outlined.Computer else Icons.Outlined.Inventory2, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer) } }
+                Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) { Text(guest.name, style = MaterialTheme.typography.titleMedium); Text("${guest.node} · ${stringResource(R.string.vm_id, guest.vmid)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 StatusBadge(label = guest.status.name.lowercase().replaceFirstChar { it.titlecase() }, tone = tone)
             }
             if (guest.status == GuestStatus.RUNNING) {
-                MetricRow(
-                    label = stringResource(R.string.metric_cpu),
-                    fraction = cpuFraction,
-                    caption = "${(cpuFraction * 100).toInt()}%",
-                )
-                MetricRow(
-                    label = stringResource(R.string.metric_memory),
-                    fraction = memFraction,
-                    caption = "${formatBytes(guest.memUsed)} / ${formatBytes(guest.memTotal)}",
-                )
+                MetricRow(stringResource(R.string.metric_cpu), guest.cpuUsage.toFloat(), "${(guest.cpuUsage * 100).toInt()}%")
+                val memF = if (guest.memTotal > 0) guest.memUsed.toFloat() / guest.memTotal else 0f
+                MetricRow(stringResource(R.string.metric_memory), memF, "${formatBytes(guest.memUsed)} / ${formatBytes(guest.memTotal)}")
             }
         }
     }
@@ -371,24 +245,7 @@ private fun GuestRow(guest: Guest, onOpen: () -> Unit) {
 @Composable
 private fun MetricRow(label: String, fraction: Float, caption: String) {
     Column {
-        Row {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = caption,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        LinearProgressIndicator(
-            progress = { fraction.coerceIn(0f, 1f) },
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        )
+        Row { Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        LinearProgressIndicator(progress = { fraction.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
     }
 }

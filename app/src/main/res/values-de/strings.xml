@@ -30,6 +30,9 @@
     <string name="dashboard_no_guests">Keine Gäste auf diesem Server.</string>
     <string name="power_actions">Power-Aktionen</string>
     <string name="charts_title">Performance</string>
+    <string name="edit_server_title">Server bearbeiten</string>
+    <string name="save">Speichern</string>
+    <string name="edit_config_title">Konfiguration</string>
 
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>

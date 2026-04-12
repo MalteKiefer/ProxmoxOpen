@@ -11,11 +11,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Computer
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +60,9 @@ import app.proxmoxopen.ui.power.PowerActionSheet
 @Composable
 fun GuestDetailScreen(
     onBack: () -> Unit,
+    onSettings: () -> Unit = {},
+    onActivity: () -> Unit = {},
+    onEditConfig: () -> Unit = {},
     viewModel: GuestDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -69,6 +75,17 @@ fun GuestDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onEditConfig) {
+                        Icon(Icons.Outlined.Edit, contentDescription = null)
+                    }
+                    IconButton(onClick = onActivity) {
+                        Icon(Icons.Outlined.History, contentDescription = null)
+                    }
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = null)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -33,6 +33,9 @@
     <string name="dashboard_no_guests">No guests on this server.</string>
     <string name="power_actions">Power actions</string>
     <string name="charts_title">Performance</string>
+    <string name="edit_server_title">Edit server</string>
+    <string name="save">Save</string>
+    <string name="edit_config_title">Configuration</string>
 
     <!-- Server list -->
     <string name="server_list_title">Servers</string>

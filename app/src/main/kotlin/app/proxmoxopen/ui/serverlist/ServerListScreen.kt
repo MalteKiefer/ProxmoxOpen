@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +50,7 @@ import java.util.Date
 fun ServerListScreen(
     onAddServer: () -> Unit,
     onOpenServer: (Server) -> Unit,
+    onEditServer: (Long) -> Unit = {},
     viewModel: ServerListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -56,6 +58,7 @@ fun ServerListScreen(
         servers = state.servers,
         onAdd = onAddServer,
         onOpen = onOpenServer,
+        onEdit = onEditServer,
         onDelete = viewModel::delete,
     )
 }
@@ -66,6 +69,7 @@ fun StatelessServerList(
     servers: List<Server>,
     onAdd: () -> Unit,
     onOpen: (Server) -> Unit,
+    onEdit: (Long) -> Unit = {},
     onDelete: (Server) -> Unit = {},
 ) {
     Scaffold(
@@ -106,6 +110,7 @@ fun StatelessServerList(
                     ServerCard(
                         server = server,
                         onOpen = { onOpen(server) },
+                        onEdit = { onEdit(server.id) },
                         onDelete = { onDelete(server) },
                     )
                 }
@@ -118,6 +123,7 @@ fun StatelessServerList(
 private fun ServerCard(
     server: Server,
     onOpen: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Card(
@@ -167,6 +173,13 @@ private fun ServerCard(
                     text = realmLabel(server.realm) + " · " + lastConnectedLabel(server.lastConnectedAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = onEdit) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = stringResource(R.string.edit_server_title),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             IconButton(onClick = onDelete) {
