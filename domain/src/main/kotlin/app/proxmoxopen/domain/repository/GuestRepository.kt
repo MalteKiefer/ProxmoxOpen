@@ -4,6 +4,7 @@ import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.VmConfig
+import app.proxmoxopen.domain.model.InterfaceIp
 import app.proxmoxopen.domain.model.VmStatus
 import app.proxmoxopen.domain.model.GuestConfig
 import app.proxmoxopen.domain.model.GuestType
@@ -81,6 +82,7 @@ interface GuestRepository {
 
     // --- QEMU VM specific ---
     suspend fun getVmStatus(serverId: Long, node: String, vmid: Int): ApiResult<VmStatus>
+    suspend fun getVmAgentIps(serverId: Long, node: String, vmid: Int): ApiResult<List<InterfaceIp>>
     suspend fun getVmConfig(serverId: Long, node: String, vmid: Int): ApiResult<VmConfig>
     suspend fun setVmConfig(serverId: Long, node: String, vmid: Int, params: Map<String, String>): ApiResult<Unit>
 

@@ -107,7 +107,20 @@ class VmHubViewModel @Inject constructor(
             }
 
             when (tab) {
-                0 -> { /* Summary — status + config already loaded */ }
+                0 -> {
+                    // Load agent IPs in background (can be slow/timeout)
+                    val vmStatus = _state.value.status
+                    if (vmStatus != null && vmStatus.agentEnabled && vmStatus.ipAddresses.isEmpty()) {
+                        viewModelScope.launch {
+                            val ips = guestRepo.getVmAgentIps(serverId, node, vmid)
+                            if (ips is ApiResult.Success && ips.value.isNotEmpty()) {
+                                _state.update { s ->
+                                    s.copy(status = s.status?.copy(ipAddresses = ips.value))
+                                }
+                            }
+                        }
+                    }
+                }
                 1 -> { val r = getRrd(serverId, node, vmid, type, _state.value.timeframe); _state.update { it.copy(rrd = (r as? ApiResult.Success)?.value ?: it.rrd) } }
                 2 -> { val r = guestRepo.listSnapshots(serverId, node, vmid, type); _state.update { it.copy(snapshots = (r as? ApiResult.Success)?.value ?: it.snapshots) } }
                 3 -> {

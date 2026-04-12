@@ -109,9 +109,25 @@ class GuestRepositoryImpl @Inject constructor(
     override suspend fun getVmStatus(
         serverId: Long, node: String, vmid: Int,
     ): ApiResult<VmStatus> = call(serverId) { api ->
-        val status = api.getVmStatus(node, vmid)
-        val ifaces = try { api.getVmAgentInterfaces(node, vmid) } catch (_: Exception) { emptyList() }
-        status.toVmStatus(node, ifaces)
+        // Status only — agent IPs loaded separately to avoid blocking
+        api.getVmStatus(node, vmid).toVmStatus(node, emptyList())
+    }
+
+    override suspend fun getVmAgentIps(
+        serverId: Long, node: String, vmid: Int,
+    ): ApiResult<List<app.proxmoxopen.domain.model.InterfaceIp>> = call(serverId) { api ->
+        api.getVmAgentInterfaces(node, vmid).flatMap { iface ->
+            val inet4 = iface.ip_addresses?.firstOrNull { it.ip_address_type == "ipv4" }
+            val inet6 = iface.ip_addresses?.firstOrNull { it.ip_address_type == "ipv6" }
+            if (inet4 != null || inet6 != null) {
+                listOf(app.proxmoxopen.domain.model.InterfaceIp(
+                    name = iface.name ?: "?",
+                    hwaddr = iface.hardware_address,
+                    inet = inet4?.let { "${it.ip_address}/${it.prefix}" },
+                    inet6 = inet6?.let { "${it.ip_address}/${it.prefix}" },
+                ))
+            } else emptyList()
+        }
     }
 
     override suspend fun getVmConfig(

@@ -253,7 +253,10 @@ class ProxmoxApiClient(
 
     suspend fun getVmAgentInterfaces(node: String, vmid: Int): List<app.proxmoxopen.data.api.dto.AgentInterfaceDto> {
         return try {
-            val resp = http.get("$baseUrl/api2/json/nodes/$node/qemu/$vmid/agent/network-get-interfaces") { applyAuth() }
+            // Short timeout — agent can be slow or absent
+            val resp = kotlinx.coroutines.withTimeout(5_000) {
+                http.get("$baseUrl/api2/json/nodes/$node/qemu/$vmid/agent/network-get-interfaces") { applyAuth() }
+            }
             if (!resp.status.isSuccess()) return emptyList()
             val result = resp.body<ApiResponse<AgentNetworkResult>>().data
             result?.result ?: emptyList()
