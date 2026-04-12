@@ -100,23 +100,27 @@ fun GuestStatusDto.toDomain(node: String, type: GuestType): Guest = Guest(
 )
 
 fun GuestConfigDto.toGuestConfig(): GuestConfig {
-    val nets = mutableListOf<NetworkInterface>()
-    net0?.let { nets += NetworkInterface.parse("net0", it) }
-    net1?.let { nets += NetworkInterface.parse("net1", it) }
-    net2?.let { nets += NetworkInterface.parse("net2", it) }
-    net3?.let { nets += NetworkInterface.parse("net3", it) }
+    val nets = allNetworkInterfaces().map { (id, raw) -> NetworkInterface.parse(id, raw) }
     return GuestConfig(
         name = name ?: hostname ?: "",
         hostname = hostname,
         onboot = onboot == 1,
         startup = startup,
         description = description,
-        nameserver = nameserver,
-        searchdomain = searchdomain,
+        protection = protection == 1,
+        unprivileged = unprivileged == 1,
         cores = cores,
+        cpulimit = cpulimit,
+        cpuunits = cpuunits,
         memory = memory,
         swap = swap,
+        nameserver = nameserver,
+        searchdomain = searchdomain,
         networkInterfaces = nets,
+        tags = tags,
+        features = features,
+        arch = arch,
+        ostype = ostype,
     )
 }
 

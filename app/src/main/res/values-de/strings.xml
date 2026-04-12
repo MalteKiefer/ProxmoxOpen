@@ -41,8 +41,25 @@
     <string name="config_onboot">Bei Boot starten</string>
     <string name="config_nameserver">Nameserver</string>
     <string name="config_searchdomain">Suchdomäne</string>
-    <string name="config_ip">IP-Adresse (CIDR)</string>
+    <string name="config_ip">IPv4 (CIDR oder dhcp)</string>
     <string name="config_gateway">Gateway</string>
+    <string name="config_ip6">IPv6 (CIDR, dhcp, auto)</string>
+    <string name="config_gateway6">Gateway (IPv6)</string>
+    <string name="config_tab_general">Allgemein</string>
+    <string name="config_tab_resources">Ressourcen</string>
+    <string name="config_tab_dns">DNS</string>
+    <string name="config_tab_network">Netzwerk</string>
+    <string name="config_description">Beschreibung</string>
+    <string name="config_protection">Schutz</string>
+    <string name="config_startup">Startreihenfolge (order=N,up=N,down=N)</string>
+    <string name="config_cores">CPU-Kerne</string>
+    <string name="config_cpulimit">CPU-Limit (0 = unbegrenzt)</string>
+    <string name="config_memory_mb">Arbeitsspeicher (MB)</string>
+    <string name="config_swap_mb">Swap (MB)</string>
+    <string name="config_nameserver_hint">Mehrere DNS-Server mit Leerzeichen oder Komma trennen.</string>
+    <string name="config_no_interfaces">Keine Netzwerkschnittstellen konfiguriert.</string>
+    <string name="config_firewall">Firewall</string>
+    <string name="config_section_resources">Ressourcen</string>
 
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>

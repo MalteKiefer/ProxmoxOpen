@@ -24,12 +24,21 @@ data class GuestConfigUiState(
     val isSaving: Boolean = false,
     val error: ApiError? = null,
     val saved: Boolean = false,
-    // Editable fields
-    val name: String = "",
+    // General
     val hostname: String = "",
     val onboot: Boolean = false,
+    val protection: Boolean = false,
+    val startup: String = "",
+    val description: String = "",
+    // Resources
+    val cores: String = "",
+    val cpulimit: String = "",
+    val memory: String = "",
+    val swap: String = "",
+    // DNS
     val nameserver: String = "",
     val searchdomain: String = "",
+    // Network
     val nets: List<NetworkInterface> = emptyList(),
 )
 
@@ -43,7 +52,7 @@ class GuestConfigViewModel @Inject constructor(
     val serverId = route.serverId
     val node = route.node
     val vmid = route.vmid
-    val type = GuestType.fromApiPath(route.type) ?: GuestType.QEMU
+    val type = GuestType.fromApiPath(route.type) ?: GuestType.LXC
 
     private val _state = MutableStateFlow(GuestConfigUiState())
     val state = _state.asStateFlow()
@@ -60,66 +69,76 @@ class GuestConfigViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             config = c,
-                            name = c.name,
-                            hostname = c.hostname ?: "",
+                            hostname = c.hostname ?: c.name,
                             onboot = c.onboot,
+                            protection = c.protection,
+                            startup = c.startup ?: "",
+                            description = c.description ?: "",
+                            cores = c.cores?.toString() ?: "",
+                            cpulimit = c.cpulimit?.toString() ?: "",
+                            memory = c.memory?.toString() ?: "",
+                            swap = c.swap?.toString() ?: "",
                             nameserver = c.nameserver ?: "",
                             searchdomain = c.searchdomain ?: "",
                             nets = c.networkInterfaces,
                         )
                     }
                 }
-                is ApiResult.Failure -> _state.update {
-                    it.copy(isLoading = false, error = result.error)
-                }
+                is ApiResult.Failure -> _state.update { it.copy(isLoading = false, error = result.error) }
             }
         }
     }
 
-    fun onName(v: String) = _state.update { it.copy(name = v) }
+    // General
     fun onHostname(v: String) = _state.update { it.copy(hostname = v) }
     fun onOnboot(v: Boolean) = _state.update { it.copy(onboot = v) }
+    fun onProtection(v: Boolean) = _state.update { it.copy(protection = v) }
+    fun onStartup(v: String) = _state.update { it.copy(startup = v) }
+    fun onDescription(v: String) = _state.update { it.copy(description = v) }
+
+    // Resources
+    fun onCores(v: String) = _state.update { it.copy(cores = v.filter { c -> c.isDigit() }) }
+    fun onCpulimit(v: String) = _state.update { it.copy(cpulimit = v) }
+    fun onMemory(v: String) = _state.update { it.copy(memory = v.filter { c -> c.isDigit() }) }
+    fun onSwap(v: String) = _state.update { it.copy(swap = v.filter { c -> c.isDigit() }) }
+
+    // DNS
     fun onNameserver(v: String) = _state.update { it.copy(nameserver = v) }
     fun onSearchdomain(v: String) = _state.update { it.copy(searchdomain = v) }
 
-    fun onNetIp(index: Int, ip: String) {
-        _state.update {
-            val updated = it.nets.toMutableList()
-            if (index in updated.indices) updated[index] = updated[index].copy(ip = ip)
-            it.copy(nets = updated)
+    // Network
+    fun onNetField(index: Int, field: NetField, value: String) {
+        _state.update { s ->
+            val updated = s.nets.toMutableList()
+            if (index !in updated.indices) return@update s
+            updated[index] = when (field) {
+                NetField.IP -> updated[index].copy(ip = value)
+                NetField.GW -> updated[index].copy(gw = value)
+                NetField.IP6 -> updated[index].copy(ip6 = value)
+                NetField.GW6 -> updated[index].copy(gw6 = value)
+                NetField.BRIDGE -> updated[index].copy(bridge = value)
+                NetField.MTU -> updated[index].copy(mtu = value.toIntOrNull())
+                NetField.RATE -> updated[index].copy(rate = value.toDoubleOrNull())
+                NetField.TAG -> updated[index].copy(tag = value.toIntOrNull())
+            }
+            s.copy(nets = updated)
         }
     }
 
-    fun onNetGw(index: Int, gw: String) {
-        _state.update {
-            val updated = it.nets.toMutableList()
-            if (index in updated.indices) updated[index] = updated[index].copy(gw = gw)
-            it.copy(nets = updated)
+    fun onNetFirewall(index: Int, enabled: Boolean) {
+        _state.update { s ->
+            val updated = s.nets.toMutableList()
+            if (index in updated.indices) updated[index] = updated[index].copy(firewall = enabled)
+            s.copy(nets = updated)
         }
     }
 
     fun save() {
         val s = _state.value
+        val orig = s.config ?: return
         _state.update { it.copy(isSaving = true, error = null) }
         viewModelScope.launch {
-            val params = mutableMapOf<String, String>()
-            val orig = s.config
-            if (orig != null) {
-                if (s.name != orig.name) {
-                    if (type == GuestType.LXC) params["hostname"] = s.name
-                    else params["name"] = s.name
-                }
-                if (s.hostname.isNotBlank() && s.hostname != orig.hostname) params["hostname"] = s.hostname
-                if (s.onboot != orig.onboot) params["onboot"] = if (s.onboot) "1" else "0"
-                if (s.nameserver != (orig.nameserver ?: "")) params["nameserver"] = s.nameserver
-                if (s.searchdomain != (orig.searchdomain ?: "")) params["searchdomain"] = s.searchdomain
-                s.nets.forEachIndexed { i, net ->
-                    val origNet = orig.networkInterfaces.getOrNull(i)
-                    if (origNet == null || net.ip != origNet.ip || net.gw != origNet.gw) {
-                        params[net.id] = net.toProxmoxString()
-                    }
-                }
-            }
+            val params = buildDiff(orig, s)
             if (params.isEmpty()) {
                 _state.update { it.copy(isSaving = false, saved = true) }
                 return@launch
@@ -130,4 +149,28 @@ class GuestConfigViewModel @Inject constructor(
             }
         }
     }
+
+    private fun buildDiff(orig: GuestConfig, s: GuestConfigUiState): Map<String, String> {
+        val params = mutableMapOf<String, String>()
+        if (s.hostname != (orig.hostname ?: orig.name)) params["hostname"] = s.hostname
+        if (s.onboot != orig.onboot) params["onboot"] = if (s.onboot) "1" else "0"
+        if (s.protection != orig.protection) params["protection"] = if (s.protection) "1" else "0"
+        if (s.startup != (orig.startup ?: "")) params["startup"] = s.startup
+        if (s.description != (orig.description ?: "")) params["description"] = s.description
+        s.cores.toIntOrNull()?.let { if (it != orig.cores) params["cores"] = it.toString() }
+        s.cpulimit.toDoubleOrNull()?.let { if (it != orig.cpulimit) params["cpulimit"] = it.toString() }
+        s.memory.toIntOrNull()?.let { if (it != orig.memory) params["memory"] = it.toString() }
+        s.swap.toIntOrNull()?.let { if (it != orig.swap) params["swap"] = it.toString() }
+        if (s.nameserver != (orig.nameserver ?: "")) params["nameserver"] = s.nameserver
+        if (s.searchdomain != (orig.searchdomain ?: "")) params["searchdomain"] = s.searchdomain
+        s.nets.forEachIndexed { i, net ->
+            val origNet = orig.networkInterfaces.getOrNull(i)
+            if (origNet == null || net != origNet) {
+                params[net.id] = net.toProxmoxString()
+            }
+        }
+        return params
+    }
 }
+
+enum class NetField { IP, GW, IP6, GW6, BRIDGE, MTU, RATE, TAG }

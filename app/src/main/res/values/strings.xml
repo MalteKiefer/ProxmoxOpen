@@ -44,8 +44,25 @@
     <string name="config_onboot">Start at boot</string>
     <string name="config_nameserver">Nameserver</string>
     <string name="config_searchdomain">Search domain</string>
-    <string name="config_ip">IP address (CIDR)</string>
+    <string name="config_ip">IPv4 (CIDR or dhcp)</string>
     <string name="config_gateway">Gateway</string>
+    <string name="config_ip6">IPv6 (CIDR, dhcp, auto)</string>
+    <string name="config_gateway6">Gateway (IPv6)</string>
+    <string name="config_tab_general">General</string>
+    <string name="config_tab_resources">Resources</string>
+    <string name="config_tab_dns">DNS</string>
+    <string name="config_tab_network">Network</string>
+    <string name="config_description">Description</string>
+    <string name="config_protection">Protection</string>
+    <string name="config_startup">Startup order (order=N,up=N,down=N)</string>
+    <string name="config_cores">CPU cores</string>
+    <string name="config_cpulimit">CPU limit (0 = unlimited)</string>
+    <string name="config_memory_mb">Memory (MB)</string>
+    <string name="config_swap_mb">Swap (MB)</string>
+    <string name="config_nameserver_hint">Separate multiple DNS servers with a space or comma.</string>
+    <string name="config_no_interfaces">No network interfaces configured.</string>
+    <string name="config_firewall">Firewall</string>
+    <string name="config_section_resources">Resources</string>
 
     <!-- Server list -->
     <string name="server_list_title">Servers</string>
