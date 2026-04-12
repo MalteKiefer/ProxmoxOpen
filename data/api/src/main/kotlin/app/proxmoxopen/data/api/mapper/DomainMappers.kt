@@ -3,6 +3,7 @@ package app.proxmoxopen.data.api.mapper
 import app.proxmoxopen.data.api.dto.ClusterResourceDto
 import app.proxmoxopen.data.api.dto.ClusterStatusDto
 import app.proxmoxopen.data.api.dto.BackupVolumeDto
+import app.proxmoxopen.data.api.dto.StorageInfoDto
 import app.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestConfigDto
 import app.proxmoxopen.data.api.dto.InterfaceDto
@@ -20,6 +21,7 @@ import app.proxmoxopen.data.api.dto.RrdPointDto
 import app.proxmoxopen.data.api.dto.TaskDto
 import app.proxmoxopen.data.api.dto.TaskStatusDto
 import app.proxmoxopen.domain.model.Cluster
+import app.proxmoxopen.domain.model.StorageInfo
 import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.GuestStatus
 import app.proxmoxopen.domain.model.GuestType
@@ -309,3 +311,14 @@ fun app.proxmoxopen.data.api.dto.VmConfigDto.toVmConfig(): app.proxmoxopen.domai
         tags = tags,
     )
 }
+
+fun StorageInfoDto.toStorageInfo(): StorageInfo = StorageInfo(
+    name = storage,
+    type = type ?: "unknown",
+    content = content ?: "",
+    enabled = (enabled ?: 1) == 1,
+    active = (active ?: 0) == 1,
+    total = total ?: 0,
+    used = used ?: 0,
+    available = avail ?: 0,
+)

@@ -74,6 +74,7 @@ fun DashboardScreen(
     onOpenGuest: (Guest) -> Unit,
     onSettings: () -> Unit = {},
     onActivity: () -> Unit = {},
+    onStorage: (String) -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -94,6 +95,12 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        val firstNode = state.cluster?.nodes?.firstOrNull()?.name
+                        if (firstNode != null) onStorage(firstNode)
+                    }) {
+                        Icon(Icons.Outlined.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    }
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Outlined.Refresh, contentDescription = null)
                     }

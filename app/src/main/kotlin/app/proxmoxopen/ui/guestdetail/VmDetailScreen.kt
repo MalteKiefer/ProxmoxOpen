@@ -101,6 +101,8 @@ fun VmDetailScreen(
     onSettings: () -> Unit = {},
     onConsole: () -> Unit = {},
     onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
+    onMigrate: () -> Unit = {},
+    onClone: () -> Unit = {},
     viewModel: VmHubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -108,6 +110,7 @@ fun VmDetailScreen(
     var sheetOpen by remember { mutableStateOf(false) }
     var createSnapDialog by remember { mutableStateOf(false) }
     var backupDialog by remember { mutableStateOf(false) }
+    var deleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedTab) { viewModel.onTabChanged(selectedTab) }
 
@@ -119,6 +122,7 @@ fun VmDetailScreen(
                 actions = {
                     IconButton(onClick = onConsole) { Icon(Icons.Outlined.Terminal, contentDescription = stringResource(R.string.console_title), tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = { sheetOpen = true }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = { deleteDialog = true }) { Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete_confirm), tint = MaterialTheme.colorScheme.error) }
                     IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -151,6 +155,15 @@ fun VmDetailScreen(
     if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
     if (createSnapDialog) { var n by remember { mutableStateOf("") }; var d by remember { mutableStateOf("") }; AlertDialog(onDismissRequest = { createSnapDialog = false }, title = { Text(stringResource(R.string.snap_create)) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(n, { n = it }, label = { Text(stringResource(R.string.snap_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth()); OutlinedTextField(d, { d = it }, label = { Text(stringResource(R.string.config_description)) }, modifier = Modifier.fillMaxWidth()) } }, confirmButton = { TextButton(onClick = { createSnapDialog = false; viewModel.createSnapshot(n, d.ifBlank { null }) }, enabled = n.isNotBlank()) { Text(stringResource(R.string.snap_create)) } }, dismissButton = { TextButton(onClick = { createSnapDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
     if (backupDialog) { var s by remember { mutableStateOf(state.backupStorages.firstOrNull() ?: "local") }; var m by remember { mutableStateOf("snapshot") }; var c by remember { mutableStateOf("zstd") }; var p by remember { mutableStateOf(false) }; var notes by remember { mutableStateOf("{{guestname}}") }; AlertDialog(onDismissRequest = { backupDialog = false }, title = { Text(stringResource(R.string.backup_dialog_title)) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(s, { s = it }, label = { Text("Storage") }, singleLine = true, modifier = Modifier.fillMaxWidth()); OutlinedTextField(m, { m = it }, label = { Text("Mode") }, singleLine = true, modifier = Modifier.fillMaxWidth()); OutlinedTextField(c, { c = it }, label = { Text("Compression") }, singleLine = true, modifier = Modifier.fillMaxWidth()); Row(Modifier.fillMaxWidth().clickable { p = !p }, verticalAlignment = Alignment.CenterVertically) { Checkbox(p, { p = it }); Text("Protected") }; OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth()) } }, confirmButton = { TextButton(onClick = { backupDialog = false; viewModel.createBackup(s, m, c, p, notes.ifBlank { null }) }) { Text(stringResource(R.string.backup_now)) } }, dismissButton = { TextButton(onClick = { backupDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
+    if (deleteDialog) DeleteGuestDialog(
+        guestTypeLabel = stringResource(R.string.guest_type_qemu),
+        vmid = viewModel.vmid,
+        onDismiss = { deleteDialog = false },
+        onConfirm = { purge, destroyDisks ->
+            deleteDialog = false
+            viewModel.deleteGuest(purge, destroyDisks) { onBack() }
+        },
+    )
 }
 
 // ---- VM Summary ----

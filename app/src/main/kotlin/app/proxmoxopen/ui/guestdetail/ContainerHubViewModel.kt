@@ -218,6 +218,18 @@ class ContainerHubViewModel @Inject constructor(
         }
     }
 
+    fun deleteGuest(purge: Boolean, destroyDisks: Boolean, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            when (val r = guestRepo.deleteGuest(serverId, node, vmid, type, purge, destroyDisks)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(actionMessage = "Delete started: ${r.value}") }
+                    onSuccess()
+                }
+                is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
+            }
+        }
+    }
+
     private suspend fun refreshSnapshots() {
         val snapResult = guestRepo.listSnapshots(serverId, node, vmid, type)
         _state.update { it.copy(snapshots = (snapResult as? ApiResult.Success)?.value ?: emptyList()) }

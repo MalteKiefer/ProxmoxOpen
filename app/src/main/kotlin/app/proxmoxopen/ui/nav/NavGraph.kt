@@ -17,6 +17,9 @@ import app.proxmoxopen.ui.serverlist.EditServerScreen
 import app.proxmoxopen.ui.settings.SettingsScreen
 import app.proxmoxopen.ui.activity.ActivityScreen
 // Console removed — will be reimplemented with native xterm.js WebSocket
+import app.proxmoxopen.ui.clone.CloneScreen
+import app.proxmoxopen.ui.migrate.MigrateScreen
+import app.proxmoxopen.ui.storage.StorageScreen
 import app.proxmoxopen.ui.taskdetail.TaskDetailScreen
 
 @Composable
@@ -74,6 +77,9 @@ fun NavGraph() {
                 },
                 onSettings = { nav.navigate(Route.Settings) },
                 onActivity = { nav.navigate(Route.Activity) },
+                onStorage = { nodeName ->
+                    nav.navigate(Route.StorageOverview(route.serverId, nodeName))
+                },
             )
         }
         composable<Route.NodeDetail> { entry ->
@@ -83,6 +89,9 @@ fun NavGraph() {
                 onSettings = { nav.navigate(Route.Settings) },
                 onActivity = { nav.navigate(Route.Activity) },
                 onConsole = { /* coming soon */ },
+                onStorage = {
+                    nav.navigate(Route.StorageOverview(route.serverId, route.node))
+                },
             )
         }
         composable<Route.GuestDetail> { entry ->
@@ -90,12 +99,24 @@ fun NavGraph() {
             val onOpenTask = { node: String, upid: String ->
                 nav.navigate(Route.TaskDetail(route.serverId, node, upid))
             }
+            val onMigrate = {
+                nav.navigate(
+                    Route.MigrateGuest(route.serverId, route.node, route.vmid, route.type),
+                )
+            }
+            val onClone = {
+                nav.navigate(
+                    Route.CloneGuest(route.serverId, route.node, route.vmid, route.type),
+                )
+            }
             if (route.type == "qemu") {
                 VmDetailScreen(
                     onBack = { nav.popBackStack() },
                     onSettings = { nav.navigate(Route.Settings) },
                     onConsole = { /* coming soon */ },
                     onOpenTask = onOpenTask,
+                    onMigrate = onMigrate,
+                    onClone = onClone,
                 )
             } else {
                 GuestDetailScreen(
@@ -109,8 +130,13 @@ fun NavGraph() {
                     },
                     onConsole = { /* coming soon */ },
                     onOpenTask = onOpenTask,
+                    onMigrate = onMigrate,
+                    onClone = onClone,
                 )
             }
+        }
+        composable<Route.CloneGuest> {
+            CloneScreen(onBack = { nav.popBackStack() })
         }
         composable<Route.GuestConfig> {
             GuestConfigScreen(onBack = { nav.popBackStack() })
@@ -118,6 +144,9 @@ fun NavGraph() {
         // Console: coming soon — will use native xterm.js WebSocket
         composable<Route.TaskDetail> {
             TaskDetailScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.MigrateGuest> {
+            MigrateScreen(onBack = { nav.popBackStack() })
         }
         composable<Route.Settings> {
             SettingsScreen(
@@ -130,6 +159,9 @@ fun NavGraph() {
                 onBack = { nav.popBackStack() },
                 showBackButton = true,
             )
+        }
+        composable<Route.StorageOverview> {
+            StorageScreen(onBack = { nav.popBackStack() })
         }
     }
 }

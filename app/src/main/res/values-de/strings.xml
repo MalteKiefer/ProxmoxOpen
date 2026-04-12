@@ -169,6 +169,27 @@
     <string name="task_status_ok">OK</string>
     <string name="task_status_failed">Fehlgeschlagen</string>
 
+    <!-- Delete guest -->
+    <string name="delete_guest_title">%1$s %2$d löschen?</string>
+    <string name="delete_guest_warning">Diese Aktion kann nicht rückgängig gemacht werden!</string>
+    <string name="delete_purge">Aus Cluster-Konfiguration entfernen</string>
+    <string name="delete_destroy_disks">Unreferenzierte Festplatten zerstören</string>
+    <string name="delete_confirm">Löschen</string>
+
+    <!-- Migrate -->
+    <string name="migrate_title">Migriere %1$s %2$d</string>
+    <string name="migrate_target_node">Ziel-Node</string>
+    <string name="migrate_online">Online-Migration</string>
+    <string name="migrate_button">Migrieren</string>
+    <string name="migrate_success">Migration gestartet</string>
+
+    <!-- Storage -->
+    <string name="storage_title">Speicher</string>
+    <string name="storage_type">Typ</string>
+    <string name="storage_content">Inhalt</string>
+    <string name="storage_enabled">Aktiviert</string>
+    <string name="storage_disabled">Deaktiviert</string>
+
     <!-- Console -->
     <string name="console_title">Konsole</string>
 
@@ -194,4 +215,13 @@
     <string name="about_license">Lizenz</string>
     <string name="about_source">Quellcode</string>
     <string name="about_translate">Beim Übersetzen helfen</string>
+
+    <!-- Clone -->
+    <string name="clone_title">Klonen %1$s %2$d</string>
+    <string name="clone_new_id">Neue VMID</string>
+    <string name="clone_name">Name (optional)</string>
+    <string name="clone_full">Vollständiger Klon</string>
+    <string name="clone_target_node">Zielknoten (optional)</string>
+    <string name="clone_storage">Zielspeicher (optional)</string>
+    <string name="clone_button">Klonen</string>
 </resources>

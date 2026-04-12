@@ -166,4 +166,16 @@ class VmHubViewModel @Inject constructor(
     fun selectBackupStorage(s: String) { _state.update { it.copy(selectedBackupStorage = s) }; viewModelScope.launch { val r = guestRepo.listBackups(serverId, node, s, vmid); _state.update { it.copy(backups = (r as? ApiResult.Success)?.value ?: emptyList()) } } }
     fun createBackup(storage: String?, mode: String, compress: String?, prot: Boolean, notes: String?) { viewModelScope.launch { guestRepo.createBackup(serverId, node, vmid, storage, mode, compress, prot, notes); refresh(silent = true) } }
     fun restoreBackup(volid: String) { viewModelScope.launch { guestRepo.restoreBackup(serverId, node, vmid, volid, null); refresh(silent = true) } }
+
+    fun deleteGuest(purge: Boolean, destroyDisks: Boolean, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            when (val r = guestRepo.deleteGuest(serverId, node, vmid, type, purge, destroyDisks)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(actionMessage = "Delete started: ${r.value}") }
+                    onSuccess()
+                }
+                is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
+            }
+        }
+    }
 }

@@ -102,6 +102,15 @@ interface GuestRepository {
         params: Map<String, String>,
     ): ApiResult<Unit>
 
+    suspend fun deleteGuest(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        purge: Boolean = true,
+        destroyUnreferencedDisks: Boolean = true,
+    ): ApiResult<String>
+
     suspend fun getGuestRrd(
         serverId: Long,
         node: String,
@@ -109,4 +118,30 @@ interface GuestRepository {
         type: GuestType,
         timeframe: RrdTimeframe,
     ): ApiResult<List<RrdPoint>>
+
+    suspend fun migrateGuest(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        target: String,
+        online: Boolean,
+    ): ApiResult<String>
+
+    // --- Clone ---
+    suspend fun cloneGuest(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        newid: Int,
+        name: String? = null,
+        full: Boolean = true,
+        target: String? = null,
+        storage: String? = null,
+    ): ApiResult<String>
+
+    suspend fun listNodes(serverId: Long): ApiResult<List<String>>
+
+    suspend fun listStorages(serverId: Long, node: String): ApiResult<List<String>>
 }

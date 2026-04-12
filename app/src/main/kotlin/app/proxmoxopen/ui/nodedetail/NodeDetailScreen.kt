@@ -71,6 +71,7 @@ fun NodeDetailScreen(
     onSettings: () -> Unit = {},
     onActivity: () -> Unit = {},
     onConsole: () -> Unit = {},
+    onStorage: () -> Unit = {},
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -89,6 +90,7 @@ fun NodeDetailScreen(
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
+                    IconButton(onClick = onStorage) { Icon(Icons.Outlined.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = onConsole) { Icon(Icons.Outlined.Terminal, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = onActivity) { Icon(Icons.Outlined.History, contentDescription = null) }
                     IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }

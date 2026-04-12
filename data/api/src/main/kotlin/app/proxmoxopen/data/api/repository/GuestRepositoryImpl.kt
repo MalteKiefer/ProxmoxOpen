@@ -158,6 +158,17 @@ class GuestRepositoryImpl @Inject constructor(
         api.setGuestConfig(node, type.apiPath, vmid, params)
     }
 
+    override suspend fun deleteGuest(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        purge: Boolean,
+        destroyUnreferencedDisks: Boolean,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.deleteGuest(node, type.apiPath, vmid, purge, destroyUnreferencedDisks)
+    }
+
     override suspend fun getGuestRrd(
         serverId: Long,
         node: String,
@@ -167,6 +178,41 @@ class GuestRepositoryImpl @Inject constructor(
     ): ApiResult<List<RrdPoint>> = call(serverId) { api ->
         api.getGuestRrd(node, type.apiPath, vmid, timeframe.apiKey).map { it.toDomain() }
     }
+
+    override suspend fun migrateGuest(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: app.proxmoxopen.domain.model.GuestType,
+        target: String,
+        online: Boolean,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.migrateGuest(node, type.apiPath, vmid, target, online)
+    }
+
+    override suspend fun cloneGuest(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        newid: Int,
+        name: String?,
+        full: Boolean,
+        target: String?,
+        storage: String?,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.cloneGuest(node, type.apiPath, vmid, newid, name, full, target, storage)
+    }
+
+    override suspend fun listNodes(serverId: Long): ApiResult<List<String>> =
+        call(serverId) { api ->
+            api.getNodes().map { it.node }
+        }
+
+    override suspend fun listStorages(serverId: Long, node: String): ApiResult<List<String>> =
+        call(serverId) { api ->
+            api.listStorages(node).map { it.storage }
+        }
 
     private suspend fun <T> call(
         serverId: Long,

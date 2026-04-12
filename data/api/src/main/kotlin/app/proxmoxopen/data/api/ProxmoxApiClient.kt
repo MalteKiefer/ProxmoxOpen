@@ -203,6 +203,12 @@ class ProxmoxApiClient(
             ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
     }
 
+    /** List all storages on a node. */
+    suspend fun listStorages(node: String): List<StorageInfoDto> =
+        try {
+            http.getJson<List<StorageInfoDto>>("$baseUrl/api2/json/nodes/$node/storage")
+        } catch (_: Exception) { emptyList() }
+
     /** List storages that support backup content. */
     suspend fun listBackupStorages(node: String): List<StorageInfoDto> =
         try {
@@ -321,6 +327,83 @@ class ProxmoxApiClient(
         return http.getJson<List<TaskLogLineDto>>(
             "$baseUrl/api2/json/nodes/$node/tasks/$encoded/log?start=$start&limit=$limit",
         )
+    }
+
+    // --- Delete guest ------------------------------------------------------
+
+    /**
+     * Deletes a VM or container. Returns the UPID of the triggered task.
+     */
+    suspend fun deleteGuest(
+        node: String,
+        type: String,
+        vmid: Int,
+        purge: Boolean = true,
+        destroyUnreferencedDisks: Boolean = true,
+    ): String {
+        val params = buildString {
+            val parts = mutableListOf<String>()
+            if (purge) parts += "purge=1"
+            if (destroyUnreferencedDisks) parts += "destroy-unreferenced-disks=1"
+            if (parts.isNotEmpty()) append("?${parts.joinToString("&")}")
+        }
+        val response = http.delete(
+            "$baseUrl/api2/json/nodes/$node/$type/$vmid$params",
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    // --- Migration ---------------------------------------------------------
+
+    suspend fun migrateGuest(
+        node: String,
+        type: String,
+        vmid: Int,
+        target: String,
+        online: Boolean = false,
+        withLocalDisks: Boolean = false,
+        targetStorage: String? = null,
+    ): String {
+        val form = Parameters.build {
+            append("target", target)
+            if (online) append("online", "1")
+            if (type == "qemu" && withLocalDisks) append("with-local-disks", "1")
+            targetStorage?.let { append("targetstorage", it) }
+        }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/$type/$vmid/migrate",
+            formParameters = form,
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    // --- Clone ---------------------------------------------------------------
+
+    suspend fun cloneGuest(
+        node: String,
+        type: String,
+        vmid: Int,
+        newid: Int,
+        name: String? = null,
+        full: Boolean = true,
+        target: String? = null,
+        storage: String? = null,
+    ): String {
+        val form = Parameters.build {
+            append("newid", newid.toString())
+            name?.let { append("name", it) }
+            append("full", if (full) "1" else "0")
+            target?.let { append("target", it) }
+            storage?.let { append("storage", it) }
+        }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/$type/$vmid/clone",
+            formParameters = form,
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
     }
 
     // --- Console (VNC proxy) -----------------------------------------------

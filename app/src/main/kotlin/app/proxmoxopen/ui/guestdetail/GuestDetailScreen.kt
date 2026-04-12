@@ -102,6 +102,8 @@ fun GuestDetailScreen(
     onEditConfig: () -> Unit = {},
     onConsole: () -> Unit = {},
     onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
+    onMigrate: () -> Unit = {},
+    onClone: () -> Unit = {},
     viewModel: ContainerHubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -109,6 +111,7 @@ fun GuestDetailScreen(
     var sheetOpen by remember { mutableStateOf(false) }
     var createSnapDialog by remember { mutableStateOf(false) }
     var backupDialog by remember { mutableStateOf(false) }
+    var deleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedTab) { viewModel.onTabChanged(selectedTab) }
 
@@ -125,6 +128,7 @@ fun GuestDetailScreen(
                 actions = {
                     IconButton(onClick = onConsole) { Icon(Icons.Outlined.Terminal, contentDescription = stringResource(R.string.console_title), tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = { sheetOpen = true }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = { deleteDialog = true }) { Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete_confirm), tint = MaterialTheme.colorScheme.error) }
                     IconButton(onClick = onEditConfig) { Icon(Icons.Outlined.Edit, contentDescription = null) }
                     IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }
                 },
@@ -168,6 +172,15 @@ fun GuestDetailScreen(
     if (sheetOpen) PowerActionSheet(guestName = state.status?.name ?: "", onDismiss = { sheetOpen = false }, onSelect = { sheetOpen = false; viewModel.triggerAction(it) })
     if (createSnapDialog) CreateSnapshotDialog(onDismiss = { createSnapDialog = false }, onCreate = { n, d -> createSnapDialog = false; viewModel.createSnapshot(n, d) })
     if (backupDialog) BackupDialog(storages = state.backupStorages, onDismiss = { backupDialog = false }, onBackup = { s, m, c, p, n -> backupDialog = false; viewModel.createBackup(s, m, c, p, n) })
+    if (deleteDialog) DeleteGuestDialog(
+        guestTypeLabel = stringResource(R.string.guest_type_lxc),
+        vmid = viewModel.vmid,
+        onDismiss = { deleteDialog = false },
+        onConfirm = { purge, destroyDisks ->
+            deleteDialog = false
+            viewModel.deleteGuest(purge, destroyDisks) { onBack() }
+        },
+    )
 }
 
 // ---- Summary ----

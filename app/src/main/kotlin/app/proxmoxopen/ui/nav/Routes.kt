@@ -23,4 +23,13 @@ sealed interface Route {
     @Serializable data class Console(
         val serverId: Long, val node: String, val vmid: Int = 0, val type: String,
     ) : Route
+    @Serializable data class MigrateGuest(
+        val serverId: Long, val node: String, val vmid: Int, val type: String,
+    ) : Route
+    @Serializable data class StorageOverview(
+        val serverId: Long, val node: String,
+    ) : Route
+    @Serializable data class CloneGuest(
+        val serverId: Long, val node: String, val vmid: Int, val type: String,
+    ) : Route
 }
