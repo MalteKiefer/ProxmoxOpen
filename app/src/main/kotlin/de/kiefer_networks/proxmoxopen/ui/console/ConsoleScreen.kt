@@ -164,22 +164,36 @@ private fun ProxmoxWebView(
                 }
 
                 ref[0] = this
-                // Load the origin first to set localStorage, then redirect to console
-                loadUrl("https://$host:$port/")
-                postDelayed({
-                    evaluateJavascript("""
-                        (function() {
-                            var loginData = {
-                                username: '$username',
-                                CSRFPreventionToken: '$csrfToken',
-                                cap: {"vms":1,"dc":1,"access":1,"nodes":1,"storage":1,"sdn":1}
-                            };
-                            window.localStorage.setItem('LoginData', JSON.stringify(loginData));
-                            document.cookie = 'PVEAuthCookie=$cookie; path=/';
-                            window.location.href = '$url';
-                        })();
-                    """.trimIndent(), null)
-                }, 1500)
+
+                // Escape single quotes in cookie/csrf for JS injection
+                val safeCookie = (cookie ?: "").replace("'", "\\'")
+                val safeCsrf = csrfToken.replace("'", "\\'")
+                val safeUser = username.replace("'", "\\'")
+                val safeUrl = url.replace("'", "\\'")
+
+                // Load a bootstrap page on the Proxmox origin that sets auth then redirects
+                val bootstrapHtml = """
+                    <html><head><script>
+                    document.cookie = 'PVEAuthCookie=$safeCookie; path=/';
+                    var loginData = {
+                        username: '$safeUser',
+                        CSRFPreventionToken: '$safeCsrf',
+                        cap: {"vms":1,"dc":1,"access":1,"nodes":1,"storage":1,"sdn":1}
+                    };
+                    localStorage.setItem('LoginData', JSON.stringify(loginData));
+                    window.location.replace('$safeUrl');
+                    </script></head><body style="background:#0B0B0C"></body></html>
+                """.trimIndent()
+
+                // loadDataWithBaseURL: sets the origin to the Proxmox server so
+                // localStorage and cookies are on the correct domain
+                loadDataWithBaseURL(
+                    "https://$host:$port/",
+                    bootstrapHtml,
+                    "text/html",
+                    "UTF-8",
+                    null,
+                )
             }
         },
     )
