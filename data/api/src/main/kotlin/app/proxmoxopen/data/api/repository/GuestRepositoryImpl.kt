@@ -1,14 +1,18 @@
 package app.proxmoxopen.data.api.repository
 
 import app.proxmoxopen.data.api.ProxmoxApiClient
+import app.proxmoxopen.data.api.mapper.toContainerStatus
 import app.proxmoxopen.data.api.mapper.toGuestConfig
 import app.proxmoxopen.data.api.mapper.toDomain
+import app.proxmoxopen.data.api.mapper.toSnapshot
 import app.proxmoxopen.data.api.mapper.toGuestOrNull
 import app.proxmoxopen.data.api.session.ProxmoxSessionManager
 import app.proxmoxopen.domain.model.Credentials
+import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.GuestConfig
 import app.proxmoxopen.domain.model.GuestType
+import app.proxmoxopen.domain.model.Snapshot
 import app.proxmoxopen.domain.model.Realm
 import app.proxmoxopen.domain.model.RrdPoint
 import app.proxmoxopen.domain.model.RrdTimeframe
@@ -38,11 +42,48 @@ class GuestRepositoryImpl @Inject constructor(
         api.getGuestStatus(node, type.apiPath, vmid).toDomain(node, type)
     }
 
+    override suspend fun getContainerStatus(
+        serverId: Long, node: String, vmid: Int,
+    ): ApiResult<ContainerStatus> = call(serverId) { api ->
+        val status = api.getContainerStatus(node, vmid)
+        val ifaces = api.getContainerInterfaces(node, vmid)
+        status.toContainerStatus(node, ifaces)
+    }
+
+    override suspend fun listSnapshots(
+        serverId: Long, node: String, vmid: Int, type: GuestType,
+    ): ApiResult<List<Snapshot>> = call(serverId) { api ->
+        api.listSnapshots(node, type.apiPath, vmid)
+            .filter { it.name != "current" }
+            .map { it.toSnapshot() }
+    }
+
+    override suspend fun createSnapshot(
+        serverId: Long, node: String, vmid: Int, type: GuestType, snapname: String, description: String?,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.createSnapshot(node, type.apiPath, vmid, snapname, description)
+    }
+
+    override suspend fun rollbackSnapshot(
+        serverId: Long, node: String, vmid: Int, type: GuestType, snapname: String,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.rollbackSnapshot(node, type.apiPath, vmid, snapname)
+    }
+
+    override suspend fun deleteSnapshot(
+        serverId: Long, node: String, vmid: Int, type: GuestType, snapname: String,
+    ): ApiResult<Unit> = call(serverId) { api ->
+        api.deleteSnapshot(node, type.apiPath, vmid, snapname)
+    }
+
+    override suspend fun createBackup(
+        serverId: Long, node: String, vmid: Int, storage: String?, mode: String, compress: String?,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.createBackup(node, vmid, storage, mode, compress)
+    }
+
     override suspend fun getGuestConfig(
-        serverId: Long,
-        node: String,
-        vmid: Int,
-        type: GuestType,
+        serverId: Long, node: String, vmid: Int, type: GuestType,
     ): ApiResult<GuestConfig> = call(serverId) { api ->
         api.getGuestConfig(node, type.apiPath, vmid).toGuestConfig()
     }

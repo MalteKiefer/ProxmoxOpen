@@ -2,9 +2,15 @@ package app.proxmoxopen.data.api.mapper
 
 import app.proxmoxopen.data.api.dto.ClusterResourceDto
 import app.proxmoxopen.data.api.dto.ClusterStatusDto
+import app.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestConfigDto
+import app.proxmoxopen.data.api.dto.InterfaceDto
+import app.proxmoxopen.data.api.dto.SnapshotDto
+import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.GuestConfig
+import app.proxmoxopen.domain.model.InterfaceIp
 import app.proxmoxopen.domain.model.NetworkInterface
+import app.proxmoxopen.domain.model.Snapshot
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
 import app.proxmoxopen.data.api.dto.NodeStatusDto
@@ -157,6 +163,50 @@ fun TaskStatusDto.toDomain(): ProxmoxTask = ProxmoxTask(
     startTime = starttime,
     endTime = null,
     exitStatus = exitstatus,
+)
+
+fun SnapshotDto.toSnapshot(): Snapshot = Snapshot(
+    name = name,
+    description = description,
+    snaptime = snaptime,
+    parent = parent,
+    vmstate = vmstate == 1,
+)
+
+fun ContainerCurrentStatusDto.toContainerStatus(
+    nodeName: String,
+    interfaces: List<InterfaceDto>,
+): ContainerStatus = ContainerStatus(
+    vmid = vmid ?: 0,
+    name = name ?: "ct-${vmid ?: 0}",
+    status = GuestStatus.fromProxmox(status),
+    uptime = uptime ?: 0,
+    haState = ha?.state,
+    node = nodeName,
+    type = GuestType.LXC,
+    unprivileged = true,
+    ostype = type,
+    pid = pid,
+    cpuUsage = cpu ?: 0.0,
+    cpuCount = cpus ?: 0,
+    memUsed = mem ?: 0,
+    memTotal = maxmem ?: 0,
+    swapUsed = swap ?: 0,
+    swapTotal = maxswap ?: 0,
+    diskUsed = disk ?: 0,
+    diskTotal = maxdisk ?: 0,
+    netIn = netin ?: 0,
+    netOut = netout ?: 0,
+    diskRead = diskread ?: 0,
+    diskWrite = diskwrite ?: 0,
+    ipAddresses = interfaces.map { iface ->
+        InterfaceIp(
+            name = iface.name ?: "?",
+            hwaddr = iface.hwaddr,
+            inet = iface.inet,
+            inet6 = iface.inet6,
+        )
+    },
 )
 
 private fun String?.toTaskState(exit: String?): TaskState = when {

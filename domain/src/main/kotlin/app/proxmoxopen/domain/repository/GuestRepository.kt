@@ -1,8 +1,10 @@
 package app.proxmoxopen.domain.repository
 
+import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.GuestConfig
 import app.proxmoxopen.domain.model.GuestType
+import app.proxmoxopen.domain.model.Snapshot
 import app.proxmoxopen.domain.model.RrdPoint
 import app.proxmoxopen.domain.model.RrdTimeframe
 import app.proxmoxopen.domain.result.ApiResult
@@ -15,6 +17,53 @@ interface GuestRepository {
         vmid: Int,
         type: GuestType,
     ): ApiResult<Guest>
+    suspend fun getContainerStatus(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+    ): ApiResult<ContainerStatus>
+
+    suspend fun listSnapshots(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+    ): ApiResult<List<Snapshot>>
+
+    suspend fun createSnapshot(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        snapname: String,
+        description: String?,
+    ): ApiResult<String>
+
+    suspend fun rollbackSnapshot(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        snapname: String,
+    ): ApiResult<String>
+
+    suspend fun deleteSnapshot(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        type: GuestType,
+        snapname: String,
+    ): ApiResult<Unit>
+
+    suspend fun createBackup(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        storage: String?,
+        mode: String,
+        compress: String?,
+    ): ApiResult<String>
+
     suspend fun getGuestConfig(
         serverId: Long,
         node: String,

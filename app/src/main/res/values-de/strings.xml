@@ -61,6 +61,18 @@
     <string name="config_firewall">Firewall</string>
     <string name="config_section_resources">Ressourcen</string>
 
+    <string name="ct_tab_summary">Übersicht</string>
+    <string name="ct_tab_charts">Graphen</string>
+    <string name="ct_tab_snapshots">Snapshots</string>
+    <string name="ct_tab_tasks">Tasks</string>
+
+    <string name="snap_create">Snapshot erstellen</string>
+    <string name="snap_name">Snapshot-Name</string>
+    <string name="snap_rollback">Zurücksetzen</string>
+    <string name="snap_delete">Löschen</string>
+    <string name="snap_empty">Noch keine Snapshots.</string>
+    <string name="backup_now">Jetzt sichern</string>
+
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>
     <string name="add_server">Server hinzufügen</string>

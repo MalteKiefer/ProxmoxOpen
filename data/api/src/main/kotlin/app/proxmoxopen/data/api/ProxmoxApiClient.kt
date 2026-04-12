@@ -3,7 +3,10 @@ package app.proxmoxopen.data.api
 import app.proxmoxopen.data.api.dto.ApiResponse
 import app.proxmoxopen.data.api.dto.ClusterResourceDto
 import app.proxmoxopen.data.api.dto.ClusterStatusDto
+import app.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestConfigDto
+import app.proxmoxopen.data.api.dto.InterfaceDto
+import app.proxmoxopen.data.api.dto.SnapshotDto
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
 import app.proxmoxopen.data.api.dto.NodeStatusDto
@@ -14,6 +17,7 @@ import app.proxmoxopen.data.api.dto.TicketDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.headers
@@ -111,6 +115,82 @@ class ProxmoxApiClient(
             formParameters = form,
         ) { applyAuth(); method = io.ktor.http.HttpMethod.Put }
         return response.body<ApiResponse<String?>>().data
+    }
+
+    // --- Extended CT status --------------------------------------------------
+
+    suspend fun getContainerStatus(node: String, vmid: Int): ContainerCurrentStatusDto =
+        http.getJson<ContainerCurrentStatusDto>(
+            "$baseUrl/api2/json/nodes/$node/lxc/$vmid/status/current",
+        )
+
+    suspend fun getContainerInterfaces(node: String, vmid: Int): List<InterfaceDto> =
+        try {
+            http.getJson<List<InterfaceDto>>(
+                "$baseUrl/api2/json/nodes/$node/lxc/$vmid/interfaces",
+            )
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+    // --- Snapshots -----------------------------------------------------------
+
+    suspend fun listSnapshots(node: String, type: String, vmid: Int): List<SnapshotDto> =
+        http.getJson<List<SnapshotDto>>(
+            "$baseUrl/api2/json/nodes/$node/$type/$vmid/snapshot",
+        )
+
+    suspend fun createSnapshot(
+        node: String, type: String, vmid: Int, snapname: String, description: String?,
+    ): String {
+        val form = Parameters.build {
+            append("snapname", snapname)
+            description?.let { append("description", it) }
+        }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/$type/$vmid/snapshot",
+            formParameters = form,
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    suspend fun rollbackSnapshot(
+        node: String, type: String, vmid: Int, snapname: String,
+    ): String {
+        val response = http.post(
+            "$baseUrl/api2/json/nodes/$node/$type/$vmid/snapshot/$snapname/rollback",
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    suspend fun deleteSnapshot(
+        node: String, type: String, vmid: Int, snapname: String,
+    ): String? {
+        val response = http.delete(
+            "$baseUrl/api2/json/nodes/$node/$type/$vmid/snapshot/$snapname",
+        ) { applyAuth() }
+        return response.body<ApiResponse<String?>>().data
+    }
+
+    // --- Backup (vzdump) -----------------------------------------------------
+
+    suspend fun createBackup(
+        node: String, vmid: Int, storage: String?, mode: String, compress: String?,
+    ): String {
+        val form = Parameters.build {
+            append("vmid", vmid.toString())
+            append("mode", mode)
+            storage?.let { append("storage", it) }
+            compress?.let { append("compress", it) }
+        }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/vzdump",
+            formParameters = form,
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
     }
 
     // --- Power actions -----------------------------------------------------
