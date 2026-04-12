@@ -82,6 +82,7 @@
     <string name="config_disks_todo">Rootfs- und Mountpoint-Bearbeitung folgen in einem zukünftigen Update.</string>
     <string name="backup_dialog_title">Backup erstellen</string>
     <string name="settings_section_data">Daten</string>
+    <string name="backup_empty">Keine Backups auf diesem Storage gefunden.</string>
     <string name="setting_refresh_interval">Live-Aktualisierungsintervall</string>
 
     <string name="server_list_title">Server</string>

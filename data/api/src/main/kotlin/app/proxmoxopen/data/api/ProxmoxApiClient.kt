@@ -7,6 +7,7 @@ import app.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestConfigDto
 import app.proxmoxopen.data.api.dto.InterfaceDto
 import app.proxmoxopen.data.api.dto.SnapshotDto
+import app.proxmoxopen.data.api.dto.BackupVolumeDto
 import app.proxmoxopen.data.api.dto.StorageInfoDto
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
@@ -202,6 +203,31 @@ class ProxmoxApiClient(
         try {
             http.getJson<List<StorageInfoDto>>("$baseUrl/api2/json/nodes/$node/storage?content=backup")
         } catch (_: Exception) { emptyList() }
+
+    /** List backup volumes for a specific vmid on a given storage. */
+    suspend fun listBackups(node: String, storage: String, vmid: Int): List<BackupVolumeDto> =
+        try {
+            http.getJson<List<BackupVolumeDto>>(
+                "$baseUrl/api2/json/nodes/$node/storage/$storage/content?content=backup&vmid=$vmid",
+            )
+        } catch (_: Exception) { emptyList() }
+
+    /** Restore a backup (vzdump archive) to a container. */
+    suspend fun restoreBackup(node: String, vmid: Int, archive: String, storage: String?): String {
+        val form = Parameters.build {
+            append("vmid", vmid.toString())
+            append("ostemplate", archive)
+            append("restore", "1")
+            append("force", "1")
+            storage?.let { append("storage", it) }
+        }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/lxc",
+            formParameters = form,
+        ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
 
     // --- Power actions -----------------------------------------------------
 

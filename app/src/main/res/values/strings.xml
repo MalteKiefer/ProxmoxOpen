@@ -87,6 +87,7 @@
     <string name="config_disks_todo">Rootfs and mount point editing will be available in a future update.</string>
     <string name="backup_dialog_title">Create backup</string>
     <string name="settings_section_data">Data</string>
+    <string name="backup_empty">No backups found on this storage.</string>
     <string name="setting_refresh_interval">Live refresh interval</string>
 
     <!-- Server list -->

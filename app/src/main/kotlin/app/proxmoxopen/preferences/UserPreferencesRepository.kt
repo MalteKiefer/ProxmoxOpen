@@ -32,7 +32,7 @@ class UserPreferencesRepository @Inject constructor(
                 ?: LanguageOption.SYSTEM,
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,
             refreshInterval = prefs[REFRESH_KEY]?.let { runCatching { RefreshInterval.valueOf(it) }.getOrNull() }
-                ?: RefreshInterval.SEC_5,
+                ?: RefreshInterval.SEC_15,
         )
     }
 

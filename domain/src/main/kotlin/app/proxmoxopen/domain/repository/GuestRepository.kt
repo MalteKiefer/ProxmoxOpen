@@ -1,5 +1,6 @@
 package app.proxmoxopen.domain.repository
 
+import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.GuestConfig
@@ -67,6 +68,14 @@ interface GuestRepository {
     ): ApiResult<String>
 
     suspend fun listBackupStorages(serverId: Long, node: String): ApiResult<List<String>>
+
+    suspend fun listBackups(
+        serverId: Long, node: String, storage: String, vmid: Int,
+    ): ApiResult<List<Backup>>
+
+    suspend fun restoreBackup(
+        serverId: Long, node: String, vmid: Int, archive: String, storage: String?,
+    ): ApiResult<String>
 
     suspend fun getGuestConfig(
         serverId: Long,

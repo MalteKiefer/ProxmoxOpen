@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.preferences.RefreshInterval
@@ -37,6 +38,8 @@ data class ContainerHubUiState(
     val snapshots: List<Snapshot> = emptyList(),
     val tasks: List<ProxmoxTask> = emptyList(),
     val backupStorages: List<String> = emptyList(),
+    val backups: List<Backup> = emptyList(),
+    val selectedBackupStorage: String? = null,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val error: ApiError? = null,
@@ -95,6 +98,12 @@ class ContainerHubViewModel @Inject constructor(
             val taskResult = taskRepo.listTasksForVmid(serverId, node, vmid, limit = 50)
             val storagesResult = guestRepo.listBackupStorages(serverId, node)
 
+            val storages = (storagesResult as? ApiResult.Success)?.value ?: _state.value.backupStorages
+            val selectedStorage = _state.value.selectedBackupStorage ?: storages.firstOrNull()
+            val backupsResult = if (selectedStorage != null) {
+                guestRepo.listBackups(serverId, node, selectedStorage, vmid)
+            } else null
+
             _state.update {
                 it.copy(
                     isLoading = false,
@@ -103,7 +112,9 @@ class ContainerHubViewModel @Inject constructor(
                     rrd = (rrdResult as? ApiResult.Success)?.value ?: it.rrd,
                     snapshots = (snapResult as? ApiResult.Success)?.value ?: it.snapshots,
                     tasks = (taskResult as? ApiResult.Success)?.value ?: it.tasks,
-                    backupStorages = (storagesResult as? ApiResult.Success)?.value ?: it.backupStorages,
+                    backupStorages = storages,
+                    selectedBackupStorage = selectedStorage,
+                    backups = (backupsResult as? ApiResult.Success)?.value ?: it.backups,
                     error = (statusResult as? ApiResult.Failure)?.error,
                 )
             }
@@ -183,6 +194,26 @@ class ContainerHubViewModel @Inject constructor(
             when (val r = guestRepo.createBackup(serverId, node, vmid, storage, mode, compress, protected, notesTemplate)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(actionMessage = "Backup started: ${r.value}") }
+                    refresh(silent = true)
+                }
+                is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
+            }
+        }
+    }
+
+    fun selectBackupStorage(storage: String) {
+        _state.update { it.copy(selectedBackupStorage = storage) }
+        viewModelScope.launch {
+            val result = guestRepo.listBackups(serverId, node, storage, vmid)
+            _state.update { it.copy(backups = (result as? ApiResult.Success)?.value ?: emptyList()) }
+        }
+    }
+
+    fun restoreBackup(volid: String) {
+        viewModelScope.launch {
+            when (val r = guestRepo.restoreBackup(serverId, node, vmid, volid, null)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(actionMessage = "Restore started: ${r.value}") }
                     refresh(silent = true)
                 }
                 is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }

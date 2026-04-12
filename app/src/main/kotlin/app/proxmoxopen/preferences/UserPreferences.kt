@@ -22,5 +22,5 @@ data class UserPreferences(
     val useDynamicColor: Boolean = false,
     val language: LanguageOption = LanguageOption.SYSTEM,
     val appLockEnabled: Boolean = false,
-    val refreshInterval: RefreshInterval = RefreshInterval.SEC_5,
+    val refreshInterval: RefreshInterval = RefreshInterval.SEC_15,
 )

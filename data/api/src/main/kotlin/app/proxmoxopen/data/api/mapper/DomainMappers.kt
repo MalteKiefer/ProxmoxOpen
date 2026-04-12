@@ -2,11 +2,13 @@ package app.proxmoxopen.data.api.mapper
 
 import app.proxmoxopen.data.api.dto.ClusterResourceDto
 import app.proxmoxopen.data.api.dto.ClusterStatusDto
+import app.proxmoxopen.data.api.dto.BackupVolumeDto
 import app.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestConfigDto
 import app.proxmoxopen.data.api.dto.InterfaceDto
 import app.proxmoxopen.data.api.dto.SnapshotDto
 import app.proxmoxopen.domain.model.ContainerStatus
+import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.GuestConfig
 import app.proxmoxopen.domain.model.InterfaceIp
 import app.proxmoxopen.domain.model.NetworkInterface
@@ -216,3 +218,14 @@ private fun String?.toTaskState(exit: String?): TaskState = when {
         else TaskState.FAILED
     else -> TaskState.UNKNOWN
 }
+
+fun BackupVolumeDto.toBackup(storage: String): Backup = Backup(
+    volid = volid,
+    vmid = vmid ?: 0,
+    createdAt = ctime ?: 0,
+    size = size ?: 0,
+    format = format,
+    notes = notes,
+    protected = protected == 1,
+    storage = storage,
+)

@@ -1,6 +1,7 @@
 package app.proxmoxopen.data.api.repository
 
 import app.proxmoxopen.data.api.ProxmoxApiClient
+import app.proxmoxopen.data.api.mapper.toBackup
 import app.proxmoxopen.data.api.mapper.toContainerStatus
 import app.proxmoxopen.data.api.mapper.toGuestConfig
 import app.proxmoxopen.data.api.mapper.toDomain
@@ -8,6 +9,7 @@ import app.proxmoxopen.data.api.mapper.toSnapshot
 import app.proxmoxopen.data.api.mapper.toGuestOrNull
 import app.proxmoxopen.data.api.session.ProxmoxSessionManager
 import app.proxmoxopen.domain.model.Credentials
+import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.GuestConfig
@@ -87,6 +89,18 @@ class GuestRepositoryImpl @Inject constructor(
         call(serverId) { api ->
             api.listBackupStorages(node).map { it.storage }
         }
+
+    override suspend fun listBackups(
+        serverId: Long, node: String, storage: String, vmid: Int,
+    ): ApiResult<List<Backup>> = call(serverId) { api ->
+        api.listBackups(node, storage, vmid).map { it.toBackup(storage) }
+    }
+
+    override suspend fun restoreBackup(
+        serverId: Long, node: String, vmid: Int, archive: String, storage: String?,
+    ): ApiResult<String> = call(serverId) { api ->
+        api.restoreBackup(node, vmid, archive, storage)
+    }
 
     override suspend fun getGuestConfig(
         serverId: Long, node: String, vmid: Int, type: GuestType,
