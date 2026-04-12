@@ -24,9 +24,12 @@ data class NodeStatusDto(
     val loadavg: List<String>? = null,
     val memory: MemoryDto? = null,
     val rootfs: StorageDto? = null,
+    val swap: StorageDto? = null,
     val ksm: KsmDto? = null,
     val kversion: String? = null,
     val pveversion: String? = null,
+    val iowait: Double? = null,
+    val bootmode: String? = null,
 )
 
 @Serializable

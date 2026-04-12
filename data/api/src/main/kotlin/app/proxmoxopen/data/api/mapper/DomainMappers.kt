@@ -49,12 +49,19 @@ fun NodeListDto.toDomain(): Node = Node(
     },
     cpuUsage = cpu ?: 0.0,
     cpuCount = maxcpu ?: 0,
+    cpuModel = null,
     memUsed = mem ?: 0,
     memTotal = maxmem ?: 0,
     diskUsed = disk ?: 0,
     diskTotal = maxdisk ?: 0,
+    swapUsed = 0,
+    swapTotal = 0,
     uptimeSeconds = uptime ?: 0,
     loadAverage = emptyList(),
+    ioDelay = null,
+    ksmShared = null,
+    kernelVersion = null,
+    pveVersion = null,
 )
 
 fun NodeStatusDto.toDomain(nodeName: String): Node = Node(
@@ -62,12 +69,19 @@ fun NodeStatusDto.toDomain(nodeName: String): Node = Node(
     status = NodeStatus.ONLINE,
     cpuUsage = cpu ?: 0.0,
     cpuCount = cpuinfo?.cpus ?: 0,
+    cpuModel = cpuinfo?.model,
     memUsed = memory?.used ?: 0,
     memTotal = memory?.total ?: 0,
     diskUsed = rootfs?.used ?: 0,
     diskTotal = rootfs?.total ?: 0,
+    swapUsed = swap?.used ?: 0,
+    swapTotal = swap?.total ?: 0,
     uptimeSeconds = uptime ?: 0,
     loadAverage = loadavg?.mapNotNull { it.toDoubleOrNull() } ?: emptyList(),
+    ioDelay = iowait,
+    ksmShared = ksm?.shared,
+    kernelVersion = kversion,
+    pveVersion = pveversion,
 )
 
 fun ClusterResourceDto.toGuestOrNull(): Guest? {

@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
@@ -163,6 +166,38 @@ fun NodeDetailScreen(
                             modifier = Modifier.weight(1f),
                         )
                     }
+                    // Swap + IO delay
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val swapFrac = if (node.swapTotal > 0) node.swapUsed.toFloat() / node.swapTotal else 0f
+                        MetricCard(
+                            icon = Icons.Outlined.Storage,
+                            label = "Swap",
+                            primaryValue = formatBytes(node.swapUsed),
+                            secondaryValue = "of ${formatBytes(node.swapTotal)}",
+                            progress = swapFrac,
+                            modifier = Modifier.weight(1f),
+                        )
+                        MetricCard(
+                            icon = Icons.Outlined.Speed,
+                            label = "IO Delay",
+                            primaryValue = "%.1f%%".format((node.ioDelay ?: 0.0) * 100),
+                            secondaryValue = "KSM: ${formatBytes(node.ksmShared ?: 0)}",
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    // Server info card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    ) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            node.cpuModel?.let { SrvRow("CPU(s)", "${node.cpuCount} x $it") }
+                            SrvRow("Load Average", node.loadAverage.joinToString(", ") { "%.2f".format(it) }.ifBlank { "—" })
+                            node.kernelVersion?.let { SrvRow("Kernel", it) }
+                            node.pveVersion?.let { SrvRow("PVE Version", it) }
+                        }
+                    }
                 }
 
                 SectionLabel(stringResource(R.string.charts_title))
@@ -211,6 +246,14 @@ private fun MetricCharts(rrd: List<RrdPoint>, memTotal: Long) {
         currentValue = "${formatBytes(diskCurrent.toLong())}/s",
         values = diskRead,
     )
+}
+
+@Composable
+private fun SrvRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodySmall)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
