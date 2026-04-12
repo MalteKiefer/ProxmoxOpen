@@ -5,6 +5,7 @@ import app.proxmoxopen.data.api.session.ProxmoxSessionManager
 import app.proxmoxopen.domain.model.Credentials
 import app.proxmoxopen.domain.model.ProxmoxTask
 import app.proxmoxopen.domain.model.Realm
+import app.proxmoxopen.domain.model.TaskLogLine
 import app.proxmoxopen.domain.model.TaskState
 import app.proxmoxopen.domain.repository.ServerRepository
 import app.proxmoxopen.domain.repository.TaskRepository
@@ -44,6 +45,18 @@ class TaskRepositoryImpl @Inject constructor(
         upid: String,
     ): ApiResult<ProxmoxTask> = runCatchingApi {
         apiClientFor(serverId).getTaskStatus(node, upid).toDomain()
+    }
+
+    override suspend fun getTaskLog(
+        serverId: Long,
+        node: String,
+        upid: String,
+        start: Int,
+        limit: Int,
+    ): ApiResult<List<TaskLogLine>> = runCatchingApi {
+        apiClientFor(serverId).getTaskLog(node, upid, start, limit).map {
+            TaskLogLine(lineNumber = it.n, text = it.t)
+        }
     }
 
     override fun streamTask(

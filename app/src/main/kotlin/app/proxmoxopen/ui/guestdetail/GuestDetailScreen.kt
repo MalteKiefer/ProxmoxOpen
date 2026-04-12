@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
@@ -99,6 +100,8 @@ fun GuestDetailScreen(
     onSettings: () -> Unit = {},
     onActivity: () -> Unit = {},
     onEditConfig: () -> Unit = {},
+    onConsole: () -> Unit = {},
+    onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
     viewModel: ContainerHubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -120,6 +123,7 @@ fun GuestDetailScreen(
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
+                    IconButton(onClick = onConsole) { Icon(Icons.Outlined.Terminal, contentDescription = stringResource(R.string.console_title), tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = { sheetOpen = true }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = onEditConfig) { Icon(Icons.Outlined.Edit, contentDescription = null) }
                     IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }
@@ -154,7 +158,7 @@ fun GuestDetailScreen(
                         1 -> ChartsContent(state.rrd, state.status, state.timeframe, viewModel::setTimeframe)
                         2 -> SnapshotsContent(state.snapshots, onCreate = { createSnapDialog = true }, onRollback = viewModel::rollbackSnapshot, onDelete = viewModel::deleteSnapshot)
                         3 -> BackupContent(state.backupStorages, state.backups, state.selectedBackupStorage, onSelectStorage = viewModel::selectBackupStorage, onBackup = { backupDialog = true }, onRestore = viewModel::restoreBackup, message = state.actionMessage)
-                        4 -> TasksContent(state.tasks)
+                        4 -> TasksContent(state.tasks) { task -> onOpenTask(task.node, task.upid) }
                     }
                 }
             }
@@ -270,13 +274,13 @@ fun GuestDetailScreen(
 }
 
 // ---- Tasks ----
-@Composable private fun TasksContent(tasks: List<ProxmoxTask>) {
+@Composable private fun TasksContent(tasks: List<ProxmoxTask>, onTaskClick: (ProxmoxTask) -> Unit = {}) {
     val df = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
     if (tasks.isEmpty()) { Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { Text(stringResource(R.string.activity_empty_title), style = MaterialTheme.typography.titleMedium) }; return }
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         items(tasks, key = { it.upid }) { task ->
             val tone = when (task.state) { TaskState.RUNNING -> BadgeTone.Running; TaskState.OK -> BadgeTone.Running; TaskState.FAILED -> BadgeTone.Error; TaskState.UNKNOWN -> BadgeTone.Neutral }
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Card(Modifier.fillMaxWidth().clickable { onTaskClick(task) }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                 Column(Modifier.padding(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(task.type, style = MaterialTheme.typography.titleSmall); Text("${task.user} · ${df.format(Date(task.startTime * 1000))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; StatusBadge(task.state.name, tone) }
                     task.exitStatus?.let { Text("Exit: $it", style = MaterialTheme.typography.bodySmall, color = if (task.state == TaskState.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant) }

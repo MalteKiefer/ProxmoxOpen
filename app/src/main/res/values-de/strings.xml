@@ -164,9 +164,13 @@
     <string name="power_task_done">%1$s abgeschlossen</string>
 
     <string name="task_log_title">Tasks</string>
+    <string name="task_detail_title">Task-Log</string>
     <string name="task_status_running">Läuft</string>
     <string name="task_status_ok">OK</string>
     <string name="task_status_failed">Fehlgeschlagen</string>
+
+    <!-- Console -->
+    <string name="console_title">Konsole</string>
 
     <string name="error_network">Netzwerkfehler. Bitte prüfe die Verbindung zu deinem Proxmox-Server.</string>
     <string name="error_auth">Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.</string>

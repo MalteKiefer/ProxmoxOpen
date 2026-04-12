@@ -178,9 +178,13 @@
 
     <!-- Tasks -->
     <string name="task_log_title">Tasks</string>
+    <string name="task_detail_title">Task Log</string>
     <string name="task_status_running">Running</string>
     <string name="task_status_ok">OK</string>
     <string name="task_status_failed">Failed</string>
+
+    <!-- Console -->
+    <string name="console_title">Console</string>
 
     <!-- Errors -->
     <string name="error_network">Network error. Please check the connection to your Proxmox server.</string>

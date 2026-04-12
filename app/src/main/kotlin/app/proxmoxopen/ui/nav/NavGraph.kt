@@ -16,6 +16,8 @@ import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
 import app.proxmoxopen.ui.serverlist.EditServerScreen
 import app.proxmoxopen.ui.settings.SettingsScreen
 import app.proxmoxopen.ui.activity.ActivityScreen
+import app.proxmoxopen.ui.console.ConsoleScreen
+import app.proxmoxopen.ui.taskdetail.TaskDetailScreen
 
 @Composable
 fun NavGraph() {
@@ -83,10 +85,19 @@ fun NavGraph() {
         }
         composable<Route.GuestDetail> { entry ->
             val route = entry.toRoute<Route.GuestDetail>()
+            val onOpenTask = { node: String, upid: String ->
+                nav.navigate(Route.TaskDetail(route.serverId, node, upid))
+            }
             if (route.type == "qemu") {
                 VmDetailScreen(
                     onBack = { nav.popBackStack() },
                     onSettings = { nav.navigate(Route.Settings) },
+                    onConsole = {
+                        nav.navigate(
+                            Route.Console(route.serverId, route.node, route.vmid, route.type),
+                        )
+                    },
+                    onOpenTask = onOpenTask,
                 )
             } else {
                 GuestDetailScreen(
@@ -98,11 +109,23 @@ fun NavGraph() {
                             Route.GuestConfig(route.serverId, route.node, route.vmid, route.type),
                         )
                     },
+                    onConsole = {
+                        nav.navigate(
+                            Route.Console(route.serverId, route.node, route.vmid, route.type),
+                        )
+                    },
+                    onOpenTask = onOpenTask,
                 )
             }
         }
         composable<Route.GuestConfig> {
             GuestConfigScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.Console> {
+            ConsoleScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.TaskDetail> {
+            TaskDetailScreen(onBack = { nav.popBackStack() })
         }
         composable<Route.Settings> {
             SettingsScreen(

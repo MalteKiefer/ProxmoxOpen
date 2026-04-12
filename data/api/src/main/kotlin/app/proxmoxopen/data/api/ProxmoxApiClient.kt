@@ -12,11 +12,13 @@ import app.proxmoxopen.data.api.dto.BackupVolumeDto
 import app.proxmoxopen.data.api.dto.StorageInfoDto
 import app.proxmoxopen.data.api.dto.VmConfigDto
 import app.proxmoxopen.data.api.dto.VmCurrentStatusDto
+import app.proxmoxopen.data.api.dto.VncProxyDto
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
 import app.proxmoxopen.data.api.dto.NodeStatusDto
 import app.proxmoxopen.data.api.dto.RrdPointDto
 import app.proxmoxopen.data.api.dto.TaskDto
+import app.proxmoxopen.data.api.dto.TaskLogLineDto
 import app.proxmoxopen.data.api.dto.TaskStatusDto
 import app.proxmoxopen.data.api.dto.TicketDto
 import io.ktor.client.HttpClient
@@ -288,6 +290,28 @@ class ProxmoxApiClient(
     suspend fun getTaskStatus(node: String, upid: String): TaskStatusDto {
         val encoded = URLBuilder().apply { parameters.append("upid", upid) }.parameters["upid"] ?: upid
         return http.getJson<TaskStatusDto>("$baseUrl/api2/json/nodes/$node/tasks/$encoded/status")
+    }
+
+    suspend fun getTaskLog(
+        node: String,
+        upid: String,
+        start: Int = 0,
+        limit: Int = 500,
+    ): List<TaskLogLineDto> {
+        val encoded = URLBuilder().apply { parameters.append("upid", upid) }.parameters["upid"] ?: upid
+        return http.getJson<List<TaskLogLineDto>>(
+            "$baseUrl/api2/json/nodes/$node/tasks/$encoded/log?start=$start&limit=$limit",
+        )
+    }
+
+    // --- Console (VNC proxy) -----------------------------------------------
+
+    suspend fun createVncProxy(node: String, type: String, vmid: Int): VncProxyDto {
+        val response = http.post(
+            "$baseUrl/api2/json/nodes/$node/$type/$vmid/vncproxy",
+        ) { applyAuth() }
+        return response.body<ApiResponse<VncProxyDto>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty vncproxy response")
     }
 
     // --- Helpers -----------------------------------------------------------
