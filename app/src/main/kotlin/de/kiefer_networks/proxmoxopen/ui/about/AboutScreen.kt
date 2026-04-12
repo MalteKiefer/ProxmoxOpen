@@ -132,7 +132,6 @@ fun AboutScreen(onBack: () -> Unit) {
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 InfoRow(Icons.Outlined.Info, "Material 3", subtitle = "Design system")
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                LinkRow(Icons.Outlined.Code, "Termux Terminal Emulator", "Terminal rendering (GPL-3.0)") { openUrl("https://github.com/termux/termux-app") }
             }
 
             // Build info

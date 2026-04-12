@@ -1,5 +1,7 @@
 # ProxMoxOpen
 
+[![Donate](https://img.shields.io/liberapay/receives/beli3ver.svg?logo=liberapay)](https://de.liberapay.com/beli3ver)
+
 Open, secure, F-Droid-first Android client for Proxmox VE.
 
 ProxMoxOpen is a native Kotlin + Jetpack Compose app for managing one or many Proxmox VE servers from your phone. It pins certificates on first use, stores all secrets in the hardware-backed Android Keystore, ships zero trackers, and is built to meet every requirement for F-Droid's main repository.
@@ -42,6 +44,5 @@ GPL-3.0-or-later. See [`LICENSE`](LICENSE).
 
 ## Acknowledgments
 
-- **[Termux](https://github.com/termux/termux-app)** — Terminal emulator and view components used for the native LXC/Node console (GPL-3.0)
 - **[Proxmox VE](https://www.proxmox.com/)** — The server virtualization platform this app connects to
 - **[Vico](https://github.com/patrykandpatrick/vico)** — Compose chart library (Apache-2.0)
