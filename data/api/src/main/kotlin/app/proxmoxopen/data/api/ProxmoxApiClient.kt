@@ -212,8 +212,13 @@ class ProxmoxApiClient(
 
     // --- Tasks -------------------------------------------------------------
 
-    suspend fun listTasks(node: String, limit: Int = 50): List<TaskDto> =
-        http.getJson<List<TaskDto>>("$baseUrl/api2/json/nodes/$node/tasks?limit=$limit")
+    suspend fun listTasks(node: String, limit: Int = 50, vmid: Int? = null): List<TaskDto> {
+        val url = buildString {
+            append("$baseUrl/api2/json/nodes/$node/tasks?limit=$limit")
+            vmid?.let { append("&vmid=$it") }
+        }
+        return http.getJson<List<TaskDto>>(url)
+    }
 
     suspend fun getTaskStatus(node: String, upid: String): TaskStatusDto {
         val encoded = URLBuilder().apply { parameters.append("upid", upid) }.parameters["upid"] ?: upid

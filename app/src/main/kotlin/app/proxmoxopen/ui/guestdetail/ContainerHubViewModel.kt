@@ -62,7 +62,7 @@ class ContainerHubViewModel @Inject constructor(
             val statusResult = guestRepo.getContainerStatus(serverId, node, vmid)
             val rrdResult = getRrd(serverId, node, vmid, type, _state.value.timeframe)
             val snapResult = guestRepo.listSnapshots(serverId, node, vmid, type)
-            val taskResult = taskRepo.listTasks(serverId, node, limit = 20)
+            val taskResult = taskRepo.listTasksForVmid(serverId, node, vmid, limit = 50)
 
             _state.update {
                 it.copy(
@@ -70,9 +70,7 @@ class ContainerHubViewModel @Inject constructor(
                     status = (statusResult as? ApiResult.Success)?.value,
                     rrd = (rrdResult as? ApiResult.Success)?.value ?: emptyList(),
                     snapshots = (snapResult as? ApiResult.Success)?.value ?: emptyList(),
-                    tasks = (taskResult as? ApiResult.Success)?.value
-                        ?.filter { t -> t.id == vmid.toString() || t.upid.contains(":$vmid:") }
-                        ?: emptyList(),
+                    tasks = (taskResult as? ApiResult.Success)?.value ?: emptyList(),
                     error = (statusResult as? ApiResult.Failure)?.error,
                 )
             }

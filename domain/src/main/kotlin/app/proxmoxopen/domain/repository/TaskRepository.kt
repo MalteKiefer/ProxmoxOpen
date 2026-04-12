@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
     suspend fun listTasks(serverId: Long, node: String, limit: Int = 50): ApiResult<List<ProxmoxTask>>
+    suspend fun listTasksForVmid(serverId: Long, node: String, vmid: Int, limit: Int = 50): ApiResult<List<ProxmoxTask>>
     suspend fun getTask(serverId: Long, node: String, upid: String): ApiResult<ProxmoxTask>
 
     /** Polls `/status` until the task is no longer running; emits each state. */

@@ -26,8 +26,16 @@ class TaskRepositoryImpl @Inject constructor(
         node: String,
         limit: Int,
     ): ApiResult<List<ProxmoxTask>> = runCatchingApi {
-        val api = apiClientFor(serverId)
-        api.listTasks(node, limit).map { it.toDomain() }
+        apiClientFor(serverId).listTasks(node, limit).map { it.toDomain() }
+    }
+
+    override suspend fun listTasksForVmid(
+        serverId: Long,
+        node: String,
+        vmid: Int,
+        limit: Int,
+    ): ApiResult<List<ProxmoxTask>> = runCatchingApi {
+        apiClientFor(serverId).listTasks(node, limit, vmid).map { it.toDomain() }
     }
 
     override suspend fun getTask(
