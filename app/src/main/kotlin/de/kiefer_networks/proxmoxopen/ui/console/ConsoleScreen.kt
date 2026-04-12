@@ -1,7 +1,9 @@
 package de.kiefer_networks.proxmoxopen.ui.console
 
+import android.content.Context
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,9 +26,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,6 +46,8 @@ fun ConsoleScreen(
     viewModel: ConsoleViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val termViewRef = remember { arrayOfNulls<TerminalView>(1) }
 
     Scaffold(
         topBar = {
@@ -53,6 +60,16 @@ fun ConsoleScreen(
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
+                    // Keyboard toggle button
+                    if (state.isConnected) {
+                        IconButton(onClick = {
+                            termViewRef[0]?.let { view ->
+                                view.requestFocus()
+                                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0)
+                            }
+                        }) { Icon(Icons.Outlined.Keyboard, contentDescription = "Keyboard") }
+                    }
                     if (!state.isConnected && !state.isConnecting) {
                         IconButton(onClick = viewModel::connect) { Icon(Icons.Outlined.Refresh, contentDescription = null) }
                     }
@@ -74,7 +91,7 @@ fun ConsoleScreen(
                     Text(state.error ?: "Error", color = MaterialTheme.colorScheme.error)
                 }
                 state.sessionReady && viewModel.terminalSession != null -> {
-                    TermuxView(viewModel.terminalSession!!, viewModel)
+                    TermuxView(viewModel.terminalSession!!, viewModel, termViewRef)
                 }
             }
         }
@@ -82,27 +99,30 @@ fun ConsoleScreen(
 }
 
 @Composable
-private fun TermuxView(session: TerminalSession, viewModel: ConsoleViewModel) {
+private fun TermuxView(session: TerminalSession, viewModel: ConsoleViewModel, ref: Array<TerminalView?>) {
     val bgColor = MaterialTheme.colorScheme.background.toArgb()
+    val context = LocalContext.current
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             TerminalView(ctx, null).apply {
                 setBackgroundColor(bgColor)
-                setTextSize(14)
+                setTextSize(18) // Bigger default font
                 attachSession(session)
                 setTerminalViewClient(object : TerminalViewClient {
-                    override fun onScale(scale: Float): Float = 14f
-                    override fun onSingleTapUp(e: MotionEvent?) {}
+                    override fun onScale(scale: Float): Float = 18f
+                    override fun onSingleTapUp(e: MotionEvent?) {
+                        // Show keyboard on tap
+                        requestFocus()
+                        val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.showSoftInput(this@apply, InputMethodManager.SHOW_IMPLICIT)
+                    }
                     override fun shouldBackButtonBeMappedToEscape() = false
                     override fun shouldEnforceCharBasedInput() = true
                     override fun shouldUseCtrlSpaceWorkaround() = false
                     override fun isTerminalViewSelected() = true
                     override fun copyModeChanged(copyMode: Boolean) {}
-                    override fun onKeyDown(keyCode: Int, e: KeyEvent?, s: TerminalSession?): Boolean {
-                        // Send key input to WebSocket
-                        return false
-                    }
+                    override fun onKeyDown(keyCode: Int, e: KeyEvent?, s: TerminalSession?): Boolean = false
                     override fun onKeyUp(keyCode: Int, e: KeyEvent?) = false
                     override fun onLongPress(event: MotionEvent?) = false
                     override fun readControlKey() = false
@@ -119,9 +139,7 @@ private fun TermuxView(session: TerminalSession, viewModel: ConsoleViewModel) {
                         return true
                     }
                     override fun onEmulatorSet() {
-                        session.emulator?.let { emu ->
-                            viewModel.updateSize(emu.mRows, emu.mColumns)
-                        }
+                        session.emulator?.let { viewModel.updateSize(it.mRows, it.mColumns) }
                     }
                     override fun logError(tag: String?, message: String?) {}
                     override fun logWarn(tag: String?, message: String?) {}
@@ -131,7 +149,15 @@ private fun TermuxView(session: TerminalSession, viewModel: ConsoleViewModel) {
                     override fun logStackTraceWithMessage(tag: String?, message: String?, e: Exception?) {}
                     override fun logStackTrace(tag: String?, e: Exception?) {}
                 })
+                isFocusable = true
+                isFocusableInTouchMode = true
                 requestFocus()
+                // Auto-show keyboard
+                post {
+                    val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+                }
+                ref[0] = this
             }
         },
         update = { view -> view.onScreenUpdated() },
