@@ -9,17 +9,15 @@ import app.proxmoxopen.ui.addserver.AddServerScreen
 import app.proxmoxopen.ui.dashboard.DashboardScreen
 import app.proxmoxopen.ui.guestdetail.GuestDetailScreen
 import app.proxmoxopen.ui.login.LoginScreen
+import app.proxmoxopen.ui.main.MainScreen
 import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
-import app.proxmoxopen.ui.serverlist.ServerListScreen
-import app.proxmoxopen.ui.settings.SettingsScreen
-import app.proxmoxopen.ui.tasklog.TaskLogScreen
 
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Route.ServerList) {
-        composable<Route.ServerList> {
-            ServerListScreen(
+    NavHost(navController = navController, startDestination = Route.Main) {
+        composable<Route.Main> {
+            MainScreen(
                 onAddServer = { navController.navigate(Route.AddServer) },
                 onOpenServer = { server -> navController.navigate(Route.Login(server.id)) },
             )
@@ -66,12 +64,6 @@ fun NavGraph() {
         }
         composable<Route.GuestDetail> {
             GuestDetailScreen(onBack = { navController.popBackStack() })
-        }
-        composable<Route.Settings> {
-            SettingsScreen(onBack = { navController.popBackStack() })
-        }
-        composable<Route.TaskLog> {
-            TaskLogScreen(onBack = { navController.popBackStack() })
         }
     }
 }

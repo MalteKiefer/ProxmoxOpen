@@ -17,21 +17,24 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 
 /**
- * Vico-backed line chart. Renders [values] as a single line series with start
- * and bottom axes. If fewer than two points are supplied a placeholder dash
- * is displayed instead.
+ * Vico-backed line chart with Material-3 theming.
+ *
+ * Renders [values] as a single line series with start and bottom axes.
+ * Shows a dash when there are fewer than two samples.
  */
 @Composable
 fun PxoLineChart(
     values: List<Double>,
+    valueFormatter: CartesianValueFormatter = percentFormatter,
     modifier: Modifier = Modifier.fillMaxWidth().height(160.dp),
 ) {
     if (values.size < 2) {
         Box(modifier, contentAlignment = Alignment.Center) {
-            Text("—", style = MaterialTheme.typography.bodyMedium)
+            Text("—", style = MaterialTheme.typography.titleLarge)
         }
         return
     }
@@ -44,10 +47,15 @@ fun PxoLineChart(
     CartesianChartHost(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(),
-            startAxis = rememberStartAxis(),
+            startAxis = rememberStartAxis(valueFormatter = valueFormatter),
             bottomAxis = rememberBottomAxis(),
         ),
         modelProducer = modelProducer,
         modifier = modifier,
     )
+}
+
+val percentFormatter: CartesianValueFormatter = CartesianValueFormatter { value, _, _ ->
+    val pct = (value * 100.0).toInt()
+    "$pct%"
 }

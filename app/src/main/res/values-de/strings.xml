@@ -2,6 +2,25 @@
 <resources>
     <string name="app_name">ProxMoxOpen</string>
 
+    <string name="tab_servers">Server</string>
+    <string name="tab_activity">Aktivität</string>
+    <string name="tab_settings">Einstellungen</string>
+
+    <string name="activity_empty_title">Keine Aktivitäten</string>
+    <string name="activity_empty_body">Laufende Aufgaben und Power-Aktionen von deinen Servern erscheinen hier.</string>
+
+    <string name="settings_section_appearance">Darstellung</string>
+    <string name="settings_section_language">Sprache</string>
+    <string name="settings_section_security">Sicherheit</string>
+    <string name="settings_section_about">Über</string>
+    <string name="setting_theme">Erscheinungsbild</string>
+    <string name="theme_system">Systemeinstellung</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="language_english">English</string>
+    <string name="language_german">Deutsch</string>
+    <string name="close">Schließen</string>
+
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>
     <string name="add_server">Server hinzufügen</string>
