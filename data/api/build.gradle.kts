@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.proxmoxopen.data.api"
+    namespace = "de.kiefer_networks.proxmoxopen.data.api"
     compileSdk = 34
     defaultConfig { minSdk = 31 }
     compileOptions {

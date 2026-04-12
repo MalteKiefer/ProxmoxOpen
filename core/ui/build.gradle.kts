@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "app.proxmoxopen.core.ui"
+    namespace = "de.kiefer_networks.proxmoxopen.core.ui"
     compileSdk = 34
 
     defaultConfig {

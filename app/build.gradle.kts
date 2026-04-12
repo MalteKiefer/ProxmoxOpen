@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "app.proxmoxopen"
+    namespace = "de.kiefer_networks.proxmoxopen"
     compileSdk = 34
 
     if (keystorePropertiesFile.exists()) {

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "app.proxmoxopen.core.common"
+    namespace = "de.kiefer_networks.proxmoxopen.core.common"
     compileSdk = 34
     defaultConfig { minSdk = 31 }
     compileOptions {
