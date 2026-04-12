@@ -95,11 +95,17 @@ private fun ProxmoxWebView(
             // Inject PVEAuthCookie BEFORE loading the page
             val cookieManager = CookieManager.getInstance()
             cookieManager.setAcceptCookie(true)
-            val domain = "https://$host:$port"
-            cookieManager.setCookie(domain, "PVEAuthCookie=$cookie; path=/; secure")
+            // Set cookie for both https and http, with and without port
+            val cookieValue = "PVEAuthCookie=$cookie; path=/"
+            cookieManager.setCookie("https://$host", cookieValue)
+            cookieManager.setCookie("https://$host:$port", cookieValue)
+            cookieManager.setCookie("http://$host", cookieValue)
+            cookieManager.setCookie("http://$host:$port", cookieValue)
+            cookieManager.setCookie(host, cookieValue)
             cookieManager.flush()
 
             WebView(context).apply {
+                CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                 setBackgroundColor(0xFF0B0B0C.toInt())
 
                 settings.apply {
@@ -118,13 +124,38 @@ private fun ProxmoxWebView(
 
                 webViewClient = object : WebViewClient() {
                     override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                        // Accept self-signed certs (TOFU — user already trusted this server)
                         handler?.proceed()
                     }
 
-                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                        // Keep all navigation inside the WebView
-                        return false
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
+
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        // Inject auth into Proxmox's ExtJS framework via localStorage + JS
+                        view?.evaluateJavascript("""
+                            (function() {
+                                try {
+                                    // Set auth in Proxmox's expected format
+                                    var authCookie = '$cookie';
+                                    if (window.Proxmox) {
+                                        window.Proxmox.UserName = 'root@pam';
+                                        window.Proxmox.CSRFPreventionToken = '';
+                                    }
+                                    // Set cookie via JS as fallback
+                                    document.cookie = 'PVEAuthCookie=' + authCookie + '; path=/';
+
+                                    // Try to auto-login if login form is visible
+                                    if (document.querySelector('.x-window')) {
+                                        // Login dialog detected — inject credentials
+                                        var loginBtn = document.querySelector('button');
+                                        if (loginBtn) {
+                                            // Force reload with cookie set
+                                            location.reload();
+                                        }
+                                    }
+                                } catch(e) { console.log('Auth inject error: ' + e); }
+                            })();
+                        """.trimIndent(), null)
                     }
                 }
 
