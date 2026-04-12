@@ -129,8 +129,8 @@ fun GuestDetailScreen(
                     IconButton(onClick = { sheetOpen = true }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     app.proxmoxopen.core.ui.component.OverflowMenu(listOf(
                         app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.edit_config_title), Icons.Outlined.Edit) { onEditConfig() },
-                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.clone_button), Icons.Outlined.Edit) { onClone() },
-                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.migrate_button), Icons.Outlined.Edit) { onMigrate() },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.clone_button), Icons.Outlined.CameraAlt) { onClone() },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.migrate_button), Icons.Outlined.Storage) { onMigrate() },
                         app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.console_title), Icons.Outlined.Terminal) { onConsole() },
                         app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.settings_title), Icons.Outlined.Settings) { onSettings() },
                         app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.delete_confirm), Icons.Outlined.Delete, tint = MaterialTheme.colorScheme.error) { deleteDialog = true },

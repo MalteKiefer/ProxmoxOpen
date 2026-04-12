@@ -90,10 +90,13 @@ fun NodeDetailScreen(
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
-                    IconButton(onClick = onStorage) { Icon(Icons.Outlined.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                    IconButton(onClick = onConsole) { Icon(Icons.Outlined.Terminal, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                    IconButton(onClick = onActivity) { Icon(Icons.Outlined.History, contentDescription = null) }
-                    IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }
+                    app.proxmoxopen.core.ui.component.OverflowMenu(listOf(
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.node_reboot), Icons.Outlined.Speed) { viewModel.nodeAction("reboot") },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.node_shutdown), Icons.Outlined.Speed, tint = MaterialTheme.colorScheme.error) { viewModel.nodeAction("shutdown") },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.storage_title), Icons.Outlined.Storage) { onStorage() },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.console_title), Icons.Outlined.Terminal) { onConsole() },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.settings_title), Icons.Outlined.Settings) { onSettings() },
+                    ))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )

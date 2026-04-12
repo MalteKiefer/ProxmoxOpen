@@ -30,6 +30,9 @@ class ClusterRepositoryImpl @Inject constructor(
         api.getNodeStatus(node).toDomain(node)
     }
 
+    override suspend fun nodeAction(serverId: Long, node: String, command: String): ApiResult<Unit> =
+        execute(serverId) { api -> api.nodeAction(node, command) }
+
     override suspend fun getNodeRrd(
         serverId: Long,
         node: String,

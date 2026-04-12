@@ -91,6 +91,8 @@
     <string name="app_lock_prompt">Authenticate to open ProxMoxOpen</string>
     <string name="app_lock_retry">Try again</string>
     <string name="search_hint">Search VMs and containers…</string>
+    <string name="node_reboot">Reboot node</string>
+    <string name="node_shutdown">Shutdown node</string>
     <string name="setting_refresh_interval">Live refresh interval</string>
 
     <!-- Server list -->

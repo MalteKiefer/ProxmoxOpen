@@ -97,4 +97,10 @@ class NodeDetailViewModel @Inject constructor(
     }
 
     fun onTabChanged() { refresh(silent = true) }
+
+    fun nodeAction(command: String) {
+        viewModelScope.launch {
+            cluster.nodeAction(serverId, nodeName, command)
+        }
+    }
 }

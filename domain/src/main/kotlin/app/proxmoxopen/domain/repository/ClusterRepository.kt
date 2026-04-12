@@ -9,6 +9,8 @@ import app.proxmoxopen.domain.result.ApiResult
 interface ClusterRepository {
     suspend fun getCluster(serverId: Long): ApiResult<Cluster>
     suspend fun getNode(serverId: Long, node: String): ApiResult<Node>
+    suspend fun nodeAction(serverId: Long, node: String, command: String): ApiResult<Unit>
+
     suspend fun getNodeRrd(
         serverId: Long,
         node: String,

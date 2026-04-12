@@ -240,6 +240,17 @@ class ProxmoxApiClient(
             ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
     }
 
+    // --- Node power actions --------------------------------------------------
+
+    suspend fun nodeAction(node: String, command: String): String? {
+        val form = Parameters.build { append("command", command) }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/status",
+            formParameters = form,
+        ) { applyAuth() }
+        return response.body<ApiResponse<String?>>().data
+    }
+
     // --- Terminal proxy (nodes + LXC) ----------------------------------------
 
     /** Shell console for a node. */

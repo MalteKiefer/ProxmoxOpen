@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -86,6 +88,18 @@ fun DashboardScreen(
     )
 
     Scaffold(
+        bottomBar = {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+                tabs.forEachIndexed { index, label ->
+                    val icon = when (index) { 0 -> Icons.Outlined.Storage; 1 -> Icons.Outlined.Computer; else -> Icons.Outlined.Inventory2 }
+                    NavigationBarItem(
+                        selected = selectedTab == index, onClick = { selectedTab = index },
+                        icon = { Icon(icon, contentDescription = null) }, label = { Text(label) },
+                        
+                    )
+                }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(state.serverName.ifBlank { stringResource(R.string.dashboard_title) }) },
@@ -95,21 +109,11 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        val firstNode = state.cluster?.nodes?.firstOrNull()?.name
-                        if (firstNode != null) onStorage(firstNode)
-                    }) {
-                        Icon(Icons.Outlined.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    }
-                    IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = null)
-                    }
-                    IconButton(onClick = onActivity) {
-                        Icon(Icons.Outlined.History, contentDescription = null)
-                    }
-                    IconButton(onClick = onSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = null)
-                    }
+                    IconButton(onClick = viewModel::refresh) { Icon(Icons.Outlined.Refresh, contentDescription = null) }
+                    app.proxmoxopen.core.ui.component.OverflowMenu(listOf(
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.storage_title), Icons.Outlined.Storage) { val n = state.cluster?.nodes?.firstOrNull()?.name; if (n != null) onStorage(n) },
+                        app.proxmoxopen.core.ui.component.MenuItem(stringResource(R.string.settings_title), Icons.Outlined.Settings) { onSettings() },
+                    ))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
@@ -159,15 +163,6 @@ fun DashboardScreen(
                                 icon = Icons.Outlined.Memory,
                                 modifier = Modifier.weight(1f),
                             )
-                        }
-                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                            tabs.forEachIndexed { index, label ->
-                                SegmentedButton(
-                                    selected = selectedTab == index,
-                                    onClick = { selectedTab = index },
-                                    shape = SegmentedButtonDefaults.itemShape(index, tabs.size),
-                                ) { Text(label) }
-                            }
                         }
                         if (selectedTab > 0) {
                             androidx.compose.material3.OutlinedTextField(
