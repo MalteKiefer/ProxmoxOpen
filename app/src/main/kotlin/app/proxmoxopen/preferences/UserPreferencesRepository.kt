@@ -26,8 +26,8 @@ class UserPreferencesRepository @Inject constructor(
     val preferences: Flow<UserPreferences> = dataStore.data.map { prefs ->
         UserPreferences(
             themeMode = prefs[THEME_KEY]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
-                ?: ThemeMode.SYSTEM,
-            useDynamicColor = prefs[DYNAMIC_COLOR_KEY] ?: true,
+                ?: ThemeMode.DARK,
+            useDynamicColor = prefs[DYNAMIC_COLOR_KEY] ?: false,
             language = prefs[LANGUAGE_KEY]?.let { runCatching { LanguageOption.valueOf(it) }.getOrNull() }
                 ?: LanguageOption.SYSTEM,
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,

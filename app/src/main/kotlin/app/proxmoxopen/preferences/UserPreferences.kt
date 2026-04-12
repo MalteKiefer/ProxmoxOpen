@@ -9,8 +9,8 @@ enum class LanguageOption(val languageTag: String?) {
 }
 
 data class UserPreferences(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val useDynamicColor: Boolean = true,
+    val themeMode: ThemeMode = ThemeMode.DARK,
+    val useDynamicColor: Boolean = false,
     val language: LanguageOption = LanguageOption.SYSTEM,
     val appLockEnabled: Boolean = false,
 )

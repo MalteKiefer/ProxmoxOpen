@@ -37,6 +37,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Default to dark Proxmox brand colors before the DataStore emits
+            // its first value, to avoid a one-frame light flash.
             ProxMoxOpenTheme(
                 useDarkTheme = when (prefs.themeMode) {
                     ThemeMode.SYSTEM -> null

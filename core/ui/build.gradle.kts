@@ -34,6 +34,8 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
-    api(libs.vico.compose)
-    api(libs.vico.compose.m3)
+    // Vico is still on the classpath because we expose
+    // CartesianValueFormatter in the public chart API. The Canvas chart
+    // implementation does not use it at runtime.
+    api(libs.vico.core)
 }

@@ -7,16 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -37,14 +35,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.proxmoxopen.R
 import app.proxmoxopen.core.ui.component.BadgeTone
+import app.proxmoxopen.core.ui.component.ChartCard
 import app.proxmoxopen.core.ui.component.ErrorState
 import app.proxmoxopen.core.ui.component.HeroHeader
 import app.proxmoxopen.core.ui.component.LoadingState
 import app.proxmoxopen.core.ui.component.MetricCard
-import app.proxmoxopen.core.ui.component.PxoLineChart
 import app.proxmoxopen.core.ui.component.SectionLabel
 import app.proxmoxopen.core.ui.component.StatusBadge
 import app.proxmoxopen.domain.model.NodeStatus
+import app.proxmoxopen.domain.model.RrdPoint
 import app.proxmoxopen.domain.model.RrdTimeframe
 import app.proxmoxopen.ui.format.formatBytes
 import app.proxmoxopen.ui.format.formatUptime
@@ -154,39 +153,52 @@ fun NodeDetailScreen(
                     }
                 }
 
-                SectionLabel(stringResource(R.string.metric_cpu))
+                SectionLabel(stringResource(R.string.charts_title))
                 TimeframeRow(state.timeframe, viewModel::setTimeframe)
-                ChartCard {
-                    val cpuSeries = state.rrd.mapNotNull { it.cpu }
-                    PxoLineChart(values = cpuSeries)
-                }
 
-                SectionLabel(stringResource(R.string.metric_network))
-                ChartCard {
-                    val netSeries = state.rrd.mapNotNull { it.netIn }
-                    PxoLineChart(
-                        values = netSeries,
-                        valueFormatter = { v, _, _ -> formatBytes(v.toLong()) + "/s" },
-                    )
-                }
+                MetricCharts(state.rrd, state.node?.memTotal ?: 0L)
             }
         }
     }
 }
 
 @Composable
-private fun ChartCard(content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            content()
-        }
-    }
+private fun MetricCharts(rrd: List<RrdPoint>, memTotal: Long) {
+    val cpu = rrd.mapNotNull { it.cpu }
+    val mem = rrd.mapNotNull { it.memUsed }
+    val netIn = rrd.mapNotNull { it.netIn }
+    val diskRead = rrd.mapNotNull { it.diskRead }
+
+    val cpuCurrent = cpu.lastOrNull() ?: 0.0
+    val memCurrent = mem.lastOrNull() ?: 0.0
+    val netCurrent = netIn.lastOrNull() ?: 0.0
+    val diskCurrent = diskRead.lastOrNull() ?: 0.0
+
+    ChartCard(
+        icon = Icons.Outlined.Speed,
+        title = stringResource(R.string.metric_cpu),
+        currentValue = "${(cpuCurrent * 100).toInt()}%",
+        values = cpu,
+    )
+    ChartCard(
+        icon = Icons.Outlined.Memory,
+        title = stringResource(R.string.metric_memory),
+        currentValue = formatBytes(memCurrent.toLong()),
+        secondaryValue = if (memTotal > 0) "of ${formatBytes(memTotal)}" else null,
+        values = mem,
+    )
+    ChartCard(
+        icon = Icons.Outlined.NetworkCheck,
+        title = stringResource(R.string.metric_network),
+        currentValue = "${formatBytes(netCurrent.toLong())}/s",
+        values = netIn,
+    )
+    ChartCard(
+        icon = Icons.Outlined.Storage,
+        title = stringResource(R.string.metric_disk),
+        currentValue = "${formatBytes(diskCurrent.toLong())}/s",
+        values = diskRead,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

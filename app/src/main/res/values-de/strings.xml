@@ -29,6 +29,7 @@
     <string name="dashboard_running">Laufend</string>
     <string name="dashboard_no_guests">Keine Gäste auf diesem Server.</string>
     <string name="power_actions">Power-Aktionen</string>
+    <string name="charts_title">Performance</string>
 
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>
@@ -75,8 +76,8 @@
 
     <string name="dashboard_title">Übersicht</string>
     <string name="tab_nodes">Nodes</string>
-    <string name="tab_vms">Virtuelle Maschinen</string>
-    <string name="tab_containers">Container</string>
+    <string name="tab_vms">VMs</string>
+    <string name="tab_containers">CTs</string>
     <string name="pull_to_refresh">Zum Aktualisieren ziehen</string>
 
     <string name="node_status_online">Online</string>

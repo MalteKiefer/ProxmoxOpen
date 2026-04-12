@@ -32,6 +32,7 @@
     <string name="dashboard_running">Running</string>
     <string name="dashboard_no_guests">No guests on this server.</string>
     <string name="power_actions">Power actions</string>
+    <string name="charts_title">Performance</string>
 
     <!-- Server list -->
     <string name="server_list_title">Servers</string>
@@ -84,8 +85,8 @@
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>
     <string name="tab_nodes">Nodes</string>
-    <string name="tab_vms">Virtual machines</string>
-    <string name="tab_containers">Containers</string>
+    <string name="tab_vms">VMs</string>
+    <string name="tab_containers">CTs</string>
     <string name="pull_to_refresh">Pull to refresh</string>
 
     <!-- Node detail -->

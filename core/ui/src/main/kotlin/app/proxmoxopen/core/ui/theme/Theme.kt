@@ -41,20 +41,28 @@ private val DarkColors = darkColorScheme(
     onBackground = DarkOnBackground,
     surface = DarkSurface,
     onSurface = DarkOnSurface,
+    surfaceVariant = ProxmoxSurfaceHigh,
+    onSurfaceVariant = ProxmoxOnSurfaceVariant,
+    surfaceContainer = ProxmoxSurface,
+    surfaceContainerLow = ProxmoxNearBlack,
+    surfaceContainerLowest = ProxmoxBlack,
+    surfaceContainerHigh = ProxmoxSurfaceHigh,
+    surfaceContainerHighest = ProxmoxSurfaceHigher,
+    outline = ProxmoxOutline,
     error = DarkError,
     onError = DarkOnError,
 )
 
 /**
- * Material 3 theme for ProxMoxOpen.
- *
- * @param useDarkTheme when `null` the system setting is followed; supply `true`/`false` to force.
- * @param dynamicColor whether to use Material You dynamic color on Android 12+.
+ * Material 3 theme for ProxMoxOpen, locked to the Proxmox brand palette
+ * (orange on near-black) by default. Pass `useDarkTheme = false` to opt
+ * into the light scheme; dynamic color is supported but not used by
+ * default because the brand palette is what we want to ship.
  */
 @Composable
 fun ProxMoxOpenTheme(
     useDarkTheme: Boolean? = null,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val resolvedDark = useDarkTheme ?: isSystemInDarkTheme()
@@ -71,7 +79,10 @@ fun ProxMoxOpenTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
             window.statusBarColor = scheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !resolvedDark
+            window.navigationBarColor = scheme.background.toArgb()
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !resolvedDark
+            controller.isAppearanceLightNavigationBars = !resolvedDark
         }
     }
 
