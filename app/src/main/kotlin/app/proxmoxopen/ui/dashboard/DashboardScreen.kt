@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -165,13 +166,21 @@ fun DashboardScreen(
                             )
                         }
                         if (selectedTab > 0) {
-                            androidx.compose.material3.OutlinedTextField(
+                            androidx.compose.material3.TextField(
                                 value = state.searchQuery,
                                 onValueChange = viewModel::onSearch,
-                                placeholder = { Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodySmall) },
+                                placeholder = { Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                 singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 textStyle = MaterialTheme.typography.bodyMedium,
+                                shape = RoundedCornerShape(24.dp),
+                                colors = androidx.compose.material3.TextFieldDefaults.colors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                ),
+                                leadingIcon = { Icon(Icons.Outlined.Memory, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
                             )
                         }
                     }
