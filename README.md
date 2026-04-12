@@ -39,3 +39,9 @@ See [`SECURITY.md`](SECURITY.md) for the responsible disclosure process.
 ## License
 
 GPL-3.0-or-later. See [`LICENSE`](LICENSE).
+
+## Acknowledgments
+
+- **[Termux](https://github.com/termux/termux-app)** — Terminal emulator and view components used for the native LXC/Node console (GPL-3.0)
+- **[Proxmox VE](https://www.proxmox.com/)** — The server virtualization platform this app connects to
+- **[Vico](https://github.com/patrykandpatrick/vico)** — Compose chart library (Apache-2.0)

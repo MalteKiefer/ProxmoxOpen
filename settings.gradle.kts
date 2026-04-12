@@ -8,4 +8,5 @@ dependencyResolutionManagement {
 rootProject.name = "ProxMoxOpen"
 include(":app", ":domain",
         ":data:api", ":data:db", ":data:secrets",
-        ":core:ui", ":core:common")
+        ":core:ui", ":core:common",
+        ":terminal-emulator", ":terminal-view")

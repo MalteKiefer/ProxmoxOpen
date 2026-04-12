@@ -105,6 +105,8 @@ dependencies {
 
     implementation(libs.timber)
     implementation(libs.okhttp)
+    implementation(project(":terminal-emulator"))
+    implementation(project(":terminal-view"))
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
