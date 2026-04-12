@@ -80,6 +80,7 @@
     <string name="config_stop_hint">Einige Änderungen erfordern, dass der Container vorher gestoppt wird.</string>
     <string name="config_options_todo">Konsolenmodus, TTY-Anzahl, Hookscript und Features-Bearbeitung folgen in einem zukünftigen Update.</string>
     <string name="config_disks_todo">Rootfs- und Mountpoint-Bearbeitung folgen in einem zukünftigen Update.</string>
+    <string name="backup_dialog_title">Backup erstellen</string>
 
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>

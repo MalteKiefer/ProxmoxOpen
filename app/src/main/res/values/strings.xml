@@ -85,6 +85,7 @@
     <string name="config_stop_hint">Some changes require the container to be stopped first.</string>
     <string name="config_options_todo">Console mode, TTY count, hookscript and features editing will be available in a future update.</string>
     <string name="config_disks_todo">Rootfs and mount point editing will be available in a future update.</string>
+    <string name="backup_dialog_title">Create backup</string>
 
     <!-- Server list -->
     <string name="server_list_title">Servers</string>

@@ -62,7 +62,11 @@ interface GuestRepository {
         storage: String?,
         mode: String,
         compress: String?,
+        protected: Boolean = false,
+        notesTemplate: String? = null,
     ): ApiResult<String>
+
+    suspend fun listBackupStorages(serverId: Long, node: String): ApiResult<List<String>>
 
     suspend fun getGuestConfig(
         serverId: Long,

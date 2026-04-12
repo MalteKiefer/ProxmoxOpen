@@ -78,9 +78,15 @@ class GuestRepositoryImpl @Inject constructor(
 
     override suspend fun createBackup(
         serverId: Long, node: String, vmid: Int, storage: String?, mode: String, compress: String?,
+        protected: Boolean, notesTemplate: String?,
     ): ApiResult<String> = call(serverId) { api ->
-        api.createBackup(node, vmid, storage, mode, compress)
+        api.createBackup(node, vmid, storage, mode, compress, protected, notesTemplate)
     }
+
+    override suspend fun listBackupStorages(serverId: Long, node: String): ApiResult<List<String>> =
+        call(serverId) { api ->
+            api.listBackupStorages(node).map { it.storage }
+        }
 
     override suspend fun getGuestConfig(
         serverId: Long, node: String, vmid: Int, type: GuestType,
