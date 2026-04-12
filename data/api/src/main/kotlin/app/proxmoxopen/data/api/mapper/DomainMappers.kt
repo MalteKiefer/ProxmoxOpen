@@ -2,6 +2,9 @@ package app.proxmoxopen.data.api.mapper
 
 import app.proxmoxopen.data.api.dto.ClusterResourceDto
 import app.proxmoxopen.data.api.dto.ClusterStatusDto
+import app.proxmoxopen.data.api.dto.GuestConfigDto
+import app.proxmoxopen.domain.model.GuestConfig
+import app.proxmoxopen.domain.model.NetworkInterface
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
 import app.proxmoxopen.data.api.dto.NodeStatusDto
@@ -95,6 +98,27 @@ fun GuestStatusDto.toDomain(node: String, type: GuestType): Guest = Guest(
     uptimeSeconds = uptime ?: 0,
     tags = tags?.split(';', ',')?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
 )
+
+fun GuestConfigDto.toGuestConfig(): GuestConfig {
+    val nets = mutableListOf<NetworkInterface>()
+    net0?.let { nets += NetworkInterface.parse("net0", it) }
+    net1?.let { nets += NetworkInterface.parse("net1", it) }
+    net2?.let { nets += NetworkInterface.parse("net2", it) }
+    net3?.let { nets += NetworkInterface.parse("net3", it) }
+    return GuestConfig(
+        name = name ?: hostname ?: "",
+        hostname = hostname,
+        onboot = onboot == 1,
+        startup = startup,
+        description = description,
+        nameserver = nameserver,
+        searchdomain = searchdomain,
+        cores = cores,
+        memory = memory,
+        swap = swap,
+        networkInterfaces = nets,
+    )
+}
 
 fun RrdPointDto.toDomain(): RrdPoint = RrdPoint(
     time = time,

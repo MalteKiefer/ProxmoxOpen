@@ -3,6 +3,7 @@ package app.proxmoxopen.data.api
 import app.proxmoxopen.data.api.dto.ApiResponse
 import app.proxmoxopen.data.api.dto.ClusterResourceDto
 import app.proxmoxopen.data.api.dto.ClusterStatusDto
+import app.proxmoxopen.data.api.dto.GuestConfigDto
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
 import app.proxmoxopen.data.api.dto.NodeStatusDto
@@ -92,6 +93,25 @@ class ProxmoxApiClient(
     ): List<RrdPointDto> = http.getJson<List<RrdPointDto>>(
         "$baseUrl/api2/json/nodes/$node/$type/$vmid/rrddata?timeframe=$timeframe",
     )
+
+    // --- Config --------------------------------------------------------------
+
+    suspend fun getGuestConfig(node: String, type: String, vmid: Int): GuestConfigDto =
+        http.getJson<GuestConfigDto>("$baseUrl/api2/json/nodes/$node/$type/$vmid/config")
+
+    suspend fun setGuestConfig(
+        node: String,
+        type: String,
+        vmid: Int,
+        params: Map<String, String>,
+    ): String? {
+        val form = Parameters.build { params.forEach { (k, v) -> append(k, v) } }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/$type/$vmid/config",
+            formParameters = form,
+        ) { applyAuth(); method = io.ktor.http.HttpMethod.Put }
+        return response.body<ApiResponse<String?>>().data
+    }
 
     // --- Power actions -----------------------------------------------------
 

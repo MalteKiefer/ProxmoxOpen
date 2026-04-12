@@ -36,6 +36,16 @@
     <string name="edit_server_title">Edit server</string>
     <string name="save">Save</string>
     <string name="edit_config_title">Configuration</string>
+    <string name="config_section_general">General</string>
+    <string name="config_section_dns">DNS</string>
+    <string name="config_section_network">Network interfaces</string>
+    <string name="config_name">Name</string>
+    <string name="config_hostname">Hostname</string>
+    <string name="config_onboot">Start at boot</string>
+    <string name="config_nameserver">Nameserver</string>
+    <string name="config_searchdomain">Search domain</string>
+    <string name="config_ip">IP address (CIDR)</string>
+    <string name="config_gateway">Gateway</string>
 
     <!-- Server list -->
     <string name="server_list_title">Servers</string>
