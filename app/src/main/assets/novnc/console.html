@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Console</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0B0B0C; overflow: hidden; width: 100vw; height: 100vh; }
+  #screen { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="screen"></div>
+<script type="module">
+import RFB from './core/rfb.js';
+
+const params = new URLSearchParams(window.location.search);
+const host = params.get('host');
+const port = params.get('port') || '8006';
+const vmid = params.get('vmid') || '0';
+const node = params.get('node');
+const type = params.get('type'); // 'lxc', 'qemu', 'node'
+const vncticket = params.get('vncticket');
+const token = params.get('token'); // PVEAuthCookie
+
+// Build WebSocket URL
+let wsPath;
+if (type === 'node') {
+  wsPath = `/api2/json/nodes/${node}/vncwebsocket`;
+} else if (type === 'lxc') {
+  wsPath = `/api2/json/nodes/${node}/lxc/${vmid}/vncwebsocket`;
+} else {
+  wsPath = `/api2/json/nodes/${node}/qemu/${vmid}/vncwebsocket`;
+}
+
+const wsUrl = `wss://${host}:${port}${wsPath}?port=${encodeURIComponent(params.get('wsport'))}&vncticket=${encodeURIComponent(vncticket)}`;
+
+// Set auth cookie
+document.cookie = `PVEAuthCookie=${token}; path=/; secure; SameSite=None`;
+
+try {
+  const rfb = new RFB(document.getElementById('screen'), wsUrl, {
+    credentials: { password: vncticket },
+    wsProtocols: ['binary'],
+  });
+  rfb.viewOnly = false;
+  rfb.scaleViewport = true;
+  rfb.resizeSession = true;
+  rfb.showDotCursor = true;
+
+  rfb.addEventListener('connect', () => {
+    window.ProxmoxBridge?.onConnected?.();
+    document.title = 'Connected';
+  });
+  rfb.addEventListener('disconnect', (e) => {
+    window.ProxmoxBridge?.onDisconnected?.(e.detail.clean ? 'clean' : 'error');
+    document.title = 'Disconnected';
+  });
+  rfb.addEventListener('desktopname', (e) => {
+    document.title = e.detail.name;
+  });
+} catch (e) {
+  document.getElementById('screen').textContent = 'Error: ' + e.message;
+  window.ProxmoxBridge?.onError?.(e.message);
+}
+</script>
+</body>
+</html>

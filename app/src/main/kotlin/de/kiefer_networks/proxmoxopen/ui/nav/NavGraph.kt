@@ -17,7 +17,7 @@ import de.kiefer_networks.proxmoxopen.ui.serverlist.EditServerScreen
 import de.kiefer_networks.proxmoxopen.ui.settings.SettingsScreen
 import de.kiefer_networks.proxmoxopen.ui.about.AboutScreen
 import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
-// Console: will use noVNC WebView
+import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
@@ -143,7 +143,7 @@ fun NavGraph() {
         composable<Route.GuestConfig> {
             GuestConfigScreen(onBack = { nav.popBackStack() })
         }
-        // Console: coming soon with noVNC
+        composable<Route.Console> { ConsoleScreen(onBack = { nav.popBackStack() }) }
         composable<Route.TaskDetail> {
             TaskDetailScreen(onBack = { nav.popBackStack() })
         }
