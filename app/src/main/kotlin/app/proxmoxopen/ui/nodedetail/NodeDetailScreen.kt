@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -69,6 +70,7 @@ fun NodeDetailScreen(
     onBack: () -> Unit,
     onSettings: () -> Unit = {},
     onActivity: () -> Unit = {},
+    onConsole: () -> Unit = {},
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -87,6 +89,7 @@ fun NodeDetailScreen(
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
                 actions = {
+                    IconButton(onClick = onConsole) { Icon(Icons.Outlined.Terminal, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = onActivity) { Icon(Icons.Outlined.History, contentDescription = null) }
                     IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = null) }
                 },

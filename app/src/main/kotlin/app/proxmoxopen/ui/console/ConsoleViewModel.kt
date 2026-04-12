@@ -35,14 +35,12 @@ class ConsoleViewModel @Inject constructor(
     val serverId = route.serverId
     val node = route.node
     val vmid = route.vmid
-    val type = route.type
+    val type = route.type  // "qemu", "lxc", or "node"
 
     private val _state = MutableStateFlow(ConsoleUiState())
     val state = _state.asStateFlow()
 
-    init {
-        load()
-    }
+    init { load() }
 
     fun load() {
         _state.update { it.copy(isLoading = true, error = null) }
@@ -54,27 +52,48 @@ class ConsoleViewModel @Inject constructor(
                 val session = sessionManager.getSession(serverId)
                     ?: run { _state.update { it.copy(isLoading = false, error = "Not authenticated") }; return@launch }
 
-                val apiClient = sessionManager.apiClient(server, null)
-                val vncProxy = apiClient.createVncProxy(node, type, vmid)
+                // Create the proxy ticket based on console type
+                val credentials = if (server.realm == app.proxmoxopen.domain.model.Realm.PVE_TOKEN) {
+                    val secret = serverRepository.getTokenSecret(serverId)
+                    if (secret != null) app.proxmoxopen.domain.model.Credentials.ApiToken(
+                        username = server.username ?: "root",
+                        realm = server.realm,
+                        tokenId = server.tokenId ?: "",
+                        tokenSecret = secret,
+                    ) else null
+                } else null
 
-                val consoleType = when (type) {
-                    "qemu" -> "kvm"
-                    "lxc" -> "lxc"
-                    else -> "kvm"
+                val apiClient = sessionManager.apiClient(server, credentials)
+
+                // Request the appropriate proxy
+                when (type) {
+                    "node" -> apiClient.createNodeTermProxy(node)
+                    "lxc" -> apiClient.createLxcTermProxy(node, vmid)
+                    "qemu" -> apiClient.createVncProxy(node, "qemu", vmid)
+                    else -> apiClient.createVncProxy(node, type, vmid)
                 }
 
-                val url = "https://${server.host}:${server.port}/" +
-                    "?console=$consoleType" +
-                    "&novnc=1" +
-                    "&vmid=$vmid" +
-                    "&vmname=" +
-                    "&node=$node" +
-                    "&resize=off"
+                // Build the console URL
+                val consoleParam = when (type) {
+                    "node" -> "shell"
+                    "lxc" -> "lxc"
+                    "qemu" -> "kvm"
+                    else -> "kvm"
+                }
+                val urlBuilder = StringBuilder("https://${server.host}:${server.port}/")
+                urlBuilder.append("?console=$consoleParam")
+                urlBuilder.append("&novnc=1")
+                urlBuilder.append("&node=$node")
+                urlBuilder.append("&resize=off")
+                if (type != "node") {
+                    urlBuilder.append("&vmid=$vmid")
+                    urlBuilder.append("&vmname=")
+                }
 
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        consoleUrl = url,
+                        consoleUrl = urlBuilder.toString(),
                         authTicket = session.ticket,
                         serverHost = server.host,
                         serverPort = server.port,

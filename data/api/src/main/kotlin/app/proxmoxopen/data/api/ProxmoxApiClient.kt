@@ -234,6 +234,22 @@ class ProxmoxApiClient(
             ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
     }
 
+    // --- Terminal proxy (nodes + LXC) ----------------------------------------
+
+    /** Shell console for a node. */
+    suspend fun createNodeTermProxy(node: String): app.proxmoxopen.data.api.dto.VncProxyDto {
+        val response = http.post("$baseUrl/api2/json/nodes/$node/termproxy") { applyAuth() }
+        return response.body<ApiResponse<app.proxmoxopen.data.api.dto.VncProxyDto>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty termproxy response")
+    }
+
+    /** Terminal for an LXC container. */
+    suspend fun createLxcTermProxy(node: String, vmid: Int): app.proxmoxopen.data.api.dto.VncProxyDto {
+        val response = http.post("$baseUrl/api2/json/nodes/$node/lxc/$vmid/termproxy") { applyAuth() }
+        return response.body<ApiResponse<app.proxmoxopen.data.api.dto.VncProxyDto>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty termproxy response")
+    }
+
     // --- QEMU VM specific ----------------------------------------------------
 
     suspend fun getVmStatus(node: String, vmid: Int): VmCurrentStatusDto =

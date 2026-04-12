@@ -21,6 +21,6 @@ sealed interface Route {
         val serverId: Long, val node: String, val vmid: Int, val type: String,
     ) : Route
     @Serializable data class Console(
-        val serverId: Long, val node: String, val vmid: Int, val type: String,
+        val serverId: Long, val node: String, val vmid: Int = 0, val type: String,
     ) : Route
 }

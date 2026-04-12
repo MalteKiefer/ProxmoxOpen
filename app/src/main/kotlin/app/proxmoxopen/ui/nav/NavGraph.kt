@@ -76,11 +76,15 @@ fun NavGraph() {
                 onActivity = { nav.navigate(Route.Activity) },
             )
         }
-        composable<Route.NodeDetail> {
+        composable<Route.NodeDetail> { entry ->
+            val route = entry.toRoute<Route.NodeDetail>()
             NodeDetailScreen(
                 onBack = { nav.popBackStack() },
                 onSettings = { nav.navigate(Route.Settings) },
                 onActivity = { nav.navigate(Route.Activity) },
+                onConsole = {
+                    nav.navigate(Route.Console(route.serverId, route.node, type = "node"))
+                },
             )
         }
         composable<Route.GuestDetail> { entry ->
