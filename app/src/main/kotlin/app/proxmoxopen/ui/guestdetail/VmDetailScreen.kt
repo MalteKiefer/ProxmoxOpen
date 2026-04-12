@@ -106,7 +106,7 @@ fun VmDetailScreen(
     var createSnapDialog by remember { mutableStateOf(false) }
     var backupDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(selectedTab) { viewModel.onTabChanged() }
+    LaunchedEffect(selectedTab) { viewModel.onTabChanged(selectedTab) }
 
     Scaffold(
         topBar = {
@@ -176,9 +176,40 @@ fun VmDetailScreen(
             }
             MB("CPU", vm.cpuUsage.toFloat(), "%.1f%% of %d CPU(s)".format(vm.cpuUsage * 100, vm.cpuCount))
             MB("Memory", if (vm.memTotal > 0) vm.memUsed.toFloat() / vm.memTotal else 0f, "${formatBytes(vm.memUsed)} / ${formatBytes(vm.memTotal)}")
-            MB("Bootdisk", if (vm.diskTotal > 0) vm.diskUsed.toFloat() / vm.diskTotal else 0f, "${formatBytes(vm.diskUsed)} / ${formatBytes(vm.diskTotal)}")
+            // Disk: use config size if status reports 0
+            val diskSize = if (vm.diskTotal > 0) vm.diskTotal else {
+                cfg?.disks?.firstOrNull()?.second?.let { raw ->
+                    val sizeStr = app.proxmoxopen.ui.format.parseDiskString(raw).size
+                    sizeStr?.replace("G", "")?.toDoubleOrNull()?.let { (it * 1073741824).toLong() }
+                } ?: 0L
+            }
+            val diskFrac = if (diskSize > 0) vm.diskUsed.toFloat() / diskSize.toFloat() else 0f
+            MB("Bootdisk", diskFrac, "${formatBytes(vm.diskUsed)} / ${formatBytes(diskSize)}")
             // Disks
-            cfg?.disks?.let { disks -> if (disks.isNotEmpty()) { SectionLabel("Disks"); disks.forEach { (id, raw) -> IR(id, raw.take(60) + if (raw.length > 60) "…" else "") } } }
+            cfg?.disks?.let { disks ->
+                if (disks.isNotEmpty()) {
+                    SectionLabel("Disks")
+                    disks.forEach { (id, raw) ->
+                        val parsed = app.proxmoxopen.ui.format.parseDiskString(raw)
+                        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(id, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+                                    parsed.size?.let { Text(it, style = MaterialTheme.typography.labelMedium) }
+                                }
+                                Text(parsed.storage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                val badges = mutableListOf<String>()
+                                parsed.format?.let { badges += it }
+                                if (parsed.discard) badges += "TRIM"
+                                if (parsed.ssd) badges += "SSD"
+                                if (parsed.iothread) badges += "IOthread"
+                                parsed.cache?.let { badges += "cache=$it" }
+                                if (badges.isNotEmpty()) Text(badges.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
             // IPs
             if (vm.ipAddresses.any { it.name != "lo" }) {
                 SectionLabel("IPs (Guest Agent)")

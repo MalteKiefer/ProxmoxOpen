@@ -107,7 +107,7 @@ fun GuestDetailScreen(
     var createSnapDialog by remember { mutableStateOf(false) }
     var backupDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(selectedTab) { viewModel.onTabChanged() }
+    LaunchedEffect(selectedTab) { viewModel.onTabChanged(selectedTab) }
 
     Scaffold(
         topBar = {

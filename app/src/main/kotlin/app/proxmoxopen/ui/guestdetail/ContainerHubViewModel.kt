@@ -67,8 +67,10 @@ class ContainerHubViewModel @Inject constructor(
 
     private var autoRefreshJob: Job? = null
 
+    private var currentTab = 0
+
     init {
-        refresh()
+        loadTab(0)
         startAutoRefresh()
     }
 
@@ -80,49 +82,44 @@ class ContainerHubViewModel @Inject constructor(
                 if (interval == RefreshInterval.OFF) return@collectLatest
                 while (true) {
                     delay(interval.seconds * 1000L)
-                    refresh(silent = true)
+                    loadTab(currentTab, silent = true)
                 }
             }
         }
     }
 
-    fun refresh(silent: Boolean = false) {
+    fun refresh(silent: Boolean = false) { loadTab(currentTab, silent) }
+
+    fun onTabChanged(tab: Int) {
+        currentTab = tab
+        loadTab(tab, silent = true)
+    }
+
+    private fun loadTab(tab: Int, silent: Boolean = false) {
         _state.update {
             if (silent) it.copy(isRefreshing = true, error = null)
             else it.copy(isLoading = it.status == null, isRefreshing = true, error = null)
         }
         viewModelScope.launch {
+            // Always load status (lightweight, needed for all tabs)
             val statusResult = guestRepo.getContainerStatus(serverId, node, vmid)
-            val rrdResult = getRrd(serverId, node, vmid, type, _state.value.timeframe)
-            val snapResult = guestRepo.listSnapshots(serverId, node, vmid, type)
-            val taskResult = taskRepo.listTasksForVmid(serverId, node, vmid, limit = 50)
-            val storagesResult = guestRepo.listBackupStorages(serverId, node)
+            _state.update { it.copy(status = (statusResult as? ApiResult.Success)?.value ?: it.status, error = (statusResult as? ApiResult.Failure)?.error) }
 
-            val storages = (storagesResult as? ApiResult.Success)?.value ?: _state.value.backupStorages
-            val selectedStorage = _state.value.selectedBackupStorage ?: storages.firstOrNull()
-            val backupsResult = if (selectedStorage != null) {
-                guestRepo.listBackups(serverId, node, selectedStorage, vmid)
-            } else null
-
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    status = (statusResult as? ApiResult.Success)?.value ?: it.status,
-                    rrd = (rrdResult as? ApiResult.Success)?.value ?: it.rrd,
-                    snapshots = (snapResult as? ApiResult.Success)?.value ?: it.snapshots,
-                    tasks = (taskResult as? ApiResult.Success)?.value ?: it.tasks,
-                    backupStorages = storages,
-                    selectedBackupStorage = selectedStorage,
-                    backups = (backupsResult as? ApiResult.Success)?.value ?: it.backups,
-                    error = (statusResult as? ApiResult.Failure)?.error,
-                )
+            // Load tab-specific data only
+            when (tab) {
+                0 -> { /* Summary — status is enough */ }
+                1 -> { val r = getRrd(serverId, node, vmid, type, _state.value.timeframe); _state.update { it.copy(rrd = (r as? ApiResult.Success)?.value ?: it.rrd) } }
+                2 -> { val r = guestRepo.listSnapshots(serverId, node, vmid, type); _state.update { it.copy(snapshots = (r as? ApiResult.Success)?.value ?: it.snapshots) } }
+                3 -> {
+                    val storages = (guestRepo.listBackupStorages(serverId, node) as? ApiResult.Success)?.value ?: _state.value.backupStorages
+                    val sel = _state.value.selectedBackupStorage ?: storages.firstOrNull()
+                    val backups = sel?.let { (guestRepo.listBackups(serverId, node, it, vmid) as? ApiResult.Success)?.value } ?: emptyList()
+                    _state.update { it.copy(backupStorages = storages, selectedBackupStorage = sel, backups = backups) }
+                }
+                4 -> { val r = taskRepo.listTasksForVmid(serverId, node, vmid, limit = 50); _state.update { it.copy(tasks = (r as? ApiResult.Success)?.value ?: it.tasks) } }
             }
+            _state.update { it.copy(isLoading = false, isRefreshing = false) }
         }
-    }
-
-    fun onTabChanged() {
-        refresh(silent = true)
     }
 
     fun setTimeframe(tf: RrdTimeframe) {

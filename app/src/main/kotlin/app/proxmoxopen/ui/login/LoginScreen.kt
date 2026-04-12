@@ -11,7 +11,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,8 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.proxmoxopen.R
-import app.proxmoxopen.core.ui.component.HeroHeader
-import app.proxmoxopen.core.ui.component.SectionLabel
 import app.proxmoxopen.domain.model.Realm
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +53,12 @@ fun LoginScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.login_title)) },
+                title = {
+                    Column {
+                        Text(state.serverName.ifBlank { stringResource(R.string.login_title) }, style = MaterialTheme.typography.titleMedium)
+                        Text("${state.username}@${state.realm.apiKey}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -76,12 +78,6 @@ fun LoginScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            HeroHeader(
-                title = state.serverName.ifBlank { stringResource(R.string.login_title) },
-                subtitle = "${state.username}@${state.realm.apiKey}",
-                icon = Icons.Outlined.Lock,
-            )
-
             if (state.realm == Realm.PVE_TOKEN) {
                 Box(
                     modifier = Modifier
@@ -102,7 +98,7 @@ fun LoginScreen(
                     }
                 }
             } else {
-                SectionLabel(stringResource(R.string.add_server_section_credentials))
+                Text(stringResource(R.string.add_server_section_credentials).uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 OutlinedTextField(
                     value = state.password,
                     onValueChange = viewModel::onPassword,

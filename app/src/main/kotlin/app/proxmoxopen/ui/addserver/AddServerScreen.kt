@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.proxmoxopen.R
-import app.proxmoxopen.core.ui.component.HeroHeader
 import app.proxmoxopen.core.ui.component.SectionLabel
 import app.proxmoxopen.domain.model.Realm
 
@@ -59,7 +58,12 @@ fun AddServerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.add_server_title)) },
+                title = {
+                    Column {
+                        Text(stringResource(R.string.add_server_title), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.add_server_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -79,12 +83,6 @@ fun AddServerScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            HeroHeader(
-                title = stringResource(R.string.add_server_title),
-                subtitle = stringResource(R.string.add_server_subtitle),
-                icon = Icons.Outlined.Dns,
-            )
-
             SectionLabel(stringResource(R.string.add_server_section_endpoint))
             OutlinedTextField(
                 value = state.name,
