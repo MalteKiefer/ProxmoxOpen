@@ -243,3 +243,69 @@ fun BackupVolumeDto.toBackup(storage: String): Backup = Backup(
     protected = protected == 1,
     storage = storage,
 )
+
+fun app.proxmoxopen.data.api.dto.VmCurrentStatusDto.toVmStatus(
+    nodeName: String,
+    agentInterfaces: List<app.proxmoxopen.data.api.dto.AgentInterfaceDto>,
+): app.proxmoxopen.domain.model.VmStatus = app.proxmoxopen.domain.model.VmStatus(
+    vmid = vmid ?: 0,
+    name = name ?: "vm-${vmid ?: 0}",
+    status = GuestStatus.fromProxmox(status ?: qmpstatus),
+    qmpStatus = qmpstatus,
+    uptime = uptime ?: 0,
+    haState = ha?.state,
+    node = nodeName,
+    pid = pid,
+    agentEnabled = agent == 1,
+    cpuUsage = cpu ?: 0.0,
+    cpuCount = cpus ?: 0,
+    memUsed = mem ?: 0,
+    memTotal = maxmem ?: 0,
+    diskUsed = disk ?: 0,
+    diskTotal = maxdisk ?: 0,
+    netIn = netin ?: 0,
+    netOut = netout ?: 0,
+    diskRead = diskread ?: 0,
+    diskWrite = diskwrite ?: 0,
+    ipAddresses = agentInterfaces.flatMap { iface ->
+        val inet4 = iface.ip_addresses?.firstOrNull { it.ip_address_type == "ipv4" }
+        val inet6 = iface.ip_addresses?.firstOrNull { it.ip_address_type == "ipv6" }
+        if (inet4 != null || inet6 != null) {
+            listOf(InterfaceIp(
+                name = iface.name ?: "?",
+                hwaddr = iface.hardware_address,
+                inet = inet4?.let { "${it.ip_address}/${it.prefix}" },
+                inet6 = inet6?.let { "${it.ip_address}/${it.prefix}" },
+            ))
+        } else emptyList()
+    },
+    runningMachine = running_machine,
+    runningQemu = running_qemu,
+)
+
+fun app.proxmoxopen.data.api.dto.VmConfigDto.toVmConfig(): app.proxmoxopen.domain.model.VmConfig {
+    val nets = allNets().map { (id, raw) -> app.proxmoxopen.domain.model.VmNetInterface.parse(id, raw) }
+    return app.proxmoxopen.domain.model.VmConfig(
+        name = name ?: "",
+        description = description,
+        onboot = onboot == 1,
+        startup = startup,
+        protection = protection == 1,
+        bios = bios,
+        machine = machine,
+        cpuType = cpu,
+        sockets = sockets,
+        cores = cores,
+        memory = memory,
+        balloon = balloon,
+        numa = numa == 1,
+        scsihw = scsihw,
+        ostype = ostype,
+        vga = vga,
+        agentEnabled = agent?.contains("enabled=1") == true || agent == "1",
+        bootOrder = boot,
+        disks = allDisks(),
+        networkInterfaces = nets,
+        tags = tags,
+    )
+}

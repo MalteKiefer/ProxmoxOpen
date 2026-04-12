@@ -7,8 +7,11 @@ import app.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestConfigDto
 import app.proxmoxopen.data.api.dto.InterfaceDto
 import app.proxmoxopen.data.api.dto.SnapshotDto
+import app.proxmoxopen.data.api.dto.AgentNetworkResult
 import app.proxmoxopen.data.api.dto.BackupVolumeDto
 import app.proxmoxopen.data.api.dto.StorageInfoDto
+import app.proxmoxopen.data.api.dto.VmConfigDto
+import app.proxmoxopen.data.api.dto.VmCurrentStatusDto
 import app.proxmoxopen.data.api.dto.GuestStatusDto
 import app.proxmoxopen.data.api.dto.NodeListDto
 import app.proxmoxopen.data.api.dto.NodeStatusDto
@@ -227,6 +230,32 @@ class ProxmoxApiClient(
         ) { applyAuth() }
         return response.body<ApiResponse<String>>().data
             ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    // --- QEMU VM specific ----------------------------------------------------
+
+    suspend fun getVmStatus(node: String, vmid: Int): VmCurrentStatusDto =
+        http.getJson<VmCurrentStatusDto>("$baseUrl/api2/json/nodes/$node/qemu/$vmid/status/current")
+
+    suspend fun getVmConfig(node: String, vmid: Int): VmConfigDto =
+        http.getJson<VmConfigDto>("$baseUrl/api2/json/nodes/$node/qemu/$vmid/config")
+
+    suspend fun setVmConfig(node: String, vmid: Int, params: Map<String, String>): String? {
+        val form = Parameters.build { params.forEach { (k, v) -> append(k, v) } }
+        val response = http.submitForm(
+            url = "$baseUrl/api2/json/nodes/$node/qemu/$vmid/config",
+            formParameters = form,
+        ) { applyAuth(); method = io.ktor.http.HttpMethod.Put }
+        return response.body<ApiResponse<String?>>().data
+    }
+
+    suspend fun getVmAgentInterfaces(node: String, vmid: Int): List<app.proxmoxopen.data.api.dto.AgentInterfaceDto> {
+        return try {
+            val resp = http.get("$baseUrl/api2/json/nodes/$node/qemu/$vmid/agent/network-get-interfaces") { applyAuth() }
+            if (!resp.status.isSuccess()) return emptyList()
+            val result = resp.body<ApiResponse<AgentNetworkResult>>().data
+            result?.result ?: emptyList()
+        } catch (_: Exception) { emptyList() }
     }
 
     // --- Power actions -----------------------------------------------------

@@ -9,6 +9,7 @@ import app.proxmoxopen.ui.addserver.AddServerScreen
 import app.proxmoxopen.ui.dashboard.DashboardScreen
 import app.proxmoxopen.ui.guestconfig.GuestConfigScreen
 import app.proxmoxopen.ui.guestdetail.GuestDetailScreen
+import app.proxmoxopen.ui.guestdetail.VmDetailScreen
 import app.proxmoxopen.ui.login.LoginScreen
 import app.proxmoxopen.ui.main.MainScreen
 import app.proxmoxopen.ui.nodedetail.NodeDetailScreen
@@ -82,16 +83,23 @@ fun NavGraph() {
         }
         composable<Route.GuestDetail> { entry ->
             val route = entry.toRoute<Route.GuestDetail>()
-            GuestDetailScreen(
-                onBack = { nav.popBackStack() },
-                onSettings = { nav.navigate(Route.Settings) },
-                onActivity = { nav.navigate(Route.Activity) },
-                onEditConfig = {
-                    nav.navigate(
-                        Route.GuestConfig(route.serverId, route.node, route.vmid, route.type),
-                    )
-                },
-            )
+            if (route.type == "qemu") {
+                VmDetailScreen(
+                    onBack = { nav.popBackStack() },
+                    onSettings = { nav.navigate(Route.Settings) },
+                )
+            } else {
+                GuestDetailScreen(
+                    onBack = { nav.popBackStack() },
+                    onSettings = { nav.navigate(Route.Settings) },
+                    onActivity = { nav.navigate(Route.Activity) },
+                    onEditConfig = {
+                        nav.navigate(
+                            Route.GuestConfig(route.serverId, route.node, route.vmid, route.type),
+                        )
+                    },
+                )
+            }
         }
         composable<Route.GuestConfig> {
             GuestConfigScreen(onBack = { nav.popBackStack() })

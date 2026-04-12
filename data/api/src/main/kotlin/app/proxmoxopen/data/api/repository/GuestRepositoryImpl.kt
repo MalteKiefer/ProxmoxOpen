@@ -3,6 +3,8 @@ package app.proxmoxopen.data.api.repository
 import app.proxmoxopen.data.api.ProxmoxApiClient
 import app.proxmoxopen.data.api.mapper.toBackup
 import app.proxmoxopen.data.api.mapper.toContainerStatus
+import app.proxmoxopen.data.api.mapper.toVmStatus
+import app.proxmoxopen.data.api.mapper.toVmConfig
 import app.proxmoxopen.data.api.mapper.toGuestConfig
 import app.proxmoxopen.data.api.mapper.toDomain
 import app.proxmoxopen.data.api.mapper.toSnapshot
@@ -15,6 +17,8 @@ import app.proxmoxopen.domain.model.Guest
 import app.proxmoxopen.domain.model.GuestConfig
 import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.domain.model.Snapshot
+import app.proxmoxopen.domain.model.VmConfig
+import app.proxmoxopen.domain.model.VmStatus
 import app.proxmoxopen.domain.model.Realm
 import app.proxmoxopen.domain.model.RrdPoint
 import app.proxmoxopen.domain.model.RrdTimeframe
@@ -100,6 +104,26 @@ class GuestRepositoryImpl @Inject constructor(
         serverId: Long, node: String, vmid: Int, archive: String, storage: String?,
     ): ApiResult<String> = call(serverId) { api ->
         api.restoreBackup(node, vmid, archive, storage)
+    }
+
+    override suspend fun getVmStatus(
+        serverId: Long, node: String, vmid: Int,
+    ): ApiResult<VmStatus> = call(serverId) { api ->
+        val status = api.getVmStatus(node, vmid)
+        val ifaces = try { api.getVmAgentInterfaces(node, vmid) } catch (_: Exception) { emptyList() }
+        status.toVmStatus(node, ifaces)
+    }
+
+    override suspend fun getVmConfig(
+        serverId: Long, node: String, vmid: Int,
+    ): ApiResult<VmConfig> = call(serverId) { api ->
+        api.getVmConfig(node, vmid).toVmConfig()
+    }
+
+    override suspend fun setVmConfig(
+        serverId: Long, node: String, vmid: Int, params: Map<String, String>,
+    ): ApiResult<Unit> = call(serverId) { api ->
+        api.setVmConfig(node, vmid, params)
     }
 
     override suspend fun getGuestConfig(

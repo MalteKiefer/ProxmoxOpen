@@ -3,6 +3,8 @@ package app.proxmoxopen.domain.repository
 import app.proxmoxopen.domain.model.Backup
 import app.proxmoxopen.domain.model.ContainerStatus
 import app.proxmoxopen.domain.model.Guest
+import app.proxmoxopen.domain.model.VmConfig
+import app.proxmoxopen.domain.model.VmStatus
 import app.proxmoxopen.domain.model.GuestConfig
 import app.proxmoxopen.domain.model.GuestType
 import app.proxmoxopen.domain.model.Snapshot
@@ -77,6 +79,12 @@ interface GuestRepository {
         serverId: Long, node: String, vmid: Int, archive: String, storage: String?,
     ): ApiResult<String>
 
+    // --- QEMU VM specific ---
+    suspend fun getVmStatus(serverId: Long, node: String, vmid: Int): ApiResult<VmStatus>
+    suspend fun getVmConfig(serverId: Long, node: String, vmid: Int): ApiResult<VmConfig>
+    suspend fun setVmConfig(serverId: Long, node: String, vmid: Int, params: Map<String, String>): ApiResult<Unit>
+
+    // --- LXC config ---
     suspend fun getGuestConfig(
         serverId: Long,
         node: String,
