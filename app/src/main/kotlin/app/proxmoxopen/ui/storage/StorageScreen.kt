@@ -128,17 +128,12 @@ private fun StorageCard(storage: StorageInfo) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Header: name + type badge + status badge
+            // Header: name + type on second line, status badge right
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    storage.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                StatusBadge(
-                    label = storage.type,
-                    tone = BadgeTone.Neutral,
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(storage.name, style = MaterialTheme.typography.titleMedium)
+                    Text(storage.type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 StatusBadge(
                     label = statusLabel,
                     tone = if (storage.enabled) statusTone else BadgeTone.Stopped,

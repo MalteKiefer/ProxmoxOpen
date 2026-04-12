@@ -169,11 +169,21 @@ fun DashboardScreen(
                                 ) { Text(label) }
                             }
                         }
+                        if (selectedTab > 0) {
+                            androidx.compose.material3.OutlinedTextField(
+                                value = state.searchQuery,
+                                onValueChange = viewModel::onSearch,
+                                placeholder = { Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodySmall) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
                     when (selectedTab) {
                         0 -> NodesList(state.cluster?.nodes.orEmpty(), onOpenNode)
-                        1 -> GuestList(state.guests.filter { it.type == GuestType.QEMU }, onOpenGuest)
-                        else -> GuestList(state.guests.filter { it.type == GuestType.LXC }, onOpenGuest)
+                        1 -> GuestList(state.filteredGuests.filter { it.type == GuestType.QEMU }, onOpenGuest)
+                        else -> GuestList(state.filteredGuests.filter { it.type == GuestType.LXC }, onOpenGuest)
                     }
                 }
             }

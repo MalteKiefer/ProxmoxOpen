@@ -1,7 +1,7 @@
 package app.proxmoxopen
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
@@ -17,7 +17,7 @@ import app.proxmoxopen.ui.nav.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -37,8 +37,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Default to dark Proxmox brand colors before the DataStore emits
-            // its first value, to avoid a one-frame light flash.
             ProxMoxOpenTheme(
                 useDarkTheme = when (prefs.themeMode) {
                     ThemeMode.SYSTEM -> null
@@ -47,7 +45,9 @@ class MainActivity : ComponentActivity() {
                 },
                 dynamicColor = prefs.useDynamicColor,
             ) {
-                NavGraph()
+                app.proxmoxopen.ui.applock.AppLockGate(enabled = prefs.appLockEnabled) {
+                    NavGraph()
+                }
             }
         }
     }

@@ -31,7 +31,17 @@ data class DashboardUiState(
     val guests: List<Guest> = emptyList(),
     val isLoading: Boolean = false,
     val error: ApiError? = null,
-)
+    val searchQuery: String = "",
+) {
+    val filteredGuests: List<Guest>
+        get() = if (searchQuery.isBlank()) guests
+        else guests.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+                it.vmid.toString().contains(searchQuery) ||
+                it.node.contains(searchQuery, ignoreCase = true) ||
+                it.tags.any { tag -> tag.contains(searchQuery, ignoreCase = true) }
+        }
+}
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -88,6 +98,8 @@ class DashboardViewModel @Inject constructor(
             }
         }
     }
+
+    fun onSearch(query: String) { _state.update { it.copy(searchQuery = query) } }
 
     fun refresh() {
         _state.update { it.copy(isLoading = true, error = null) }

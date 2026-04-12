@@ -88,6 +88,9 @@
     <string name="backup_dialog_title">Create backup</string>
     <string name="settings_section_data">Data</string>
     <string name="backup_empty">No backups found on this storage.</string>
+    <string name="app_lock_prompt">Authenticate to open ProxMoxOpen</string>
+    <string name="app_lock_retry">Try again</string>
+    <string name="search_hint">Search VMs and containers…</string>
     <string name="setting_refresh_interval">Live refresh interval</string>
 
     <!-- Server list -->
