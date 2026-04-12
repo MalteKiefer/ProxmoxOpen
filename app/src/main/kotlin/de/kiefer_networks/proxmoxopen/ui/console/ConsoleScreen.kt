@@ -70,6 +70,8 @@ fun ConsoleScreen(
                     ProxmoxWebView(
                         url = state.consoleUrl!!,
                         cookie = state.authCookie,
+                        csrfToken = state.csrfToken ?: "",
+                        username = state.username ?: "root@pam",
                         host = state.serverHost ?: "",
                         port = state.serverPort,
                         ref = webViewRef,
@@ -85,6 +87,8 @@ fun ConsoleScreen(
 private fun ProxmoxWebView(
     url: String,
     cookie: String?,
+    csrfToken: String,
+    username: String,
     host: String,
     port: Int,
     ref: Array<WebView?>,
@@ -160,7 +164,22 @@ private fun ProxmoxWebView(
                 }
 
                 ref[0] = this
-                loadUrl(url)
+                // Load the origin first to set localStorage, then redirect to console
+                loadUrl("https://$host:$port/")
+                postDelayed({
+                    evaluateJavascript("""
+                        (function() {
+                            var loginData = {
+                                username: '$username',
+                                CSRFPreventionToken: '$csrfToken',
+                                cap: {"vms":1,"dc":1,"access":1,"nodes":1,"storage":1,"sdn":1}
+                            };
+                            window.localStorage.setItem('LoginData', JSON.stringify(loginData));
+                            document.cookie = 'PVEAuthCookie=$cookie; path=/';
+                            window.location.href = '$url';
+                        })();
+                    """.trimIndent(), null)
+                }, 1500)
             }
         },
     )
