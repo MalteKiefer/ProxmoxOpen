@@ -17,7 +17,7 @@ import de.kiefer_networks.proxmoxopen.ui.serverlist.EditServerScreen
 import de.kiefer_networks.proxmoxopen.ui.settings.SettingsScreen
 import de.kiefer_networks.proxmoxopen.ui.about.AboutScreen
 import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
-// Console removed — will be reimplemented with native xterm.js WebSocket
+import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
@@ -90,7 +90,7 @@ fun NavGraph() {
                 onBack = { nav.popBackStack() },
                 onSettings = { nav.navigate(Route.Settings) },
                 onActivity = { nav.navigate(Route.Activity) },
-                onConsole = { /* coming soon */ },
+                onConsole = { nav.navigate(Route.Console(route.serverId, route.node, type = "node")) },
                 onStorage = {
                     nav.navigate(Route.StorageOverview(route.serverId, route.node))
                 },
@@ -115,7 +115,7 @@ fun NavGraph() {
                 VmDetailScreen(
                     onBack = { nav.popBackStack() },
                     onSettings = { nav.navigate(Route.Settings) },
-                    onConsole = { /* coming soon */ },
+                    onConsole = { nav.navigate(Route.Console(route.serverId, route.node, route.vmid, route.type)) },
                     onOpenTask = onOpenTask,
                     onMigrate = onMigrate,
                     onClone = onClone,
@@ -130,7 +130,7 @@ fun NavGraph() {
                             Route.GuestConfig(route.serverId, route.node, route.vmid, route.type),
                         )
                     },
-                    onConsole = { /* coming soon */ },
+                    onConsole = { nav.navigate(Route.Console(route.serverId, route.node, route.vmid, route.type)) },
                     onOpenTask = onOpenTask,
                     onMigrate = onMigrate,
                     onClone = onClone,
@@ -143,7 +143,7 @@ fun NavGraph() {
         composable<Route.GuestConfig> {
             GuestConfigScreen(onBack = { nav.popBackStack() })
         }
-        // Console: coming soon — will use native xterm.js WebSocket
+        composable<Route.Console> { ConsoleScreen(onBack = { nav.popBackStack() }) }
         composable<Route.TaskDetail> {
             TaskDetailScreen(onBack = { nav.popBackStack() })
         }

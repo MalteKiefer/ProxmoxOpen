@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
 
     implementation(libs.timber)
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
