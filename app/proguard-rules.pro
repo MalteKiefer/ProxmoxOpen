@@ -6,11 +6,11 @@
 -keepclassmembers class ** {
     @kotlinx.serialization.Serializable *;
 }
--keep,includedescriptorclasses class app.proxmoxopen.**$$serializer { *; }
--keepclassmembers class app.proxmoxopen.** {
+-keep,includedescriptorclasses class de.kiefer_networks.proxmoxopen.**$$serializer { *; }
+-keepclassmembers class de.kiefer_networks.proxmoxopen.** {
     *** Companion;
 }
--keepclasseswithmembers class app.proxmoxopen.** {
+-keepclasseswithmembers class de.kiefer_networks.proxmoxopen.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
@@ -34,5 +34,5 @@
 -dontwarn dagger.hilt.internal.**
 
 # ---------- App types ----------
--keep class app.proxmoxopen.data.api.dto.** { *; }
--keep class app.proxmoxopen.domain.model.** { *; }
+-keep class de.kiefer_networks.proxmoxopen.data.api.dto.** { *; }
+-keep class de.kiefer_networks.proxmoxopen.domain.model.** { *; }

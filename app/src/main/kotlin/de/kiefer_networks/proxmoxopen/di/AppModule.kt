@@ -14,6 +14,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 
@@ -23,10 +25,69 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): ProxmoxDatabase =
-        Room.databaseBuilder(context, ProxmoxDatabase::class.java, ProxmoxDatabase.DATABASE_NAME)
+    fun provideDatabase(@ApplicationContext context: Context): ProxmoxDatabase {
+        val dbKey = getOrCreateDatabaseKey(context)
+        val factory = net.sqlcipher.database.SupportFactory(dbKey)
+        return Room.databaseBuilder(context, ProxmoxDatabase::class.java, ProxmoxDatabase.DATABASE_NAME)
+            .openHelperFactory(factory)
             .fallbackToDestructiveMigration()
             .build()
+    }
+
+    private fun getOrCreateDatabaseKey(context: Context): ByteArray {
+        val keyStore = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val alias = "proxmoxopen_db_encryption_key"
+
+        val prefs = context.getSharedPreferences("db_key_prefs", Context.MODE_PRIVATE)
+        val existingEncrypted = prefs.getString("encrypted_db_key", null)
+
+        if (existingEncrypted != null && keyStore.containsAlias(alias)) {
+            // Decrypt existing key
+            try {
+                val parts = existingEncrypted.split(".")
+                val iv = android.util.Base64.decode(parts[0], android.util.Base64.NO_WRAP)
+                val encrypted = android.util.Base64.decode(parts[1], android.util.Base64.NO_WRAP)
+                val secretKey = (keyStore.getEntry(alias, null) as java.security.KeyStore.SecretKeyEntry).secretKey
+                val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.GCMParameterSpec(128, iv))
+                return cipher.doFinal(encrypted)
+            } catch (_: Exception) {
+                // Key corrupted, regenerate
+            }
+        }
+
+        // Generate new database key
+        val dbKey = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+
+        // Create or get AndroidKeyStore wrapping key
+        if (!keyStore.containsAlias(alias)) {
+            val keyGen = javax.crypto.KeyGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
+            )
+            keyGen.init(
+                KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+                ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(256)
+                    .build()
+            )
+            keyGen.generateKey()
+        }
+
+        // Encrypt db key with AndroidKeyStore key
+        val secretKey = (keyStore.getEntry(alias, null) as java.security.KeyStore.SecretKeyEntry).secretKey
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey)
+        val encryptedDbKey = cipher.doFinal(dbKey)
+        val iv = cipher.iv
+        val stored = android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP) + "." +
+            android.util.Base64.encodeToString(encryptedDbKey, android.util.Base64.NO_WRAP)
+        prefs.edit().putString("encrypted_db_key", stored).apply()
+
+        return dbKey
+    }
 
     @Provides
     fun provideServerDao(db: ProxmoxDatabase): ServerDao = db.serverDao()

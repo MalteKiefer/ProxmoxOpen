@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "de.kiefer_networks.proxmoxopen.data.db"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig { minSdk = 31 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,6 +27,8 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    api(libs.sqlcipher)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
