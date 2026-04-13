@@ -3,9 +3,9 @@ Categories:
   - Internet
 License: GPL-3.0-or-later
 WebSite: https://proxmoxopen.app
-SourceCode: https://github.com/placeholder/proxmoxopen
-IssueTracker: https://github.com/placeholder/proxmoxopen/issues
-Changelog: https://github.com/placeholder/proxmoxopen/blob/main/CHANGELOG.md
+SourceCode: https://github.com/MalteKiefer/ProxmoxOpen
+IssueTracker: https://github.com/MalteKiefer/ProxmoxOpen/issues
+Changelog: https://github.com/MalteKiefer/ProxmoxOpen/blob/main/CHANGELOG.md
 
 AutoName: ProxMoxOpen
 Summary: Open, secure, F-Droid-first Android client for Proxmox VE.
@@ -23,7 +23,7 @@ Description: |
     - Material 3 with dynamic color on Android 12+
 
 RepoType: git
-Repo: https://github.com/placeholder/proxmoxopen
+Repo: https://github.com/MalteKiefer/ProxmoxOpen
 
 Builds:
   - versionName: "0.1.0-dev"
