@@ -1,55 +1,64 @@
 package de.kiefer_networks.proxmoxopen.ui.console
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import okio.ByteString
+import android.content.Context
+import timber.log.Timber
+import java.io.BufferedOutputStream
 import java.io.IOException
-import java.net.InetSocketAddress
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.ServerSocket
-import java.nio.ByteBuffer
-import java.security.MessageDigest
+import java.net.Socket
+import java.net.SocketTimeoutException
+import java.net.URI
 import java.security.SecureRandom
-import java.util.Base64
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
 /**
- * Local WebSocket proxy that bridges:
- *   WebView (ws://localhost:{port}) ←→ Proxmox (wss://{host}:{port}, self-signed OK)
+ * Transparent TCP proxy that bridges WebView to Proxmox WebSocket.
  *
- * The proxy accepts a raw WebSocket connection on localhost (no TLS),
- * and forwards all frames bidirectionally to the Proxmox WebSocket
- * endpoint using OkHttp (which supports TOFU TLS pinning).
+ * Instead of implementing WebSocket framing, this proxy:
+ * 1. Serves HTML/JS/CSS assets over HTTP
+ * 2. For WebSocket upgrades: rewrites the HTTP upgrade request (adds auth, changes path),
+ *    forwards it to Proxmox over TLS, and then bridges raw bytes bidirectionally.
+ *
+ * The WebSocket handshake happens end-to-end between Chrome and Proxmox.
  */
 class LocalWebSocketProxy(
     private val targetUrl: String,
     private val cookie: String,
     private val fingerprint: String?,
+    private val context: Context,
+    private val assetDir: String,
+    private val indexFile: String,
+    private val isTerminal: Boolean = true,
 ) {
-    private var serverSocket: ServerSocket? = null
+    @Volatile private var serverSocket: ServerSocket? = null
     private var running = AtomicBoolean(false)
-    private var upstreamWs: WebSocket? = null
-    private var clientSocket: java.net.Socket? = null
+    private val activeSockets = java.util.Collections.synchronizedList(mutableListOf<Socket>())
     var localPort: Int = 0
         private set
 
     fun start(): Int {
-        serverSocket = ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1"))
+        serverSocket = ServerSocket(0, 5, java.net.InetAddress.getByName("127.0.0.1"))
         localPort = serverSocket!!.localPort
         running.set(true)
 
         Thread({
             try {
-                val client = serverSocket!!.accept()
-                clientSocket = client
-                handleClient(client)
+                while (running.get()) {
+                    val client = serverSocket!!.accept()
+                    Thread({
+                        try {
+                            handleConnection(client)
+                        } catch (e: Exception) {
+                            if (running.get()) Timber.e("handler error: %s", e.localizedMessage)
+                        }
+                    }, "WsProxy-Handler").start()
+                }
             } catch (e: IOException) {
-                if (running.get()) e.printStackTrace()
+                if (running.get()) Timber.e("accept error: %s", e.localizedMessage)
             }
         }, "WsProxy-Accept").start()
 
@@ -58,159 +67,222 @@ class LocalWebSocketProxy(
 
     fun stop() {
         running.set(false)
-        upstreamWs?.close(1000, "proxy stopped")
-        try { clientSocket?.close() } catch (_: Exception) {}
+        synchronized(activeSockets) {
+            activeSockets.forEach { try { it.close() } catch (_: Exception) {} }
+            activeSockets.clear()
+        }
         try { serverSocket?.close() } catch (_: Exception) {}
     }
 
-    private fun handleClient(client: java.net.Socket) {
+    private fun handleConnection(client: Socket) {
         val input = client.getInputStream()
         val output = client.getOutputStream()
 
-        // 1. Read WebSocket upgrade request from WebView
-        val requestBytes = ByteArray(4096)
-        val len = input.read(requestBytes)
-        if (len <= 0) return
-        val request = String(requestBytes, 0, len)
+        // Read HTTP request headers (byte-by-byte to not over-read)
+        val headerBytes = readUntilHeaderEnd(input) ?: run { client.close(); return }
+        val request = String(headerBytes)
 
-        // Extract Sec-WebSocket-Key from the request
-        val keyMatch = Regex("Sec-WebSocket-Key: (.+)").find(request)
-        val wsKey = keyMatch?.groupValues?.get(1)?.trim() ?: return
+        val isUpgrade = request.contains("Upgrade: websocket", ignoreCase = true)
 
-        // 2. Send WebSocket upgrade response to WebView
-        val acceptKey = computeAcceptKey(wsKey)
-        val response = "HTTP/1.1 101 Switching Protocols\r\n" +
-            "Upgrade: websocket\r\n" +
-            "Connection: Upgrade\r\n" +
-            "Sec-WebSocket-Accept: $acceptKey\r\n" +
-            "\r\n"
-        output.write(response.toByteArray())
-        output.flush()
+        if (isUpgrade) {
+            handleWebSocketUpgrade(client, input, output, request)
+        } else {
+            val firstLine = request.lineSequence().firstOrNull() ?: ""
+            handleHttpRequest(client, output, firstLine)
+        }
+    }
 
-        // 3. Connect upstream to Proxmox via OkHttp (TOFU TLS)
+    /** Read bytes until \r\n\r\n (end of HTTP headers), without consuming body/frame data */
+    private fun readUntilHeaderEnd(input: InputStream): ByteArray? {
+        val buf = java.io.ByteArrayOutputStream(1024)
+        var state = 0 // 0=normal, 1=\r, 2=\r\n, 3=\r\n\r
+        while (true) {
+            val b = input.read()
+            if (b < 0) return null
+            buf.write(b)
+            if (buf.size() > 16384) return null
+            state = when {
+                b == '\r'.code && (state == 0 || state == 2) -> state + 1
+                b == '\n'.code && state == 1 -> 2
+                b == '\n'.code && state == 3 -> 4
+                else -> 0
+            }
+            if (state == 4) break
+        }
+        return buf.toByteArray()
+    }
+
+    private fun handleHttpRequest(client: Socket, output: OutputStream, requestLine: String) {
+        val parts = requestLine.split(" ")
+        val rawPath = if (parts.size >= 2) parts[1] else "/"
+        val path = rawPath.substringBefore("?")
+        if (path.contains("..")) {
+            val body = "403 Forbidden"
+            val headers = "HTTP/1.1 403 Forbidden\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n"
+            output.write(headers.toByteArray())
+            output.write(body.toByteArray())
+            output.flush()
+            client.close()
+            return
+        }
+
+        val assetPath = when {
+            path == "/" || path == "/$indexFile" -> "$assetDir/$indexFile"
+            path.startsWith("/") -> "$assetDir${path}"
+            else -> "$assetDir/$path"
+        }
+
+        try {
+            val data = context.assets.open(assetPath).use { it.readBytes() }
+            val contentType = when {
+                assetPath.endsWith(".html") -> "text/html; charset=utf-8"
+                assetPath.endsWith(".js") -> "application/javascript; charset=utf-8"
+                assetPath.endsWith(".css") -> "text/css; charset=utf-8"
+                assetPath.endsWith(".png") -> "image/png"
+                assetPath.endsWith(".svg") -> "image/svg+xml"
+                else -> "application/octet-stream"
+            }
+            val headers = "HTTP/1.1 200 OK\r\n" +
+                "Content-Type: $contentType\r\n" +
+                "Content-Length: ${data.size}\r\n" +
+                "Connection: close\r\n" +
+                "\r\n"
+            output.write(headers.toByteArray())
+            output.write(data)
+            output.flush()
+        } catch (e: Exception) {
+            val body = "404 Not Found"
+            val headers = "HTTP/1.1 404 Not Found\r\n" +
+                "Content-Length: ${body.length}\r\n" +
+                "Connection: close\r\n" +
+                "\r\n"
+            output.write(headers.toByteArray())
+            output.write(body.toByteArray())
+            output.flush()
+        } finally {
+            try { client.close() } catch (_: Exception) {}
+        }
+    }
+
+    private fun handleWebSocketUpgrade(client: Socket, clientIn: InputStream, clientOut: OutputStream, originalRequest: String) {
+        activeSockets.add(client)
+
+        // Validate cookie value to prevent header injection
+        if (cookie.contains("\r") || cookie.contains("\n")) {
+            Timber.e("Cookie contains invalid characters, rejecting")
+            client.close()
+            activeSockets.remove(client)
+            return
+        }
+
+        val uri = URI(targetUrl)
+        val host = uri.host
+        val port = if (uri.port > 0) uri.port else 443
+        val pathAndQuery = if (uri.rawQuery != null) "${uri.rawPath}?${uri.rawQuery}" else uri.rawPath
+
+        // Rewrite the HTTP upgrade request for Proxmox
+        val rewrittenRequest = buildString {
+            val lines = originalRequest.trimEnd().split("\r\n")
+            // Replace first line with upstream path
+            append("GET $pathAndQuery HTTP/1.1\r\n")
+            // Replace Host, add Cookie, keep other headers
+            var hasCookie = false
+            for (i in 1 until lines.size) {
+                val line = lines[i]
+                when {
+                    line.startsWith("Host:", ignoreCase = true) -> append("Host: $host:$port\r\n")
+                    line.startsWith("Origin:", ignoreCase = true) -> continue // drop Origin
+                    line.startsWith("Cookie:", ignoreCase = true) -> {
+                        append("Cookie: PVEAuthCookie=<redacted>\r\n".replace("<redacted>", cookie))
+                        hasCookie = true
+                    }
+                    else -> append("$line\r\n")
+                }
+            }
+            if (!hasCookie) append("Cookie: PVEAuthCookie=$cookie\r\n")
+            // Proxmox checks Referer for xtermjs=1 to decide text vs RFB mode
+            if (isTerminal) append("Referer: https://$host:$port/?xtermjs=1\r\n")
+            append("\r\n")
+        }
+
+        // Connect upstream TLS socket
         val trustManager = de.kiefer_networks.proxmoxopen.data.api.tls.TofuTrustManager(fingerprint)
         val sslContext = SSLContext.getInstance("TLS").apply {
             init(null, arrayOf<X509TrustManager>(trustManager), SecureRandom())
         }
-        val okClient = OkHttpClient.Builder()
-            .sslSocketFactory(sslContext.socketFactory, trustManager)
-            .hostnameVerifier { _, _ -> true }
-            .pingInterval(10, TimeUnit.SECONDS)
-            .readTimeout(0, TimeUnit.MILLISECONDS)
-            .build()
+        val rawSocket = sslContext.socketFactory.createSocket(host, port) as javax.net.ssl.SSLSocket
+        rawSocket.soTimeout = 120_000
+        activeSockets.add(rawSocket)
 
-        val upstreamRequest = Request.Builder()
-            .url(targetUrl)
-            .addHeader("Cookie", "PVEAuthCookie=$cookie")
-            .build()
+        val upIn = rawSocket.getInputStream()
+        val upOut = BufferedOutputStream(rawSocket.getOutputStream())
 
-        upstreamWs = okClient.newWebSocket(upstreamRequest, object : WebSocketListener() {
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                // Forward upstream text frame → local client
-                try {
-                    sendWsFrame(output, text.toByteArray(Charsets.UTF_8), opcode = 0x1)
-                } catch (_: Exception) {}
-            }
+        // Send rewritten upgrade to Proxmox
+        upOut.write(rewrittenRequest.toByteArray())
+        upOut.flush()
 
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                try {
-                    sendWsFrame(output, bytes.toByteArray(), opcode = 0x2)
-                } catch (_: Exception) {}
-            }
+        // Read Proxmox's HTTP response headers and forward to client
+        val responseHeaders = readUntilHeaderEnd(upIn)
+        if (responseHeaders == null) {
+            Timber.e("No response from upstream")
+            client.close(); rawSocket.close(); return
+        }
+        val responseStr = String(responseHeaders)
 
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                try { client.close() } catch (_: Exception) {}
-            }
+        // Forward the response to client as-is
+        clientOut.write(responseHeaders)
+        clientOut.flush()
 
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                try { client.close() } catch (_: Exception) {}
-            }
-        })
+        Timber.d("Upstream response status: %s", responseStr.lineSequence().firstOrNull())
+        if (!responseStr.contains("101")) {
+            Timber.e("Upstream upgrade failed (non-101 response)")
+            client.close(); rawSocket.close(); return
+        }
 
-        // 4. Read frames from local client → forward upstream
-        Thread({
+        // Bidirectional raw byte forwarding (no WebSocket frame parsing)
+        val upToClient = Thread({
             try {
-                while (running.get() && !client.isClosed) {
-                    val frame = readWsFrame(input) ?: break
-                    when (frame.opcode) {
-                        0x1 -> upstreamWs?.send(String(frame.payload, Charsets.UTF_8))
-                        0x2 -> upstreamWs?.send(ByteString.of(*frame.payload))
-                        0x8 -> { upstreamWs?.close(1000, "client closed"); break }
-                        0x9 -> upstreamWs?.send(ByteString.of(*frame.payload)) // ping
-                    }
+                val buf = ByteArray(8192)
+                while (running.get()) {
+                    val n = upIn.read(buf)
+                    if (n < 0) break
+                    clientOut.write(buf, 0, n)
+                    clientOut.flush()
                 }
-            } catch (_: Exception) {
+            } catch (e: SocketTimeoutException) {
+                Timber.e("up->client socket timeout")
+            } catch (e: Exception) {
+                if (running.get()) Timber.e("up->client error: %s", e.localizedMessage)
             } finally {
-                upstreamWs?.close(1000, "client disconnected")
+                try { client.close() } catch (_: Exception) {}
+                try { rawSocket.close() } catch (_: Exception) {}
+                activeSockets.remove(client)
+                activeSockets.remove(rawSocket)
             }
-        }, "WsProxy-Accept").start()
-    }
+        }, "WsProxy-UpToClient")
 
-    // --- WebSocket framing helpers ---
-
-    private data class WsFrame(val opcode: Int, val payload: ByteArray)
-
-    private fun readWsFrame(input: java.io.InputStream): WsFrame? {
-        val b0 = input.read(); if (b0 < 0) return null
-        val b1 = input.read(); if (b1 < 0) return null
-
-        val opcode = b0 and 0x0F
-        val masked = (b1 and 0x80) != 0
-        var payloadLen = (b1 and 0x7F).toLong()
-
-        if (payloadLen == 126L) {
-            val b2 = input.read(); val b3 = input.read()
-            if (b2 < 0 || b3 < 0) return null
-            payloadLen = ((b2 shl 8) or b3).toLong()
-        } else if (payloadLen == 127L) {
-            val buf = ByteArray(8)
-            var read = 0; while (read < 8) { val r = input.read(buf, read, 8 - read); if (r < 0) return null; read += r }
-            payloadLen = ByteBuffer.wrap(buf).long
-        }
-
-        val mask = if (masked) {
-            val m = ByteArray(4)
-            var read = 0; while (read < 4) { val r = input.read(m, read, 4 - read); if (r < 0) return null; read += r }
-            m
-        } else null
-
-        val payload = ByteArray(payloadLen.toInt())
-        var read = 0
-        while (read < payloadLen) {
-            val r = input.read(payload, read, (payloadLen - read).toInt())
-            if (r < 0) return null
-            read += r
-        }
-
-        if (mask != null) {
-            for (i in payload.indices) payload[i] = (payload[i].toInt() xor mask[i % 4].toInt()).toByte()
-        }
-
-        return WsFrame(opcode, payload)
-    }
-
-    private fun sendWsFrame(output: java.io.OutputStream, data: ByteArray, opcode: Int) {
-        synchronized(output) {
-            output.write(0x80 or opcode) // FIN + opcode
-            if (data.size < 126) {
-                output.write(data.size)
-            } else if (data.size < 65536) {
-                output.write(126)
-                output.write(data.size shr 8)
-                output.write(data.size and 0xFF)
-            } else {
-                output.write(127)
-                val buf = ByteBuffer.allocate(8).putLong(data.size.toLong()).array()
-                output.write(buf)
+        val clientToUp = Thread({
+            try {
+                val buf = ByteArray(8192)
+                while (running.get()) {
+                    val n = clientIn.read(buf)
+                    if (n < 0) break
+                    upOut.write(buf, 0, n)
+                    upOut.flush()
+                }
+            } catch (e: SocketTimeoutException) {
+                Timber.e("client->up socket timeout")
+            } catch (e: Exception) {
+                if (running.get()) Timber.e("client->up error: %s", e.localizedMessage)
+            } finally {
+                try { rawSocket.close() } catch (_: Exception) {}
+                try { client.close() } catch (_: Exception) {}
+                activeSockets.remove(rawSocket)
+                activeSockets.remove(client)
             }
-            output.write(data)
-            output.flush()
-        }
-    }
+        }, "WsProxy-ClientToUp")
 
-    private fun computeAcceptKey(key: String): String {
-        val magic = key + "258EAFA5-E914-47DA-95CA-5AB5F986B130"
-        val sha1 = MessageDigest.getInstance("SHA-1").digest(magic.toByteArray())
-        return Base64.getEncoder().encodeToString(sha1)
+        upToClient.start()
+        clientToUp.start()
     }
 }

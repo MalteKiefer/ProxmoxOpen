@@ -81,6 +81,7 @@ class ProxmoxClientFactory(
                         val sanitized = message
                             .replace(Regex("Authorization: [^\\r\\n]+"), "Authorization: ***")
                             .replace(Regex("PVEAPIToken=[^\\r\\n]+"), "PVEAPIToken=***")
+                            .replace(Regex("Cookie: [^\\r\\n]+"), "Cookie: ***")
                         Timber.tag("PxoHttp").v(sanitized)
                     }
                 }

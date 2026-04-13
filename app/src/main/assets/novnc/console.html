@@ -6,9 +6,11 @@
 <title>Console</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0B0B0C; overflow: hidden; width: 100vw; height: 100vh; }
-  #screen { width: 100%; height: 100%; }
-  #status { position: fixed; top: 8px; right: 8px; color: #E57000; font: 12px monospace; z-index: 99; }
+  html, body { width: 100%; height: 100%; background: #0B0B0C; overflow: hidden; }
+  #screen { width: 100vw; height: 100vh; }
+  #status { position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+    color: #E57000; font: 13px monospace; z-index: 99;
+    background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -20,36 +22,142 @@ import RFB from './core/rfb.js';
 const params = new URLSearchParams(window.location.search);
 const host = params.get('host') || '127.0.0.1';
 const port = params.get('port');
-const path = params.get('path') || '';
-const encrypt = params.get('encrypt') === '1';
 const password = params.get('password') || '';
 
-const scheme = encrypt ? 'wss' : 'ws';
-const wsUrl = `${scheme}://${host}:${port}/${path}`;
+const wsUrl = 'ws://' + host + ':' + port;
+const statusEl = document.getElementById('status');
+const screenEl = document.getElementById('screen');
 
-document.getElementById('status').textContent = 'Connecting to ' + host + ':' + port;
+// Fix height for WebView
+function fixHeight() {
+  const h = window.innerHeight || document.documentElement.clientHeight || 480;
+  if (screenEl.clientHeight < 10) screenEl.style.height = h + 'px';
+}
+fixHeight();
+window.addEventListener('resize', fixHeight);
+setTimeout(fixHeight, 100);
+setTimeout(fixHeight, 500);
 
 try {
-  const rfb = new RFB(document.getElementById('screen'), wsUrl, {
+  const rfb = new RFB(screenEl, wsUrl, {
     credentials: { password: password },
     wsProtocols: ['binary'],
   });
   rfb.viewOnly = false;
   rfb.scaleViewport = true;
-  rfb.resizeSession = true;
+  rfb.resizeSession = false;
   rfb.showDotCursor = true;
+  rfb.qualityLevel = 0;
+  rfb.compressionLevel = 9;
+
+  // Render overlay: copies backbuffer to a visible canvas
+  // (workaround for noVNC's render queue not flushing in Android WebView)
+  let vncOverlay = null;
+  let vncCtx = null;
+
+  function createOverlay() {
+    // Use the backbuffer's native resolution for sharp rendering
+    vncOverlay = document.createElement('canvas');
+    // Will be sized on first refresh
+    vncOverlay.width = 1;
+    vncOverlay.height = 1;
+    vncOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;';
+    document.body.appendChild(vncOverlay);
+    vncCtx = vncOverlay.getContext('2d');
+    vncOverlay._bbW = 0;
+    vncOverlay._bbH = 0;
+  }
+
+  function refreshOverlay() {
+    try {
+      const bb = rfb._display._backbuffer;
+      if (!bb || bb.width === 0) return;
+      if (!vncOverlay) createOverlay();
+      // Match canvas internal resolution to backbuffer (1:1 pixels, CSS scales to fit)
+      if (vncOverlay._bbW !== bb.width || vncOverlay._bbH !== bb.height) {
+        vncOverlay.remove();
+        vncOverlay = document.createElement('canvas');
+        vncOverlay.width = bb.width;
+        vncOverlay.height = bb.height;
+        vncOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;object-fit:contain;';
+        document.body.appendChild(vncOverlay);
+        vncCtx = vncOverlay.getContext('2d');
+        vncOverlay._bbW = bb.width;
+        vncOverlay._bbH = bb.height;
+      }
+      vncCtx.drawImage(bb, 0, 0);
+    } catch(e) {}
+  }
+
+  // Start rendering after VNC connects
+  let renderTimer = null;
+  rfb.addEventListener('connect', () => {
+    setTimeout(() => {
+      createOverlay();
+      renderTimer = setInterval(refreshOverlay, 100);
+    }, 1000);
+  });
+  rfb.addEventListener('disconnect', () => {
+    if (renderTimer) clearInterval(renderTimer);
+    if (vncOverlay) vncOverlay.remove();
+  });
 
   rfb.addEventListener('connect', () => {
-    document.getElementById('status').textContent = 'Connected';
-    setTimeout(() => { document.getElementById('status').style.display = 'none'; }, 2000);
+    statusEl.textContent = 'Connected';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+    rfb.focus();
+    // Force full (non-incremental) framebuffer request
+    // RFB msg type 3, incremental=0, x=0, y=0, w=65535, h=65535
+    setTimeout(() => {
+      try {
+        const req = new Uint8Array([3, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff]);
+        rfb._sock.send(req);
+      } catch(e) {}
+    }, 500);
+    setTimeout(() => {
+      try {
+        const req = new Uint8Array([3, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff]);
+        rfb._sock.send(req);
+      } catch(e) {}
+    }, 2000);
   });
-  rfb.addEventListener('disconnect', (e) => {
-    document.getElementById('status').textContent = 'Disconnected';
-    document.getElementById('status').style.display = 'block';
+
+  rfb.addEventListener('disconnect', () => {
+    statusEl.textContent = 'Disconnected';
+    statusEl.style.display = 'block';
+
+    // Show reconnect button on disconnect
+    const reconnectDiv = document.createElement('div');
+    reconnectDiv.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:10000;';
+    const reconnectBtn = document.createElement('button');
+    reconnectBtn.textContent = 'Reconnect';
+    reconnectBtn.style.cssText = 'padding:12px 24px;background:#E57000;color:#fff;border:none;border-radius:12px;font:16px monospace;cursor:pointer;';
+    reconnectBtn.onclick = () => { location.reload(); };
+    reconnectDiv.appendChild(reconnectBtn);
+    document.body.appendChild(reconnectDiv);
   });
+
+  rfb.addEventListener('credentialsrequired', () => {
+    rfb.sendCredentials({ password: password });
+  });
+
+  rfb.addEventListener('securityfailure', (e) => {
+    statusEl.textContent = 'Auth failed';
+  });
+
+  // Focus on touch/click for keyboard input
+  document.addEventListener('click', () => { rfb.focus(); });
+  document.addEventListener('touchstart', () => { rfb.focus(); });
+
 } catch (e) {
-  document.getElementById('status').textContent = 'Error: ' + e.message;
+  statusEl.textContent = 'Error: ' + e.message;
 }
+
+setTimeout(() => {
+    if (statusEl.textContent === 'Connecting...') {
+        statusEl.textContent = 'Connection timed out';
+    }
+}, 15000);
 </script>
 </body>
 </html>

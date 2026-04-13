@@ -17,4 +17,5 @@ data class RrdPoint(
     val netOut: Double?,
     val diskRead: Double?,
     val diskWrite: Double?,
+    val ioWait: Double? = null,
 )

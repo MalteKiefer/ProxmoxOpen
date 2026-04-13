@@ -8,6 +8,7 @@ import de.kiefer_networks.proxmoxopen.data.api.dto.GuestConfigDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.InterfaceDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.SnapshotDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.AgentNetworkResult
+import de.kiefer_networks.proxmoxopen.data.api.dto.BackupJobDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.BackupVolumeDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.StorageInfoDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.VmConfigDto
@@ -21,6 +22,7 @@ import de.kiefer_networks.proxmoxopen.data.api.dto.TaskDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.TaskLogLineDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.TaskStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.TicketDto
+import timber.log.Timber
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.submitForm
@@ -136,7 +138,8 @@ class ProxmoxApiClient(
             http.getJson<List<InterfaceDto>>(
                 "$baseUrl/api2/json/nodes/$node/lxc/$vmid/interfaces",
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Timber.d(e, "Failed to load container interfaces")
             emptyList()
         }
 
@@ -181,6 +184,32 @@ class ProxmoxApiClient(
         return response.body<ApiResponse<String?>>().data
     }
 
+    // --- Cluster Backup Jobs ---------------------------------------------------
+
+    suspend fun listBackupJobs(): List<BackupJobDto> =
+        http.getJson<List<BackupJobDto>>("$baseUrl/api2/json/cluster/backup")
+
+    suspend fun runBackupJob(id: String): String {
+        val response = http.post("$baseUrl/api2/json/cluster/backup/$id") { applyAuth() }
+        return response.body<ApiResponse<String>>().data ?: "started"
+    }
+
+    suspend fun createBackupJob(params: Map<String, String>): String? {
+        val form = Parameters.build { params.forEach { (k, v) -> append(k, v) } }
+        val response = http.submitForm("$baseUrl/api2/json/cluster/backup", formParameters = form) { applyAuth() }
+        return response.body<ApiResponse<String?>>().data
+    }
+
+    suspend fun updateBackupJob(id: String, params: Map<String, String>): String? {
+        val form = Parameters.build { params.forEach { (k, v) -> append(k, v) } }
+        val response = http.submitForm("$baseUrl/api2/json/cluster/backup/$id", formParameters = form) { applyAuth() }
+        return response.body<ApiResponse<String?>>().data
+    }
+
+    suspend fun deleteBackupJob(id: String) {
+        http.delete("$baseUrl/api2/json/cluster/backup/$id") { applyAuth() }
+    }
+
     // --- Backup (vzdump) -----------------------------------------------------
 
     suspend fun createBackup(
@@ -207,13 +236,13 @@ class ProxmoxApiClient(
     suspend fun listStorages(node: String): List<StorageInfoDto> =
         try {
             http.getJson<List<StorageInfoDto>>("$baseUrl/api2/json/nodes/$node/storage")
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) { Timber.d(e, "Failed to load storages"); emptyList() }
 
     /** List storages that support backup content. */
     suspend fun listBackupStorages(node: String): List<StorageInfoDto> =
         try {
             http.getJson<List<StorageInfoDto>>("$baseUrl/api2/json/nodes/$node/storage?content=backup")
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) { Timber.d(e, "Failed to load backup storages"); emptyList() }
 
     /** List backup volumes for a specific vmid on a given storage. */
     suspend fun listBackups(node: String, storage: String, vmid: Int): List<BackupVolumeDto> =
@@ -221,7 +250,7 @@ class ProxmoxApiClient(
             http.getJson<List<BackupVolumeDto>>(
                 "$baseUrl/api2/json/nodes/$node/storage/$storage/content?content=backup&vmid=$vmid",
             )
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) { Timber.d(e, "Failed to load backups"); emptyList() }
 
     /** Restore a backup (vzdump archive) to a container. */
     suspend fun restoreBackup(node: String, vmid: Int, archive: String, storage: String?): String {
@@ -293,7 +322,7 @@ class ProxmoxApiClient(
             if (!resp.status.isSuccess()) return emptyList()
             val result = resp.body<ApiResponse<AgentNetworkResult>>().data
             result?.result ?: emptyList()
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) { Timber.d(e, "Failed to load agent interfaces"); emptyList() }
     }
 
     // --- Power actions -----------------------------------------------------
@@ -420,8 +449,10 @@ class ProxmoxApiClient(
     // --- Console (VNC proxy) -----------------------------------------------
 
     suspend fun createVncProxy(node: String, type: String, vmid: Int): VncProxyDto {
-        val response = http.post(
+        val form = io.ktor.http.Parameters.build { append("websocket", "1") }
+        val response = http.submitForm(
             "$baseUrl/api2/json/nodes/$node/$type/$vmid/vncproxy",
+            formParameters = form,
         ) { applyAuth() }
         return response.body<ApiResponse<VncProxyDto>>().data
             ?: throw ProxmoxHttpException(response.status.value, "empty vncproxy response")

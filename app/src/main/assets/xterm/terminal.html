@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Terminal</title>
+<link rel="stylesheet" href="xterm.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; }
+  #terminal { width: 100vw; height: calc(100vh - 44px); }
+  #keybar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; overflow-x: auto; white-space: nowrap;
+    border-top: 1px solid #333;
+    padding: 4px 2px; z-index: 10;
+    -webkit-overflow-scrolling: touch;
+  }
+  #keybar button {
+    flex-shrink: 0; min-width: 40px; height: 36px;
+    margin: 0 2px; padding: 0 8px;
+    background: #333; color: #EEE; border: 1px solid #555;
+    border-radius: 4px; font-size: 13px; font-family: monospace;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #keybar button.active { background: #E57000; color: #FFF; border-color: #E57000; }
+  #keybar button:active { opacity: 0.7; }
+</style>
+</head>
+<body>
+<div id="terminal"></div>
+<div id="keybar"></div>
+
+<script src="xterm.min.js"></script>
+<script src="xterm-addon-fit.min.js"></script>
+<script>
+var params = new URLSearchParams(window.location.search);
+var host = params.get('host') || '127.0.0.1';
+var port = params.get('port');
+var user = params.get('user') || '';
+var ticket = params.get('ticket') || '';
+var fontSize = parseInt(params.get('fontSize')) || 16;
+var themeName = params.get('theme') || 'DARK';
+
+// --- Theme definitions ---
+var THEMES = {
+  DARK:            { background: '#0B0B0C', foreground: '#EFEFF1', cursor: '#E57000', selectionBackground: '#E5700050', keybarBg: '#1A1A1B', keybarBorder: '#333' },
+  LIGHT:           { background: '#FFFFFF', foreground: '#1E1E1E', cursor: '#E57000', selectionBackground: '#FFD59950', keybarBg: '#F0F0F0', keybarBorder: '#CCC' },
+  SOLARIZED_DARK:  { background: '#002B36', foreground: '#839496', cursor: '#93A1A1', selectionBackground: '#073642', keybarBg: '#073642', keybarBorder: '#586E75' },
+  SOLARIZED_LIGHT: { background: '#FDF6E3', foreground: '#657B83', cursor: '#586E75', selectionBackground: '#EEE8D5', keybarBg: '#EEE8D5', keybarBorder: '#93A1A1' },
+  DRACULA:         { background: '#282A36', foreground: '#F8F8F2', cursor: '#F8F8F2', selectionBackground: '#44475A', keybarBg: '#343746', keybarBorder: '#6272A4' },
+  MONOKAI:         { background: '#272822', foreground: '#F8F8F2', cursor: '#F92672', selectionBackground: '#49483E', keybarBg: '#3E3D32', keybarBorder: '#75715E' },
+  NORD:            { background: '#2E3440', foreground: '#D8DEE9', cursor: '#88C0D0', selectionBackground: '#434C5E', keybarBg: '#3B4252', keybarBorder: '#4C566A' },
+  GRUVBOX_DARK:    { background: '#282828', foreground: '#EBDBB2', cursor: '#FE8019', selectionBackground: '#3C3836', keybarBg: '#3C3836', keybarBorder: '#665C54' },
+  GRUVBOX_LIGHT:   { background: '#FBF1C7', foreground: '#3C3836', cursor: '#AF3A03', selectionBackground: '#EBDBB2', keybarBg: '#EBDBB2', keybarBorder: '#BDAE93' },
+  ONE_DARK:        { background: '#282C34', foreground: '#ABB2BF', cursor: '#528BFF', selectionBackground: '#3E4451', keybarBg: '#21252B', keybarBorder: '#3E4451' },
+  TOKYO_NIGHT:     { background: '#1A1B26', foreground: '#A9B1D6', cursor: '#C0CAF5', selectionBackground: '#283457', keybarBg: '#16161E', keybarBorder: '#3B4261' },
+  CATPPUCCIN:      { background: '#1E1E2E', foreground: '#CDD6F4', cursor: '#F5E0DC', selectionBackground: '#45475A', keybarBg: '#181825', keybarBorder: '#45475A' },
+  PROXMOX:         { background: '#0B0B0C', foreground: '#EFEFF1', cursor: '#E57000', selectionBackground: '#E5700050', keybarBg: '#1A1A1B', keybarBorder: '#E57000', btnBg: '#1A1A1B', btnColor: '#E57000', btnBorder: '#E57000' },
+};
+
+var selectedTheme = THEMES[themeName] || THEMES.DARK;
+document.body.style.background = selectedTheme.background;
+
+// Apply theme to keybar
+var keybarEl = document.getElementById('keybar');
+keybarEl.style.background = selectedTheme.keybarBg;
+keybarEl.style.borderTopColor = selectedTheme.keybarBorder;
+
+// --- Terminal setup ---
+var term = new Terminal({
+  cursorBlink: true,
+  fontSize: fontSize,
+  fontFamily: 'monospace',
+  theme: {
+    background: selectedTheme.background,
+    foreground: selectedTheme.foreground,
+    cursor: selectedTheme.cursor,
+    selectionBackground: selectedTheme.selectionBackground,
+  },
+});
+
+var fitAddon = new FitAddon.FitAddon();
+term.loadAddon(fitAddon);
+term.open(document.getElementById('terminal'));
+
+function doFit() {
+  fitAddon.fit();
+  if (term.rows < 5) {
+    var h = document.getElementById('terminal').clientHeight || 400;
+    var rows = Math.floor(h / (fontSize * 1.2));
+    if (rows < 10) rows = 24;
+    term.resize(term.cols, rows);
+  }
+}
+doFit();
+setTimeout(doFit, 100);
+setTimeout(doFit, 500);
+
+window.addEventListener('resize', doFit);
+document.addEventListener('click', function() { term.focus(); });
+
+// --- Key bar ---
+var modState = { ctrl: false, alt: false };
+
+var KEYS = [
+  { label: 'Esc',  seq: '\x1b' },
+  { label: 'Tab',  seq: '\t' },
+  { label: 'Ctrl', mod: 'ctrl' },
+  { label: 'Alt',  mod: 'alt' },
+  { label: '\u2191', seq: '\x1b[A' },
+  { label: '\u2193', seq: '\x1b[B' },
+  { label: '\u2190', seq: '\x1b[D' },
+  { label: '\u2192', seq: '\x1b[C' },
+  { label: 'Home', seq: '\x1b[H' },
+  { label: 'End',  seq: '\x1b[F' },
+  { label: 'PgUp', seq: '\x1b[5~' },
+  { label: 'PgDn', seq: '\x1b[6~' },
+  { label: 'Del',  seq: '\x1b[3~' },
+  { label: 'Ins',  seq: '\x1b[2~' },
+  { label: 'C-c',  seq: '\x03' },
+  { label: 'C-d',  seq: '\x04' },
+  { label: 'C-z',  seq: '\x1a' },
+  { label: 'C-l',  seq: '\x0c' },
+  { label: 'F1',  seq: '\x1bOP' },
+  { label: 'F2',  seq: '\x1bOQ' },
+  { label: 'F3',  seq: '\x1bOR' },
+  { label: 'F4',  seq: '\x1bOS' },
+  { label: 'F5',  seq: '\x1b[15~' },
+  { label: 'F6',  seq: '\x1b[17~' },
+  { label: 'F7',  seq: '\x1b[18~' },
+  { label: 'F8',  seq: '\x1b[19~' },
+  { label: 'F9',  seq: '\x1b[20~' },
+  { label: 'F10', seq: '\x1b[21~' },
+  { label: 'F11', seq: '\x1b[23~' },
+  { label: 'F12', seq: '\x1b[24~' },
+];
+
+KEYS.forEach(function(key) {
+  var btn = document.createElement('button');
+  btn.textContent = key.label;
+
+  // Theme-aware button colors
+  if (themeName === 'LIGHT') {
+    btn.style.background = '#E0E0E0';
+    btn.style.color = '#1E1E1E';
+    btn.style.borderColor = '#BBB';
+  } else if (themeName === 'SOLARIZED_DARK') {
+    btn.style.background = '#073642';
+    btn.style.color = '#839496';
+    btn.style.borderColor = '#586E75';
+  } else if (themeName === 'DRACULA') {
+    btn.style.background = '#44475A';
+    btn.style.color = '#F8F8F2';
+    btn.style.borderColor = '#6272A4';
+  }
+
+  if (key.mod) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      modState[key.mod] = !modState[key.mod];
+      btn.classList.toggle('active', modState[key.mod]);
+      term.focus();
+    });
+  } else {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      sendSpecialKey(key.seq);
+      term.focus();
+    });
+  }
+  keybarEl.appendChild(btn);
+});
+
+function sendSpecialKey(seq) {
+  if (ws && ws.readyState === WebSocket.OPEN && authenticated) {
+    var data = seq;
+    var bytes = new TextEncoder().encode(data);
+    var msg = '0:' + bytes.length + ':' + data;
+    ws.send(new TextEncoder().encode(msg));
+  }
+}
+
+// --- WebSocket connection ---
+var ws = null;
+var authenticated = false;
+
+term.writeln('Connecting...');
+
+ws = new WebSocket('ws://' + host + ':' + port, ['binary']);
+ws.binaryType = 'arraybuffer';
+
+ws.onopen = function() {
+  var authMsg = user + ':' + ticket + '\n';
+  ws.send(new TextEncoder().encode(authMsg));
+};
+
+ws.onmessage = function(event) {
+  var data = new TextDecoder().decode(event.data);
+
+  if (!authenticated) {
+    if (data.indexOf('OK') === 0) {
+      authenticated = true;
+      term.clear();
+      var cols = term.cols;
+      var rows = term.rows;
+      ws.send(new TextEncoder().encode('1:' + cols + ':' + rows + ':'));
+      term.focus();
+    } else {
+      term.writeln('\r\n\x1b[31mAuth failed: ' + data + '\x1b[0m');
+    }
+    return;
+  }
+
+  term.write(data);
+};
+
+ws.onerror = function() {
+  console.log('WS ERROR');
+  term.writeln('\r\n\x1b[31mConnection error\x1b[0m');
+};
+ws.onclose = function(e) {
+  console.log('WS CLOSE code=' + e.code);
+  term.writeln('\r\n\x1b[31mDisconnected (code=' + e.code + ')\x1b[0m');
+
+  // Show reconnect button on disconnect
+  var reconnectDiv = document.createElement('div');
+  reconnectDiv.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:100;';
+  var reconnectBtn = document.createElement('button');
+  reconnectBtn.textContent = 'Reconnect';
+  reconnectBtn.style.cssText = 'padding:12px 24px;background:#E57000;color:#fff;border:none;border-radius:12px;font:16px monospace;cursor:pointer;';
+  reconnectBtn.onclick = function() { location.reload(); };
+  reconnectDiv.appendChild(reconnectBtn);
+  document.body.appendChild(reconnectDiv);
+};
+
+// Terminal input with modifier support
+term.onData(function(data) {
+  if (ws.readyState !== WebSocket.OPEN || !authenticated) return;
+
+  var toSend = data;
+
+  if (modState.ctrl && data.length === 1) {
+    var code = data.charCodeAt(0);
+    // a-z: Ctrl+letter = code & 0x1f
+    if (code >= 97 && code <= 122) {
+      toSend = String.fromCharCode(code & 0x1f);
+    } else if (code >= 65 && code <= 90) {
+      toSend = String.fromCharCode(code & 0x1f);
+    }
+    modState.ctrl = false;
+    var ctrlBtn = keybarEl.querySelector('button:nth-child(3)');
+    if (ctrlBtn) ctrlBtn.classList.remove('active');
+  }
+
+  if (modState.alt && data.length === 1) {
+    toSend = '\x1b' + data;
+    modState.alt = false;
+    var altBtn = keybarEl.querySelector('button:nth-child(4)');
+    if (altBtn) altBtn.classList.remove('active');
+  }
+
+  var msg = '0:' + new TextEncoder().encode(toSend).length + ':' + toSend;
+  ws.send(new TextEncoder().encode(msg));
+});
+
+// Resize events
+term.onResize(function(size) {
+  if (ws.readyState === WebSocket.OPEN && authenticated) {
+    ws.send(new TextEncoder().encode('1:' + size.cols + ':' + size.rows + ':'));
+  }
+});
+
+// Keep keybar above soft keyboard
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    var keybar = document.getElementById('keybar');
+    var offset = window.innerHeight - window.visualViewport.height;
+    keybar.style.bottom = Math.max(0, offset) + 'px';
+    var terminal = document.getElementById('terminal');
+    terminal.style.height = 'calc(' + window.visualViewport.height + 'px - 44px)';
+    doFit();
+  });
+  window.visualViewport.addEventListener('scroll', function() {
+    var keybar = document.getElementById('keybar');
+    keybar.style.bottom = Math.max(0, window.innerHeight - window.visualViewport.height) + 'px';
+  });
+}
+
+// Keepalive ping every 30 seconds
+setInterval(function() {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(new TextEncoder().encode('2'));
+  }
+}, 30000);
+
+// Auth timeout
+setTimeout(function() {
+  if (!authenticated && ws.readyState === WebSocket.OPEN) {
+    term.writeln('\r\n\x1b[31mAuthentication timed out\x1b[0m');
+    ws.close();
+  }
+}, 10000);
+</script>
+</body>
+</html>

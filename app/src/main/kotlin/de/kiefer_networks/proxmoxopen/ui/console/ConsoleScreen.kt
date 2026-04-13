@@ -3,6 +3,7 @@ package de.kiefer_networks.proxmoxopen.ui.console
 import android.annotation.SuppressLint
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
@@ -42,9 +43,9 @@ fun ConsoleScreen(
         topBar = {
             TopAppBar(
                 title = { Text(state.title, style = MaterialTheme.typography.titleMedium) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
                 actions = {
-                    IconButton(onClick = viewModel::load) { Icon(Icons.Outlined.Refresh, contentDescription = null) }
+                    IconButton(onClick = viewModel::load) { Icon(Icons.Outlined.Refresh, contentDescription = "Refresh") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
@@ -58,7 +59,7 @@ fun ConsoleScreen(
                 state.error != null -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                     Text(state.error ?: "Error", color = MaterialTheme.colorScheme.error)
                 }
-                state.noVncUrl != null -> NoVncView(state.noVncUrl!!)
+                state.webViewUrl != null -> NoVncView(state.webViewUrl!!)
             }
         }
     }
@@ -75,16 +76,24 @@ private fun NoVncView(url: String) {
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
-                    allowFileAccess = true
-                    allowFileAccessFromFileURLs = true
-                    allowUniversalAccessFromFileURLs = true
                     mediaPlaybackRequiresUserGesture = false
-                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 }
-                webChromeClient = WebChromeClient()
-                webViewClient = WebViewClient()
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                        timber.log.Timber.d("Console-JS %s: %s", consoleMessage?.messageLevel(), consoleMessage?.message())
+                        return true
+                    }
+                }
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        val host = request?.url?.host
+                        return host != "127.0.0.1" && host != "localhost"
+                    }
+                }
                 loadUrl(url)
             }
         },
+        onRelease = { it.destroy() },
     )
 }
