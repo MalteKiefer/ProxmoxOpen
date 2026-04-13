@@ -47,3 +47,8 @@ val StatusRunning = Color(0xFF6BCB77)
 val StatusStopped = Color(0xFF8C8C95)
 val StatusPaused = ProxmoxOrange
 val StatusError = Color(0xFFFF6B6B)
+
+// Resource gauge colors.
+val ResourceCpu = Color(0xFF6BCB77)    // Same as StatusRunning - green
+val ResourceRam = Color(0xFF5B9BD5)    // Blue
+val ResourceDisk = Color(0xFFE8A838)   // Orange (standardize to one shade)

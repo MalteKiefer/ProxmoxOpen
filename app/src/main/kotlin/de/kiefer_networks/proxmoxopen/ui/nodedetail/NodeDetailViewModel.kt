@@ -17,6 +17,8 @@ import de.kiefer_networks.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,10 +29,12 @@ import kotlinx.coroutines.launch
 data class NodeDetailUiState(
     val node: Node? = null,
     val rrd: List<RrdPoint> = emptyList(),
+    val tasks: List<de.kiefer_networks.proxmoxopen.domain.model.ProxmoxTask> = emptyList(),
     val timeframe: RrdTimeframe = RrdTimeframe.HOUR,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val error: ApiError? = null,
+    val actionMessage: String? = null,
 )
 
 @HiltViewModel
@@ -38,6 +42,7 @@ class NodeDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val cluster: ClusterRepository,
     private val getRrd: GetNodeRrdUseCase,
+    private val taskRepo: de.kiefer_networks.proxmoxopen.domain.repository.TaskRepository,
     private val prefsRepo: UserPreferencesRepository,
 ) : ViewModel() {
 
@@ -82,14 +87,20 @@ class NodeDetailViewModel @Inject constructor(
             else it.copy(isLoading = it.node == null, isRefreshing = true, error = null)
         }
         viewModelScope.launch {
-            val nodeResult = cluster.getNode(serverId, nodeName)
-            val rrdResult = getRrd(serverId, nodeName, _state.value.timeframe)
+            val (nodeResult, rrdResult, taskResult) = coroutineScope {
+                Triple(
+                    async { cluster.getNode(serverId, nodeName) },
+                    async { getRrd(serverId, nodeName, _state.value.timeframe) },
+                    async { taskRepo.listTasks(serverId, nodeName, limit = 50) }
+                ).let { Triple(it.first.await(), it.second.await(), it.third.await()) }
+            }
             _state.update {
                 it.copy(
                     isLoading = false,
                     isRefreshing = false,
                     node = (nodeResult as? ApiResult.Success)?.value ?: it.node,
                     rrd = (rrdResult as? ApiResult.Success)?.value ?: it.rrd,
+                    tasks = (taskResult as? ApiResult.Success)?.value ?: it.tasks,
                     error = (nodeResult as? ApiResult.Failure)?.error,
                 )
             }
@@ -100,7 +111,13 @@ class NodeDetailViewModel @Inject constructor(
 
     fun nodeAction(command: String) {
         viewModelScope.launch {
-            cluster.nodeAction(serverId, nodeName, command)
+            when (val r = cluster.nodeAction(serverId, nodeName, command)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(actionMessage = "Node $command initiated") }
+                    refresh(silent = true)
+                }
+                is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
+            }
         }
     }
 }

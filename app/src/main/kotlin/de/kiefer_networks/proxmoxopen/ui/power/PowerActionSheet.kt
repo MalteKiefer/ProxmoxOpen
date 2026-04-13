@@ -149,7 +149,7 @@ private fun ActionRow(action: PowerAction, onClick: () -> Unit) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = iconFor(action),
-                        contentDescription = null,
+                        contentDescription = label(action),
                         tint = onColor,
                     )
                 }

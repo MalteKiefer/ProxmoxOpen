@@ -94,6 +94,7 @@ fun NavGraph() {
                 onStorage = {
                     nav.navigate(Route.StorageOverview(route.serverId, route.node))
                 },
+                onOpenTask = { node, upid -> nav.navigate(Route.TaskDetail(route.serverId, node, upid)) },
             )
         }
         composable<Route.GuestDetail> { entry ->
@@ -114,7 +115,6 @@ fun NavGraph() {
             if (route.type == "qemu") {
                 VmDetailScreen(
                     onBack = { nav.popBackStack() },
-                    onSettings = { nav.navigate(Route.Settings) },
                     onConsole = { nav.navigate(Route.Console(route.serverId, route.node, route.vmid, route.type)) },
                     onOpenTask = onOpenTask,
                     onMigrate = onMigrate,

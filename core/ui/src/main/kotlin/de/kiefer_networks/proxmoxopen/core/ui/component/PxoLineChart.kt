@@ -85,7 +85,7 @@ fun PxoLineChart(
     }
 }
 
-val percentFormatter: CartesianValueFormatter = CartesianValueFormatter { value, _, _ ->
-    val pct = (value * 100.0).toInt()
+val percentFormatter: CartesianValueFormatter = CartesianValueFormatter { _, value, _ ->
+    val pct = (value.toFloat() * 100f).toInt()
     "$pct%"
 }

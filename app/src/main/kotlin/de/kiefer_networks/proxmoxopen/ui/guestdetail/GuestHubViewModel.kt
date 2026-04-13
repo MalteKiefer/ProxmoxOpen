@@ -7,19 +7,21 @@ import androidx.navigation.toRoute
 import de.kiefer_networks.proxmoxopen.domain.model.Backup
 import de.kiefer_networks.proxmoxopen.domain.model.ContainerStatus
 import de.kiefer_networks.proxmoxopen.domain.model.GuestType
-import de.kiefer_networks.proxmoxopen.preferences.RefreshInterval
-import de.kiefer_networks.proxmoxopen.preferences.UserPreferencesRepository
 import de.kiefer_networks.proxmoxopen.domain.model.PowerAction
 import de.kiefer_networks.proxmoxopen.domain.model.ProxmoxTask
 import de.kiefer_networks.proxmoxopen.domain.model.RrdPoint
 import de.kiefer_networks.proxmoxopen.domain.model.RrdTimeframe
 import de.kiefer_networks.proxmoxopen.domain.model.Snapshot
+import de.kiefer_networks.proxmoxopen.domain.model.VmConfig
+import de.kiefer_networks.proxmoxopen.domain.model.VmStatus
 import de.kiefer_networks.proxmoxopen.domain.repository.GuestRepository
 import de.kiefer_networks.proxmoxopen.domain.repository.TaskRepository
 import de.kiefer_networks.proxmoxopen.domain.result.ApiError
 import de.kiefer_networks.proxmoxopen.domain.result.ApiResult
 import de.kiefer_networks.proxmoxopen.domain.usecase.GetGuestRrdUseCase
 import de.kiefer_networks.proxmoxopen.domain.usecase.PowerActionUseCase
+import de.kiefer_networks.proxmoxopen.preferences.RefreshInterval
+import de.kiefer_networks.proxmoxopen.preferences.UserPreferencesRepository
 import de.kiefer_networks.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -31,8 +33,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ContainerHubUiState(
-    val status: ContainerStatus? = null,
+data class GuestHubUiState(
+    // Container status (CT only)
+    val containerStatus: ContainerStatus? = null,
+    // VM status (VM only)
+    val vmStatus: VmStatus? = null,
+    // VM config (VM only)
+    val vmConfig: VmConfig? = null,
     val rrd: List<RrdPoint> = emptyList(),
     val timeframe: RrdTimeframe = RrdTimeframe.HOUR,
     val snapshots: List<Snapshot> = emptyList(),
@@ -44,10 +51,13 @@ data class ContainerHubUiState(
     val isRefreshing: Boolean = false,
     val error: ApiError? = null,
     val actionMessage: String? = null,
-)
+) {
+    /** True when either status has been loaded. */
+    val hasStatus: Boolean get() = containerStatus != null || vmStatus != null
+}
 
 @HiltViewModel
-class ContainerHubViewModel @Inject constructor(
+class GuestHubViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val guestRepo: GuestRepository,
     private val taskRepo: TaskRepository,
@@ -61,85 +71,133 @@ class ContainerHubViewModel @Inject constructor(
     val node = route.node
     val vmid = route.vmid
     val type = GuestType.fromApiPath(route.type) ?: GuestType.LXC
+    val isVm = type == GuestType.QEMU
 
-    private val _state = MutableStateFlow(ContainerHubUiState())
+    private val _state = MutableStateFlow(GuestHubUiState())
     val state = _state.asStateFlow()
-
     private var autoRefreshJob: Job? = null
 
     private var currentTab = 0
 
-    init {
-        loadTab(0)
-        startAutoRefresh()
-    }
+    init { loadTab(0); startAutoRefresh() }
 
     private fun startAutoRefresh() {
         autoRefreshJob?.cancel()
         autoRefreshJob = viewModelScope.launch {
             prefsRepo.preferences.collectLatest { prefs ->
-                val interval = prefs.refreshInterval
-                if (interval == RefreshInterval.OFF) return@collectLatest
-                while (true) {
-                    delay(interval.seconds * 1000L)
-                    loadTab(currentTab, silent = true)
-                }
+                if (prefs.refreshInterval == RefreshInterval.OFF) return@collectLatest
+                while (true) { delay(prefs.refreshInterval.seconds * 1000L); loadTab(currentTab, silent = true) }
             }
         }
     }
 
     fun refresh(silent: Boolean = false) { loadTab(currentTab, silent) }
 
-    fun onTabChanged(tab: Int) {
+    fun loadTab(tab: Int, silent: Boolean = false) {
         currentTab = tab
-        loadTab(tab, silent = true)
-    }
-
-    private fun loadTab(tab: Int, silent: Boolean = false) {
         _state.update {
             if (silent) it.copy(isRefreshing = true, error = null)
-            else it.copy(isLoading = it.status == null, isRefreshing = true, error = null)
+            else it.copy(isLoading = !it.hasStatus, isRefreshing = true, error = null)
         }
         viewModelScope.launch {
-            // Always load status (lightweight, needed for all tabs)
-            val statusResult = guestRepo.getContainerStatus(serverId, node, vmid)
-            _state.update { it.copy(status = (statusResult as? ApiResult.Success)?.value ?: it.status, error = (statusResult as? ApiResult.Failure)?.error) }
+            loadStatus()
 
-            // Load tab-specific data only
             when (tab) {
-                0 -> { /* Summary — status is enough */ }
-                1 -> { val r = getRrd(serverId, node, vmid, type, _state.value.timeframe); _state.update { it.copy(rrd = (r as? ApiResult.Success)?.value ?: it.rrd) } }
-                2 -> { val r = guestRepo.listSnapshots(serverId, node, vmid, type); _state.update { it.copy(snapshots = (r as? ApiResult.Success)?.value ?: it.snapshots) } }
-                3 -> {
-                    val storages = (guestRepo.listBackupStorages(serverId, node) as? ApiResult.Success)?.value ?: _state.value.backupStorages
-                    val sel = _state.value.selectedBackupStorage ?: storages.firstOrNull()
-                    val backups = sel?.let { (guestRepo.listBackups(serverId, node, it, vmid) as? ApiResult.Success)?.value } ?: emptyList()
-                    _state.update { it.copy(backupStorages = storages, selectedBackupStorage = sel, backups = backups) }
-                }
-                4 -> { val r = taskRepo.listTasksForVmid(serverId, node, vmid, limit = 50); _state.update { it.copy(tasks = (r as? ApiResult.Success)?.value ?: it.tasks) } }
+                0 -> loadSummaryExtras()
+                1 -> loadRrd()
+                2 -> loadSnapshots()
+                3 -> loadBackups()
+                4 -> loadTasks()
             }
+
             _state.update { it.copy(isLoading = false, isRefreshing = false) }
         }
     }
 
+    // ── Status loading ──────────────────────────────────────────────────
+
+    private suspend fun loadStatus() {
+        if (isVm) {
+            val statusResult = guestRepo.getVmStatus(serverId, node, vmid)
+            val configResult = if (_state.value.vmConfig == null) guestRepo.getVmConfig(serverId, node, vmid) else null
+            _state.update {
+                it.copy(
+                    vmStatus = (statusResult as? ApiResult.Success)?.value ?: it.vmStatus,
+                    vmConfig = (configResult as? ApiResult.Success)?.value ?: it.vmConfig,
+                    error = (statusResult as? ApiResult.Failure)?.error,
+                )
+            }
+        } else {
+            val statusResult = guestRepo.getContainerStatus(serverId, node, vmid)
+            _state.update {
+                it.copy(
+                    containerStatus = (statusResult as? ApiResult.Success)?.value ?: it.containerStatus,
+                    error = (statusResult as? ApiResult.Failure)?.error,
+                )
+            }
+        }
+    }
+
+    /** VM-only: fetch QEMU agent IPs when summary tab is selected. */
+    private fun loadSummaryExtras() {
+        if (!isVm) return
+        val vmStatus = _state.value.vmStatus ?: return
+        if (vmStatus.agentEnabled && vmStatus.ipAddresses.isEmpty()) {
+            viewModelScope.launch {
+                val ips = guestRepo.getVmAgentIps(serverId, node, vmid)
+                if (ips is ApiResult.Success && ips.value.isNotEmpty()) {
+                    _state.update { s ->
+                        s.copy(vmStatus = s.vmStatus?.copy(ipAddresses = ips.value))
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Tab data loading (shared) ───────────────────────────────────────
+
+    private suspend fun loadRrd() {
+        val rrdResult = getRrd(serverId, node, vmid, type, _state.value.timeframe)
+        _state.update { it.copy(rrd = (rrdResult as? ApiResult.Success)?.value ?: it.rrd) }
+    }
+
+    private suspend fun loadSnapshots() {
+        val snapResult = guestRepo.listSnapshots(serverId, node, vmid, type)
+        val snaps = (snapResult as? ApiResult.Success)?.value?.filter { it.name != "current" }
+        _state.update { it.copy(snapshots = snaps ?: it.snapshots) }
+    }
+
+    private suspend fun loadBackups() {
+        val storages = (guestRepo.listBackupStorages(serverId, node) as? ApiResult.Success)?.value ?: _state.value.backupStorages
+        val sel = _state.value.selectedBackupStorage ?: storages.firstOrNull()
+        val backups = sel?.let { (guestRepo.listBackups(serverId, node, it, vmid) as? ApiResult.Success)?.value } ?: emptyList()
+        _state.update { it.copy(backupStorages = storages, selectedBackupStorage = sel, backups = backups) }
+    }
+
+    private suspend fun loadTasks() {
+        val taskResult = taskRepo.listTasksForVmid(serverId, node, vmid, limit = 50)
+        _state.update { it.copy(tasks = (taskResult as? ApiResult.Success)?.value ?: it.tasks) }
+    }
+
+    // ── Actions (shared) ────────────────────────────────────────────────
+
     fun setTimeframe(tf: RrdTimeframe) {
         _state.update { it.copy(timeframe = tf) }
         viewModelScope.launch {
-            val rrdResult = getRrd(serverId, node, vmid, type, tf)
-            _state.update { it.copy(rrd = (rrdResult as? ApiResult.Success)?.value ?: emptyList()) }
+            val r = getRrd(serverId, node, vmid, type, tf)
+            _state.update { it.copy(rrd = (r as? ApiResult.Success)?.value ?: emptyList()) }
         }
     }
 
     fun triggerAction(action: PowerAction) {
         _state.update { it.copy(actionMessage = null) }
         viewModelScope.launch {
-            when (val result = powerAction(serverId, node, vmid, type, action)) {
+            when (val r = powerAction(serverId, node, vmid, type, action)) {
                 is ApiResult.Success -> {
-                    _state.update { it.copy(actionMessage = "Task: ${result.value}") }
-                    refresh()
+                    _state.update { it.copy(actionMessage = "Task: ${r.value}") }
+                    refresh(silent = true)
                 }
-                is ApiResult.Failure ->
-                    _state.update { it.copy(actionMessage = result.error.message) }
+                is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
             }
         }
     }
@@ -149,7 +207,7 @@ class ContainerHubViewModel @Inject constructor(
             when (val r = guestRepo.createSnapshot(serverId, node, vmid, type, name, description)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(actionMessage = "Snapshot created") }
-                    refreshSnapshots()
+                    loadSnapshots()
                 }
                 is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
             }
@@ -161,7 +219,7 @@ class ContainerHubViewModel @Inject constructor(
             when (val r = guestRepo.rollbackSnapshot(serverId, node, vmid, type, name)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(actionMessage = "Rollback started") }
-                    refresh()
+                    refresh(silent = true)
                 }
                 is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
             }
@@ -173,7 +231,7 @@ class ContainerHubViewModel @Inject constructor(
             when (val r = guestRepo.deleteSnapshot(serverId, node, vmid, type, name)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(actionMessage = "Snapshot deleted") }
-                    refreshSnapshots()
+                    loadSnapshots()
                 }
                 is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
             }
@@ -228,10 +286,5 @@ class ContainerHubViewModel @Inject constructor(
                 is ApiResult.Failure -> _state.update { it.copy(actionMessage = r.error.message) }
             }
         }
-    }
-
-    private suspend fun refreshSnapshots() {
-        val snapResult = guestRepo.listSnapshots(serverId, node, vmid, type)
-        _state.update { it.copy(snapshots = (snapResult as? ApiResult.Success)?.value ?: emptyList()) }
     }
 }
