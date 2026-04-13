@@ -61,7 +61,7 @@ fun GuestConfigScreen(
     LaunchedEffect(state.saved) { if (state.saved) onBack() }
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("General", "Resources", "DNS", "Network", "Options", "Disks")
+    val tabs = listOf("General", "Resources", "DNS", "Network", stringResource(R.string.config_options), stringResource(R.string.config_disks))
 
     Scaffold(
         topBar = {
@@ -72,7 +72,7 @@ fun GuestConfigScreen(
                         Text("CT ${viewModel.vmid} · ${viewModel.node}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
@@ -164,7 +164,7 @@ private fun NetworkTab(state: GuestConfigUiState, vm: GuestConfigViewModel) {
         NetCard(i, net, vm, canDelete = state.nets.size > 1)
     }
     OutlinedButton(onClick = { vm.addNetInterface() }, modifier = Modifier.fillMaxWidth()) {
-        Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+        Icon(Icons.Outlined.Add, contentDescription = "Add network interface", modifier = Modifier.padding(end = 8.dp))
         Text(stringResource(R.string.config_add_interface))
     }
 }
@@ -176,7 +176,7 @@ private fun NetCard(index: Int, net: NetworkInterface, vm: GuestConfigViewModel,
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("${net.id}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
                 net.bridge?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                if (canDelete) IconButton(onClick = { vm.deleteNetInterface(index) }) { Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(0.dp)) }
+                if (canDelete) IconButton(onClick = { vm.deleteNetInterface(index) }) { Icon(Icons.Outlined.Delete, contentDescription = "Delete network interface", tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(0.dp)) }
             }
             net.hwaddr?.let { Text("MAC: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Compact(net.ip ?: "", { vm.onNetField(index, NetField.IP, it) }, "IPv4 (CIDR/dhcp)")
@@ -196,7 +196,7 @@ private fun NetCard(index: Int, net: NetworkInterface, vm: GuestConfigViewModel,
 
 @Composable
 private fun OptionsTab(state: GuestConfigUiState) {
-    Text("Options", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+    Text(stringResource(R.string.config_options), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
     state.config?.let { c ->
         ReadOnlyRow("Start at boot", if (c.onboot) "Yes" else "No")
         ReadOnlyRow("Start/Shutdown order", c.startup ?: "order=any")
@@ -213,7 +213,7 @@ private fun OptionsTab(state: GuestConfigUiState) {
 
 @Composable
 private fun DisksTab(state: GuestConfigUiState) {
-    Text("Disks", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+    Text(stringResource(R.string.config_disks), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
     TodoHint(stringResource(R.string.config_disks_todo))
 }
 
@@ -255,7 +255,7 @@ private fun StopHint() {
 
 @Composable
 private fun TodoHint(text: String) {
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)) {
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)) {
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(12.dp))
     }
 }

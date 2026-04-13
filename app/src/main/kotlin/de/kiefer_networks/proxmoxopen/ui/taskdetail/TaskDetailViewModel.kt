@@ -14,6 +14,8 @@ import de.kiefer_networks.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,8 +51,11 @@ class TaskDetailViewModel @Inject constructor(
     fun refresh() {
         _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
-            val taskResult = taskRepo.getTask(serverId, node, upid)
-            val logResult = taskRepo.getTaskLog(serverId, node, upid, start = 0, limit = 1000)
+            val (taskResult, logResult) = coroutineScope {
+                val taskDeferred = async { taskRepo.getTask(serverId, node, upid) }
+                val logDeferred = async { taskRepo.getTaskLog(serverId, node, upid, start = 0, limit = 1000) }
+                Pair(taskDeferred.await(), logDeferred.await())
+            }
             _state.update {
                 it.copy(
                     isLoading = false,
@@ -75,8 +80,11 @@ class TaskDetailViewModel @Inject constructor(
         pollingJob = viewModelScope.launch {
             while (true) {
                 delay(2000L)
-                val taskResult = taskRepo.getTask(serverId, node, upid)
-                val logResult = taskRepo.getTaskLog(serverId, node, upid, start = 0, limit = 1000)
+                val (taskResult, logResult) = coroutineScope {
+                    val taskDeferred = async { taskRepo.getTask(serverId, node, upid) }
+                    val logDeferred = async { taskRepo.getTaskLog(serverId, node, upid, start = 0, limit = 1000) }
+                    Pair(taskDeferred.await(), logDeferred.await())
+                }
                 _state.update {
                     it.copy(
                         task = (taskResult as? ApiResult.Success)?.value ?: it.task,

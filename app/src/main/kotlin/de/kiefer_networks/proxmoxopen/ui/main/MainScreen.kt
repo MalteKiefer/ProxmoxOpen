@@ -70,7 +70,7 @@ fun MainScreen(
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(tab.icon, contentDescription = null) },
+                        icon = { Icon(tab.icon, contentDescription = stringResource(tab.labelRes)) },
                         label = { Text(stringResource(tab.labelRes)) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,

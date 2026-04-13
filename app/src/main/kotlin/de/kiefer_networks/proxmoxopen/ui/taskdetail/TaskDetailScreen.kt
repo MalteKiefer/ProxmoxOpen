@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.kiefer_networks.proxmoxopen.R
@@ -64,8 +63,8 @@ fun TaskDetailScreen(
                         state.task?.let { Text(it.type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) } },
-                actions = { IconButton(onClick = viewModel::refresh) { Icon(Icons.Outlined.Refresh, contentDescription = null) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+                actions = { IconButton(onClick = viewModel::refresh) { Icon(Icons.Outlined.Refresh, contentDescription = "Refresh") } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
@@ -94,7 +93,7 @@ fun TaskDetailScreen(
                         state.task?.let { task ->
                             val df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
                             val tone = when (task.state) { TaskState.RUNNING -> BadgeTone.Running; TaskState.OK -> BadgeTone.Running; TaskState.FAILED -> BadgeTone.Error; else -> BadgeTone.Neutral }
-                            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(task.type, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
@@ -104,10 +103,10 @@ fun TaskDetailScreen(
                                         }
                                         StatusBadge(task.state.name, tone)
                                     }
-                                    Row(Modifier.fillMaxWidth()) { Text("User", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(task.user, style = MaterialTheme.typography.bodySmall) }
-                                    Row(Modifier.fillMaxWidth()) { Text("Started", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(df.format(Date(task.startTime * 1000)), style = MaterialTheme.typography.bodySmall) }
-                                    task.endTime?.let { Row(Modifier.fillMaxWidth()) { Text("Ended", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(df.format(Date(it * 1000)), style = MaterialTheme.typography.bodySmall) } }
-                                    task.exitStatus?.let { Row(Modifier.fillMaxWidth()) { Text("Exit", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(it, style = MaterialTheme.typography.bodySmall, color = if (task.state == TaskState.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface) } }
+                                    Row(Modifier.fillMaxWidth()) { Text(stringResource(R.string.task_user), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(task.user, style = MaterialTheme.typography.bodySmall) }
+                                    Row(Modifier.fillMaxWidth()) { Text(stringResource(R.string.task_started), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(df.format(Date(task.startTime * 1000)), style = MaterialTheme.typography.bodySmall) }
+                                    task.endTime?.let { Row(Modifier.fillMaxWidth()) { Text(stringResource(R.string.task_ended), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(df.format(Date(it * 1000)), style = MaterialTheme.typography.bodySmall) } }
+                                    task.exitStatus?.let { Row(Modifier.fillMaxWidth()) { Text(stringResource(R.string.task_exit), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(it, style = MaterialTheme.typography.bodySmall, color = if (task.state == TaskState.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface) } }
                                 }
                             }
                         }
@@ -117,6 +116,7 @@ fun TaskDetailScreen(
                             Card(
                                 Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
                             ) {
                                 Column(
@@ -125,10 +125,8 @@ fun TaskDetailScreen(
                                     state.logLines.forEach { line ->
                                         Text(
                                             text = line.text,
-                                            style = MaterialTheme.typography.bodySmall.copy(
+                                            style = MaterialTheme.typography.labelSmall.copy(
                                                 fontFamily = FontFamily.Monospace,
-                                                fontSize = 11.sp,
-                                                lineHeight = 16.sp,
                                             ),
                                             color = MaterialTheme.colorScheme.onSurface,
                                         )

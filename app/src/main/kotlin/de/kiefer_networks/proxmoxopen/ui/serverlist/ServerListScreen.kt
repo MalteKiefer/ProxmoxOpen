@@ -89,7 +89,7 @@ fun StatelessServerList(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 text = { Text(stringResource(R.string.add_server)) },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Add server") },
                 onClick = onAdd,
             )
         },
@@ -133,7 +133,7 @@ private fun ServerCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Row(
             modifier = Modifier
@@ -149,7 +149,7 @@ private fun ServerCard(
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Outlined.Dns,
-                        contentDescription = null,
+                        contentDescription = "Server",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
