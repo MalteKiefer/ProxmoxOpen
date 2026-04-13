@@ -22,6 +22,9 @@
     <string name="theme_dark">Dark</string>
     <string name="language_english">English</string>
     <string name="language_german">Deutsch</string>
+    <string name="language_french">Français</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_italian">Italiano</string>
     <string name="close">Close</string>
 
     <string name="add_server_subtitle">Connect to a Proxmox VE host or cluster.</string>
@@ -29,29 +32,14 @@
     <string name="add_server_section_token">API token</string>
     <string name="add_server_section_credentials">Credentials</string>
     <string name="login_using_token">Signing in with API token…</string>
-    <string name="dashboard_running">Running</string>
     <string name="dashboard_no_guests">No guests on this server.</string>
     <string name="power_actions">Power actions</string>
-    <string name="charts_title">Performance</string>
     <string name="edit_server_title">Edit server</string>
     <string name="save">Save</string>
     <string name="edit_config_title">Configuration</string>
-    <string name="config_section_general">General</string>
-    <string name="config_section_dns">DNS</string>
-    <string name="config_section_network">Network interfaces</string>
-    <string name="config_name">Name</string>
-    <string name="config_hostname">Hostname</string>
     <string name="config_onboot">Start at boot</string>
     <string name="config_nameserver">Nameserver</string>
     <string name="config_searchdomain">Search domain</string>
-    <string name="config_ip">IPv4 (CIDR or dhcp)</string>
-    <string name="config_gateway">Gateway</string>
-    <string name="config_ip6">IPv6 (CIDR, dhcp, auto)</string>
-    <string name="config_gateway6">Gateway (IPv6)</string>
-    <string name="config_tab_general">General</string>
-    <string name="config_tab_resources">Resources</string>
-    <string name="config_tab_dns">DNS</string>
-    <string name="config_tab_network">Network</string>
     <string name="config_description">Description</string>
     <string name="config_protection">Protection</string>
     <string name="config_startup">Startup order (order=N,up=N,down=N)</string>
@@ -62,13 +50,8 @@
     <string name="config_nameserver_hint">Separate multiple DNS servers with a space or comma.</string>
     <string name="config_no_interfaces">No network interfaces configured.</string>
     <string name="config_firewall">Firewall</string>
-    <string name="config_section_resources">Resources</string>
 
     <!-- CT Hub tabs -->
-    <string name="ct_tab_summary">Summary</string>
-    <string name="ct_tab_charts">Charts</string>
-    <string name="ct_tab_snapshots">Snapshots</string>
-    <string name="ct_tab_tasks">Tasks</string>
 
     <!-- Snapshots -->
     <string name="snap_create">Create snapshot</string>
@@ -77,23 +60,20 @@
     <string name="snap_delete">Delete</string>
     <string name="snap_empty">No snapshots yet.</string>
     <string name="backup_now">Backup now</string>
-    <string name="ct_tab_backup">Backup</string>
-    <string name="backup_title">Backup</string>
-    <string name="backup_description">Create a backup of this container using vzdump (snapshot mode, zstd compression).</string>
-    <string name="backup_list_todo">Listing existing backups is not yet implemented.</string>
     <string name="config_add_interface">Add network interface</string>
     <string name="config_stop_hint">Some changes require the container to be stopped first.</string>
     <string name="config_options_todo">Console mode, TTY count, hookscript and features editing will be available in a future update.</string>
     <string name="config_disks_todo">Rootfs and mount point editing will be available in a future update.</string>
     <string name="backup_dialog_title">Create backup</string>
     <string name="settings_section_data">Data</string>
+    <string name="settings_section_terminal">Terminal</string>
+    <string name="setting_terminal_font_size">Font size</string>
+    <string name="setting_terminal_theme">Theme</string>
     <string name="backup_empty">No backups found on this storage.</string>
     <string name="app_lock_prompt">Authenticate to open ProxMoxOpen</string>
     <string name="app_lock_retry">Try again</string>
     <string name="task_live">Live</string>
     <string name="search_hint">Search VMs and containers…</string>
-    <string name="node_reboot">Reboot node</string>
-    <string name="node_shutdown">Shutdown node</string>
     <string name="setting_refresh_interval">Live refresh interval</string>
 
     <!-- Server list -->
@@ -149,18 +129,9 @@
     <string name="tab_nodes">Nodes</string>
     <string name="tab_vms">VMs</string>
     <string name="tab_containers">CTs</string>
-    <string name="pull_to_refresh">Pull to refresh</string>
+    <string name="tab_backups">Backups</string>
 
     <!-- Node detail -->
-    <string name="node_status_online">Online</string>
-    <string name="node_status_offline">Offline</string>
-    <string name="node_status_unknown">Unknown</string>
-    <string name="metric_cpu">CPU</string>
-    <string name="metric_memory">Memory</string>
-    <string name="metric_disk">Disk</string>
-    <string name="metric_network">Network</string>
-    <string name="metric_uptime">Uptime</string>
-    <string name="metric_load">Load average</string>
     <string name="timeframe_1h">1h</string>
     <string name="timeframe_24h">24h</string>
     <string name="timeframe_7d">7d</string>
@@ -169,7 +140,6 @@
     <!-- Guest detail / power -->
     <string name="guest_type_qemu">VM</string>
     <string name="guest_type_lxc">Container</string>
-    <string name="vm_id">VMID %1$d</string>
     <string name="power_start">Start</string>
     <string name="power_stop">Stop</string>
     <string name="power_shutdown">Shutdown</string>
@@ -179,15 +149,9 @@
     <string name="power_reset">Reset</string>
     <string name="power_confirm_title">Confirm action</string>
     <string name="power_confirm_body">Run “%1$s” on %2$s?</string>
-    <string name="power_task_running">Running %1$s…</string>
-    <string name="power_task_done">Completed %1$s</string>
 
     <!-- Tasks -->
-    <string name="task_log_title">Tasks</string>
     <string name="task_detail_title">Task Log</string>
-    <string name="task_status_running">Running</string>
-    <string name="task_status_ok">OK</string>
-    <string name="task_status_failed">Failed</string>
 
     <!-- Delete guest -->
     <string name="delete_guest_title">Delete %1$s %2$d?</string>
@@ -201,12 +165,9 @@
     <string name="migrate_target_node">Target node</string>
     <string name="migrate_online">Online migration</string>
     <string name="migrate_button">Migrate</string>
-    <string name="migrate_success">Migration started</string>
 
     <!-- Storage -->
     <string name="storage_title">Storage</string>
-    <string name="storage_type">Type</string>
-    <string name="storage_content">Content</string>
     <string name="storage_enabled">Enabled</string>
     <string name="storage_disabled">Disabled</string>
 
@@ -214,12 +175,6 @@
     <string name="console_title">Console</string>
 
     <!-- Errors -->
-    <string name="error_network">Network error. Please check the connection to your Proxmox server.</string>
-    <string name="error_auth">Authentication failed. Please verify your credentials.</string>
-    <string name="error_tls">TLS error: %1$s</string>
-    <string name="error_fingerprint_changed">Server fingerprint has changed.</string>
-    <string name="error_unknown">Something went wrong.</string>
-    <string name="error_parse">The server responded with unexpected data.</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -227,18 +182,12 @@
     <string name="setting_dynamic_color_desc">Use the system color palette (Android 12+).</string>
     <string name="setting_biometric_lock">App lock</string>
     <string name="setting_biometric_lock_desc">Require biometric authentication to open the app.</string>
-    <string name="setting_flag_secure">Hide from recents</string>
-    <string name="setting_flag_secure_desc">Blur screenshots and the recents thumbnail.</string>
-    <string name="setting_auto_refresh">Auto-refresh interval</string>
     <string name="setting_language">Language</string>
     <string name="setting_language_system">System</string>
     <string name="about">About</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_license">License</string>
-    <string name="about_source">Source code</string>
     <string name="donate_title">Support development</string>
     <string name="donate_subtitle">Donate via Liberapay or PayPal</string>
-    <string name="about_translate">Help translate</string>
 
     <!-- Clone -->
     <string name="clone_title">Clone %1$s %2$d</string>
@@ -248,4 +197,46 @@
     <string name="clone_target_node">Target node (optional)</string>
     <string name="clone_storage">Target storage (optional)</string>
     <string name="clone_button">Clone</string>
+
+    <!-- Backup Jobs -->
+    <string name="backup_job_create">Create Backup Job</string>
+    <string name="backup_job_edit">Edit Backup Job</string>
+    <string name="backup_job_delete_title">Delete Backup Job</string>
+    <string name="backup_job_delete_body">Delete backup job %s?</string>
+    <string name="backup_job_run">Run</string>
+    <string name="backup_job_schedule">Schedule</string>
+    <string name="backup_job_cron">Cron Expression</string>
+    <string name="backup_job_all_guests">All Guests</string>
+    <string name="backup_job_select_guests">Select VMs/CTs</string>
+    <string name="backup_job_select_hint">Select at least one guest</string>
+    <string name="backup_job_storage">Storage</string>
+    <string name="backup_job_node">Node</string>
+    <string name="backup_job_all_nodes">All Nodes</string>
+    <string name="backup_job_mode">Mode</string>
+    <string name="backup_job_compression">Compression</string>
+    <string name="backup_job_notification">Notification</string>
+    <string name="backup_job_mailto">Mail to</string>
+    <string name="backup_job_notes">Notes</string>
+    <string name="backup_no_jobs">No backup jobs configured</string>
+    <string name="backup_job_enabled">Enabled</string>
+    <string name="backup_job_disabled">Disabled</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="node_no_recent_tasks">No recent tasks</string>
+    <string name="task_exit_prefix">Exit: %s</string>
+
+    <!-- Backup dialog -->
+    <string name="backup_dialog_storage">Storage</string>
+    <string name="backup_dialog_mode">Mode</string>
+    <string name="backup_dialog_compression">Compression</string>
+    <string name="backup_dialog_protected">Protected</string>
+    <string name="backup_dialog_notes">Notes</string>
+    <string name="backup_dialog_restore">Restore</string>
+    <string name="config_options">Options</string>
+    <string name="config_disks">Disks</string>
+    <string name="task_user">User</string>
+    <string name="task_started">Started</string>
+    <string name="task_ended">Ended</string>
+    <string name="task_exit">Exit</string>
+    <string name="about_tagline">Native Android client for Proxmox VE</string>
 </resources>

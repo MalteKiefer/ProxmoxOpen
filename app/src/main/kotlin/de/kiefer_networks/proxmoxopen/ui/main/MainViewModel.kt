@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.kiefer_networks.proxmoxopen.preferences.LanguageOption
 import de.kiefer_networks.proxmoxopen.preferences.RefreshInterval
+import de.kiefer_networks.proxmoxopen.preferences.TerminalFontSize
+import de.kiefer_networks.proxmoxopen.preferences.TerminalTheme
 import de.kiefer_networks.proxmoxopen.preferences.ThemeMode
 import de.kiefer_networks.proxmoxopen.preferences.UserPreferences
 import de.kiefer_networks.proxmoxopen.preferences.UserPreferencesRepository
@@ -40,5 +42,13 @@ class MainViewModel @Inject constructor(
 
     fun setRefreshInterval(interval: RefreshInterval) {
         viewModelScope.launch { preferencesRepository.setRefreshInterval(interval) }
+    }
+
+    fun setTerminalFontSize(size: TerminalFontSize) {
+        viewModelScope.launch { preferencesRepository.setTerminalFontSize(size) }
+    }
+
+    fun setTerminalTheme(theme: TerminalTheme) {
+        viewModelScope.launch { preferencesRepository.setTerminalTheme(theme) }
     }
 }

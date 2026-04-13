@@ -33,6 +33,10 @@ class UserPreferencesRepository @Inject constructor(
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,
             refreshInterval = prefs[REFRESH_KEY]?.let { runCatching { RefreshInterval.valueOf(it) }.getOrNull() }
                 ?: RefreshInterval.SEC_15,
+            terminalFontSize = prefs[TERMINAL_FONT_KEY]?.let { runCatching { TerminalFontSize.valueOf(it) }.getOrNull() }
+                ?: TerminalFontSize.MEDIUM,
+            terminalTheme = prefs[TERMINAL_THEME_KEY]?.let { runCatching { TerminalTheme.valueOf(it) }.getOrNull() }
+                ?: TerminalTheme.DARK,
         )
     }
 
@@ -56,11 +60,21 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { it[REFRESH_KEY] = interval.name }
     }
 
+    suspend fun setTerminalFontSize(size: TerminalFontSize) {
+        dataStore.edit { it[TERMINAL_FONT_KEY] = size.name }
+    }
+
+    suspend fun setTerminalTheme(theme: TerminalTheme) {
+        dataStore.edit { it[TERMINAL_THEME_KEY] = theme.name }
+    }
+
     companion object {
         private val THEME_KEY = stringPreferencesKey("theme_mode")
         private val DYNAMIC_COLOR_KEY = booleanPreferencesKey("dynamic_color")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val APP_LOCK_KEY = booleanPreferencesKey("app_lock")
         private val REFRESH_KEY = stringPreferencesKey("refresh_interval")
+        private val TERMINAL_FONT_KEY = stringPreferencesKey("terminal_font_size")
+        private val TERMINAL_THEME_KEY = stringPreferencesKey("terminal_theme")
     }
 }

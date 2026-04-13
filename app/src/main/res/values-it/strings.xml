@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ProxMoxOpen</string>
+
+    <!-- Bottom navigation -->
+    <string name="tab_servers">Server</string>
+    <string name="tab_activity">Attività</string>
+    <string name="tab_settings">Impostazioni</string>
+
+    <!-- Activity screen -->
+    <string name="activity_empty_title">Nessuna attività recente</string>
+    <string name="activity_empty_body">Le attività in esecuzione e le azioni di alimentazione dai tuoi server appariranno qui.</string>
+
+    <!-- Settings sections -->
+    <string name="settings_section_appearance">Aspetto</string>
+    <string name="settings_section_language">Lingua</string>
+    <string name="settings_section_security">Sicurezza</string>
+    <string name="settings_section_about">Informazioni</string>
+    <string name="setting_theme">Tema</string>
+    <string name="theme_system">Segui il sistema</string>
+    <string name="theme_light">Chiaro</string>
+    <string name="theme_dark">Scuro</string>
+    <string name="language_english">English</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_french">Français</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_italian">Italiano</string>
+    <string name="close">Chiudi</string>
+
+    <string name="add_server_subtitle">Connettiti a un host o cluster Proxmox VE.</string>
+    <string name="add_server_section_endpoint">Endpoint</string>
+    <string name="add_server_section_token">Token API</string>
+    <string name="add_server_section_credentials">Credenziali</string>
+    <string name="login_using_token">Accesso con token API in corso…</string>
+    <string name="dashboard_no_guests">Nessun ospite su questo server.</string>
+    <string name="power_actions">Azioni di alimentazione</string>
+    <string name="edit_server_title">Modifica server</string>
+    <string name="save">Salva</string>
+    <string name="edit_config_title">Configurazione</string>
+    <string name="config_onboot">Avvia all\'accensione</string>
+    <string name="config_nameserver">Server dei nomi</string>
+    <string name="config_searchdomain">Dominio di ricerca</string>
+    <string name="config_description">Descrizione</string>
+    <string name="config_protection">Protezione</string>
+    <string name="config_startup">Ordine di avvio (order=N,up=N,down=N)</string>
+    <string name="config_cores">Core CPU</string>
+    <string name="config_cpulimit">Limite CPU (0 = illimitato)</string>
+    <string name="config_memory_mb">Memoria (MB)</string>
+    <string name="config_swap_mb">Swap (MB)</string>
+    <string name="config_nameserver_hint">Separa più server DNS con uno spazio o una virgola.</string>
+    <string name="config_no_interfaces">Nessuna interfaccia di rete configurata.</string>
+    <string name="config_firewall">Firewall</string>
+
+    <!-- CT Hub tabs -->
+
+    <!-- Snapshots -->
+    <string name="snap_create">Crea istantanea</string>
+    <string name="snap_name">Nome dell\'istantanea</string>
+    <string name="snap_rollback">Ripristina</string>
+    <string name="snap_delete">Elimina</string>
+    <string name="snap_empty">Nessuna istantanea ancora.</string>
+    <string name="backup_now">Backup adesso</string>
+    <string name="config_add_interface">Aggiungi interfaccia di rete</string>
+    <string name="config_stop_hint">Alcune modifiche richiedono che il container sia prima arrestato.</string>
+    <string name="config_options_todo">La modalità console, il numero di TTY, l\'hookscript e la modifica delle funzionalità saranno disponibili in un futuro aggiornamento.</string>
+    <string name="config_disks_todo">La modifica del rootfs e dei punti di montaggio sarà disponibile in un futuro aggiornamento.</string>
+    <string name="backup_dialog_title">Crea backup</string>
+    <string name="settings_section_data">Dati</string>
+    <string name="settings_section_terminal">Terminale</string>
+    <string name="setting_terminal_font_size">Dimensione carattere</string>
+    <string name="setting_terminal_theme">Tema</string>
+    <string name="backup_empty">Nessun backup trovato su questo archivio.</string>
+    <string name="app_lock_prompt">Autenticati per aprire ProxMoxOpen</string>
+    <string name="app_lock_retry">Riprova</string>
+    <string name="task_live">In diretta</string>
+    <string name="search_hint">Cerca VM e container…</string>
+    <string name="setting_refresh_interval">Intervallo di aggiornamento in diretta</string>
+
+    <!-- Server list -->
+    <string name="server_list_title">Server</string>
+    <string name="server_list_empty">Nessun server ancora. Tocca + per aggiungere il tuo primo server Proxmox.</string>
+    <string name="add_server">Aggiungi server</string>
+    <string name="delete_server">Elimina server</string>
+    <string name="last_connected">Ultima connessione: %1$s</string>
+    <string name="never_connected">Mai connesso</string>
+
+    <!-- Add server -->
+    <string name="add_server_title">Aggiungi server Proxmox</string>
+    <string name="field_server_name">Nome visualizzato</string>
+    <string name="field_host">Host o IP</string>
+    <string name="field_port">Porta</string>
+    <string name="field_realm">Dominio</string>
+    <string name="realm_pam">Linux PAM</string>
+    <string name="realm_pve">Autenticazione Proxmox VE</string>
+    <string name="realm_pve_token">Token API</string>
+    <string name="connect">Connetti</string>
+    <string name="cancel">Annulla</string>
+    <string name="retry">Riprova</string>
+
+    <!-- Trust certificate -->
+    <string name="trust_title">Verifica certificato del server</string>
+    <string name="trust_subject">Soggetto</string>
+    <string name="trust_issuer">Emittente</string>
+    <string name="trust_valid_from">Valido dal</string>
+    <string name="trust_valid_to">Valido fino al</string>
+    <string name="trust_sha256">Impronta SHA-256</string>
+    <string name="trust_sha1">Impronta SHA-1</string>
+    <string name="trust_button">Considera attendibile questo server</string>
+    <string name="trust_warning">Verifica che l\'impronta corrisponda a quella mostrata dal tuo server Proxmox prima di concedere la fiducia.</string>
+
+    <!-- Fingerprint mismatch -->
+    <string name="fp_mismatch_title">Certificato modificato</string>
+    <string name="fp_mismatch_body">Il certificato del server non corrisponde più a quello considerato attendibile. Questo potrebbe indicare un attacco man-in-the-middle. Rimuovi e riaggiungi il server se sei sicuro che la modifica sia legittima.</string>
+    <string name="fp_mismatch_old">Precedentemente attendibile</string>
+    <string name="fp_mismatch_new">Attualmente presentato</string>
+    <string name="fp_mismatch_close">Chiudi</string>
+
+    <!-- Login -->
+    <string name="login_title">Accedi</string>
+    <string name="field_username">Nome utente</string>
+    <string name="field_password">Password</string>
+    <string name="field_token_id">ID token</string>
+    <string name="field_token_secret">Segreto del token</string>
+    <string name="field_totp">Codice monouso (TOTP)</string>
+    <string name="sign_in">Accedi</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Pannello di controllo</string>
+    <string name="tab_nodes">Nodi</string>
+    <string name="tab_vms">VM</string>
+    <string name="tab_containers">CT</string>
+    <string name="tab_backups">Backup</string>
+
+    <!-- Node detail -->
+    <string name="timeframe_1h">1h</string>
+    <string name="timeframe_24h">24h</string>
+    <string name="timeframe_7d">7g</string>
+    <string name="timeframe_30d">30g</string>
+
+    <!-- Guest detail / power -->
+    <string name="guest_type_qemu">VM</string>
+    <string name="guest_type_lxc">Container</string>
+    <string name="power_start">Avvia</string>
+    <string name="power_stop">Arresta</string>
+    <string name="power_shutdown">Spegni</string>
+    <string name="power_reboot">Riavvia</string>
+    <string name="power_suspend">Sospendi</string>
+    <string name="power_resume">Riprendi</string>
+    <string name="power_reset">Reimposta</string>
+    <string name="power_confirm_title">Conferma azione</string>
+    <string name="power_confirm_body">Eseguire « %1$s » su %2$s?</string>
+
+    <!-- Tasks -->
+    <string name="task_detail_title">Registro attività</string>
+
+    <!-- Delete guest -->
+    <string name="delete_guest_title">Eliminare %1$s %2$d?</string>
+    <string name="delete_guest_warning">Questa azione è irreversibile!</string>
+    <string name="delete_purge">Rimuovi dalla configurazione del cluster</string>
+    <string name="delete_destroy_disks">Distruggi dischi non referenziati</string>
+    <string name="delete_confirm">Elimina</string>
+
+    <!-- Migrate -->
+    <string name="migrate_title">Migra %1$s %2$d</string>
+    <string name="migrate_target_node">Nodo di destinazione</string>
+    <string name="migrate_online">Migrazione online</string>
+    <string name="migrate_button">Migra</string>
+
+    <!-- Storage -->
+    <string name="storage_title">Archiviazione</string>
+    <string name="storage_enabled">Abilitato</string>
+    <string name="storage_disabled">Disabilitato</string>
+
+    <!-- Console -->
+    <string name="console_title">Console</string>
+
+    <!-- Errors -->
+
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="setting_dynamic_color">Colore dinamico</string>
+    <string name="setting_dynamic_color_desc">Usa la tavolozza colori del sistema (Android 12+).</string>
+    <string name="setting_biometric_lock">Blocco app</string>
+    <string name="setting_biometric_lock_desc">Richiedi l\'autenticazione biometrica per aprire l\'app.</string>
+    <string name="setting_language">Lingua</string>
+    <string name="setting_language_system">Sistema</string>
+    <string name="about">Informazioni</string>
+    <string name="about_version">Versione %1$s</string>
+    <string name="donate_title">Sostieni lo sviluppo</string>
+    <string name="donate_subtitle">Dona tramite Liberapay o PayPal</string>
+
+    <!-- Clone -->
+    <string name="clone_title">Clona %1$s %2$d</string>
+    <string name="clone_new_id">Nuovo VMID</string>
+    <string name="clone_name">Nome (opzionale)</string>
+    <string name="clone_full">Clone completo</string>
+    <string name="clone_target_node">Nodo di destinazione (opzionale)</string>
+    <string name="clone_storage">Archiviazione di destinazione (opzionale)</string>
+    <string name="clone_button">Clona</string>
+
+    <!-- Backup Jobs -->
+    <string name="backup_job_create">Crea attività di backup</string>
+    <string name="backup_job_edit">Modifica attività di backup</string>
+    <string name="backup_job_delete_title">Elimina attività di backup</string>
+    <string name="backup_job_delete_body">Eliminare l\'attività di backup %s?</string>
+    <string name="backup_job_run">Esegui</string>
+    <string name="backup_job_schedule">Pianificazione</string>
+    <string name="backup_job_cron">Espressione Cron</string>
+    <string name="backup_job_all_guests">Tutti gli ospiti</string>
+    <string name="backup_job_select_guests">Seleziona VM/CT</string>
+    <string name="backup_job_select_hint">Seleziona almeno un ospite</string>
+    <string name="backup_job_storage">Archiviazione</string>
+    <string name="backup_job_node">Nodo</string>
+    <string name="backup_job_all_nodes">Tutti i nodi</string>
+    <string name="backup_job_mode">Modalità</string>
+    <string name="backup_job_compression">Compressione</string>
+    <string name="backup_job_notification">Notifica</string>
+    <string name="backup_job_mailto">Invia a</string>
+    <string name="backup_job_notes">Note</string>
+    <string name="backup_no_jobs">Nessun job di backup configurato</string>
+    <string name="backup_job_enabled">Abilitato</string>
+    <string name="backup_job_disabled">Disabilitato</string>
+    <string name="back">Indietro</string>
+    <string name="next">Avanti</string>
+    <string name="node_no_recent_tasks">Nessuna attività recente</string>
+    <string name="task_exit_prefix">Uscita: %s</string>
+    <string name="backup_dialog_storage">Archiviazione</string>
+    <string name="backup_dialog_mode">Modalità</string>
+    <string name="backup_dialog_compression">Compressione</string>
+    <string name="backup_dialog_protected">Protetto</string>
+    <string name="backup_dialog_notes">Note</string>
+    <string name="backup_dialog_restore">Ripristina</string>
+    <string name="config_options">Opzioni</string>
+    <string name="config_disks">Dischi</string>
+    <string name="task_user">Utente</string>
+    <string name="task_started">Avviato</string>
+    <string name="task_ended">Terminato</string>
+    <string name="task_exit">Uscita</string>
+    <string name="about_tagline">Client Android nativo per Proxmox VE</string>
+</resources>
