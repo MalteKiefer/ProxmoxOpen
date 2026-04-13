@@ -42,13 +42,3 @@ fun parseDiskString(raw: String): ParsedDisk {
         backup = kv["backup"] != "0",
     )
 }
-
-fun ParsedDisk.displayLine(): String = buildString {
-    append(storage)
-    size?.let { append(" · $it") }
-    format?.let { append(" · $it") }
-    if (discard) append(" · TRIM")
-    if (ssd) append(" · SSD")
-    if (iothread) append(" · IOthread")
-    cache?.let { append(" · cache=$it") }
-}

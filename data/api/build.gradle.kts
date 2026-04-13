@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "de.kiefer_networks.proxmoxopen.data.api"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig { minSdk = 31 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

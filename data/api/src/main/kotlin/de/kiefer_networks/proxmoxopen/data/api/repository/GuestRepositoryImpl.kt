@@ -241,4 +241,3 @@ class GuestRepositoryImpl @Inject constructor(
     }
 }
 
-@Suppress("unused") private val _unusedPing = ApiError.Unknown("ping")

@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "de.kiefer_networks.proxmoxopen"
-    compileSdk = 34
+    compileSdk = 35
 
     if (keystorePropertiesFile.exists()) {
         signingConfigs {
@@ -34,7 +34,7 @@ android {
     defaultConfig {
         applicationId = "de.kiefer_networks.proxmoxopen"
         minSdk = 31
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-dev"
     }
@@ -104,7 +104,6 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
 
     implementation(libs.timber)
-    implementation(libs.okhttp)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
