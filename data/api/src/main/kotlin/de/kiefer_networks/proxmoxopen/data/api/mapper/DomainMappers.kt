@@ -157,6 +157,7 @@ fun RrdPointDto.toDomain(): RrdPoint = RrdPoint(
     netOut = netout,
     diskRead = diskread,
     diskWrite = diskwrite,
+    ioWait = iowait,
 )
 
 fun TaskDto.toDomain(): ProxmoxTask = ProxmoxTask(
