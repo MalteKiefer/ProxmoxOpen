@@ -1,14 +1,18 @@
 package de.kiefer_networks.proxmoxopen.data.api.di
 
 import de.kiefer_networks.proxmoxopen.data.api.repository.AuthRepositoryImpl
+import de.kiefer_networks.proxmoxopen.data.api.repository.BackupJobRepositoryImpl
 import de.kiefer_networks.proxmoxopen.data.api.repository.ClusterRepositoryImpl
+import de.kiefer_networks.proxmoxopen.data.api.repository.ConsoleRepositoryImpl
 import de.kiefer_networks.proxmoxopen.data.api.repository.GuestRepositoryImpl
 import de.kiefer_networks.proxmoxopen.data.api.repository.PowerRepositoryImpl
 import de.kiefer_networks.proxmoxopen.data.api.repository.ServerRepositoryImpl
 import de.kiefer_networks.proxmoxopen.data.api.repository.StorageRepositoryImpl
 import de.kiefer_networks.proxmoxopen.data.api.repository.TaskRepositoryImpl
 import de.kiefer_networks.proxmoxopen.domain.repository.AuthRepository
+import de.kiefer_networks.proxmoxopen.domain.repository.BackupJobRepository
 import de.kiefer_networks.proxmoxopen.domain.repository.ClusterRepository
+import de.kiefer_networks.proxmoxopen.domain.repository.ConsoleRepository
 import de.kiefer_networks.proxmoxopen.domain.repository.GuestRepository
 import de.kiefer_networks.proxmoxopen.domain.repository.PowerRepository
 import de.kiefer_networks.proxmoxopen.domain.repository.ServerRepository
@@ -30,7 +34,13 @@ abstract class DataModule {
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
     @Binds @Singleton
+    abstract fun bindBackupJobRepository(impl: BackupJobRepositoryImpl): BackupJobRepository
+
+    @Binds @Singleton
     abstract fun bindClusterRepository(impl: ClusterRepositoryImpl): ClusterRepository
+
+    @Binds @Singleton
+    abstract fun bindConsoleRepository(impl: ConsoleRepositoryImpl): ConsoleRepository
 
     @Binds @Singleton
     abstract fun bindGuestRepository(impl: GuestRepositoryImpl): GuestRepository
