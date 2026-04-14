@@ -1,0 +1,59 @@
+Categories:
+  - System
+  - Internet
+License: GPL-3.0-or-later
+WebSite: https://kiefer-networks.de
+SourceCode: https://github.com/MalteKiefer/ProxmoxOpen
+IssueTracker: https://github.com/MalteKiefer/ProxmoxOpen/issues
+Changelog: https://github.com/MalteKiefer/ProxmoxOpen/releases
+Donate: https://de.liberapay.com/beli3ver
+
+AutoName: ProxMoxOpen
+Summary: Open-source native Android client for Proxmox VE server management.
+Description: |
+    ProxMoxOpen is a native Android client for Proxmox VE that brings full
+    cluster management to your phone. Browse nodes, VMs, and containers,
+    open terminal and VNC consoles, manage snapshots and backups, and
+    monitor live resource charts — all from a single app with Material
+    Design 3 and Proxmox brand colors.
+
+    Features:
+    - Multi-server management with fast switching
+    - Cluster dashboard with node, VM, and container overview
+    - Live resource charts (CPU, RAM, Network, Disk I/O) with timeframe selection
+    - VM and container power actions (Start, Stop, Shutdown, Reboot, Suspend, Reset)
+    - xterm.js terminal console for nodes and LXC containers
+    - noVNC graphical console for QEMU VMs
+    - Terminal keyboard bar with special keys (Esc, Tab, Ctrl, Alt, arrows, F1-F12)
+    - 13 terminal themes and 8 font sizes
+    - Snapshot management (create, rollback, delete)
+    - Per-guest backup and restore
+    - Cluster-wide backup job management with 4-step wizard
+    - LXC container config editing (6 tabs)
+    - VM and container cloning and migration
+    - Storage overview with usage bars
+    - Task log with real-time polling
+    - PAM, PVE, and API Token authentication with TOTP two-factor
+    - Trust On First Use (TOFU) TLS certificate pinning
+    - AES-256-GCM credential encryption via Android Keystore
+    - SQLCipher encrypted database
+    - Biometric app lock (fingerprint/face)
+    - 5 languages (English, German, French, Spanish, Italian)
+    - No tracking, no analytics, no telemetry, no ads
+
+RepoType: git
+Repo: https://github.com/MalteKiefer/ProxmoxOpen
+
+Builds:
+  - versionName: "1.0.0"
+    versionCode: 1
+    commit: HEAD
+    subdir: app
+    gradle:
+      - yes
+    output: build/outputs/apk/release/app-release-unsigned.apk
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: "1.0.0"
+CurrentVersionCode: 1
