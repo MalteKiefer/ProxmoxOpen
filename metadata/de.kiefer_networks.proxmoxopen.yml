@@ -9,6 +9,7 @@ Changelog: https://github.com/MalteKiefer/ProxmoxOpen/releases
 Donate: https://de.liberapay.com/beli3ver
 
 AutoName: ProxMoxOpen
+Name: ProxMoxOpen
 Summary: Open-source native Android client for Proxmox VE server management.
 Description: |
     ProxMoxOpen is a native Android client for Proxmox VE that brings full
