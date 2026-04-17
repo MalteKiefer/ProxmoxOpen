@@ -30,7 +30,7 @@ object AppModule {
         val factory = net.sqlcipher.database.SupportFactory(dbKey)
         return Room.databaseBuilder(context, ProxmoxDatabase::class.java, ProxmoxDatabase.DATABASE_NAME)
             .openHelperFactory(factory)
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 

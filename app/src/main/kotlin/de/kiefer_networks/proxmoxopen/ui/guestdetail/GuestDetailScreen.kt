@@ -36,7 +36,7 @@ import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Restore
-import androidx.compose.material.icons.outlined.ShowChart
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Terminal
@@ -131,7 +131,7 @@ fun GuestDetailScreen(
     val tabs = remember {
         listOf(
             DetailTab("Summary", Icons.Outlined.Info),
-            DetailTab("Charts", Icons.Outlined.ShowChart),
+            DetailTab("Charts", Icons.AutoMirrored.Outlined.ShowChart),
             DetailTab("Snapshots", Icons.Outlined.PhotoCamera),
             DetailTab("Backups", Icons.Outlined.Backup),
             DetailTab("Tasks", Icons.Outlined.History),
