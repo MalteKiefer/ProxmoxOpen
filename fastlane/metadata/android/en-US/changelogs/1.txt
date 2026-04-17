@@ -1,1 +1,16 @@
-Initial development release. Multi-server dashboard with read-only cluster, node and guest views plus power actions. TOFU certificate pinning and hardware-backed credential storage.
+First stable release of ProxMoxOpen — a native Android client for Proxmox VE.
+
+• Multi-server management with fast switching
+• Cluster dashboard with node, VM, and container overview
+• Live resource charts (CPU, RAM, Network, Disk I/O)
+• VM/CT power actions (Start, Stop, Shutdown, Reboot, Suspend, Reset)
+• xterm.js terminal console and noVNC graphical console
+• Terminal keyboard bar with special keys, 13 themes, 8 font sizes
+• Snapshot management (create, rollback, delete)
+• Per-guest backup/restore and cluster-wide backup job wizard
+• LXC config editing, VM/CT cloning and migration
+• Storage overview, task log with real-time polling
+• PAM, PVE, and API Token auth with TOTP two-factor
+• TOFU TLS certificate pinning, AES-256-GCM encrypted credentials
+• SQLCipher encrypted database, biometric app lock
+• 5 languages: English, German, French, Spanish, Italian
