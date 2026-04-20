@@ -1,0 +1,6 @@
+Fixed startup crash on release builds caused by R8 stripping SQLCipher JNI classes.
+
+Changes:
+- Migrated from deprecated android-database-sqlcipher to the maintained sqlcipher-android 4.6.1
+- Added R8 keep rules for SQLCipher native bridge classes
+- Native SQLCipher library is now loaded explicitly during app startup

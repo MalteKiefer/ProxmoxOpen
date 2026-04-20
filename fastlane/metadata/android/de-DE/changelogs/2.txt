@@ -1,0 +1,6 @@
+Startup-Crash in Release-Builds behoben, verursacht durch R8, das SQLCipher-JNI-Klassen entfernt hatte.
+
+Änderungen:
+- Migration vom veralteten android-database-sqlcipher zur gepflegten sqlcipher-android 4.6.1
+- R8-Keep-Regeln für SQLCipher-Native-Bridge-Klassen hinzugefügt
+- Native SQLCipher-Bibliothek wird jetzt beim App-Start explizit geladen
