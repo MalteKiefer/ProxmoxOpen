@@ -23,7 +23,8 @@ mockwebserver = "4.12.0"
 androidx-test-ext = "1.2.1"
 espresso = "3.6.1"
 detekt = "1.23.7"
-sqlcipher = "4.5.4"
+sqlcipher = "4.6.1"
+androidx-sqlite = "2.4.0"
 
 [libraries]
 javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
@@ -66,7 +67,8 @@ vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = 
 vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
 vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 
-sqlcipher = { module = "net.zetetic:android-database-sqlcipher", version.ref = "sqlcipher" }
+sqlcipher = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
+androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "androidx-sqlite" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 

@@ -27,7 +27,7 @@ object AppModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): ProxmoxDatabase {
         val dbKey = getOrCreateDatabaseKey(context)
-        val factory = net.sqlcipher.database.SupportFactory(dbKey)
+        val factory = net.zetetic.database.sqlcipher.SupportOpenHelperFactory(dbKey)
         return Room.databaseBuilder(context, ProxmoxDatabase::class.java, ProxmoxDatabase.DATABASE_NAME)
             .openHelperFactory(factory)
             .fallbackToDestructiveMigration(dropAllTables = true)

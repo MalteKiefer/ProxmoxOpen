@@ -33,6 +33,11 @@
 -keep class * extends dagger.hilt.android.internal.managers.ViewComponentManager$FragmentContextWrapper
 -dontwarn dagger.hilt.internal.**
 
+# ---------- SQLCipher ----------
+-keep class net.zetetic.database.** { *; }
+-keep interface net.zetetic.database.** { *; }
+-dontwarn net.zetetic.database.**
+
 # ---------- App types ----------
 -keep class de.kiefer_networks.proxmoxopen.data.api.dto.** { *; }
 -keep class de.kiefer_networks.proxmoxopen.domain.model.** { *; }

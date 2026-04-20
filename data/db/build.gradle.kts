@@ -29,6 +29,7 @@ dependencies {
     ksp(libs.room.compiler)
 
     api(libs.sqlcipher)
+    api(libs.androidx.sqlite)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
