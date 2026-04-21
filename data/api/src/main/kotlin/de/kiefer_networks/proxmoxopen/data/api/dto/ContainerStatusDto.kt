@@ -9,7 +9,7 @@ data class ContainerCurrentStatusDto(
     val name: String? = null,
     val status: String? = null,
     val uptime: Long? = null,
-    val ha: HaStatusDto? = null,
+    val ha: GuestHaStateDto? = null,
     val pid: Int? = null,
     val cpu: Double? = null,
     val cpus: Int? = null,
@@ -27,8 +27,9 @@ data class ContainerCurrentStatusDto(
     val tags: String? = null,
 )
 
+/** Inline HA state object returned as part of guest `/status/current`. */
 @Serializable
-data class HaStatusDto(
+data class GuestHaStateDto(
     val managed: Int? = null,
     val state: String? = null,
 )

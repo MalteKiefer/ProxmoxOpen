@@ -10,7 +10,7 @@ data class VmCurrentStatusDto(
     val status: String? = null,
     val qmpstatus: String? = null,
     val uptime: Long? = null,
-    val ha: HaStatusDto? = null,
+    val ha: GuestHaStateDto? = null,
     val pid: Int? = null,
     val cpu: Double? = null,
     val cpus: Int? = null,
