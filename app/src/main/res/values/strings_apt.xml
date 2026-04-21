@@ -8,4 +8,9 @@
     <string name="apt_empty">System is up to date.</string>
     <string name="apt_loading">Loading updates\u2026</string>
     <string name="nav_apt_updates">APT Updates</string>
+    <string name="apt_updates_tap">Tap to view pending packages</string>
+    <plurals name="apt_updates_available">
+        <item quantity="one">1 update available</item>
+        <item quantity="other">%d updates available</item>
+    </plurals>
 </resources>

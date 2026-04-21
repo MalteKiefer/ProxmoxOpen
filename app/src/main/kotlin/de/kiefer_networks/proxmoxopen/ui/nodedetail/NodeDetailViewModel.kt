@@ -35,6 +35,7 @@ data class NodeDetailUiState(
     val isRefreshing: Boolean = false,
     val error: ApiError? = null,
     val actionMessage: String? = null,
+    val pendingUpdates: Int = 0,
 )
 
 @HiltViewModel
@@ -43,6 +44,7 @@ class NodeDetailViewModel @Inject constructor(
     private val cluster: ClusterRepository,
     private val getRrd: GetNodeRrdUseCase,
     private val taskRepo: de.kiefer_networks.proxmoxopen.domain.repository.TaskRepository,
+    private val aptRepo: de.kiefer_networks.proxmoxopen.domain.repository.AptRepository,
     private val prefsRepo: UserPreferencesRepository,
 ) : ViewModel() {
 
@@ -87,12 +89,19 @@ class NodeDetailViewModel @Inject constructor(
             else it.copy(isLoading = it.node == null, isRefreshing = true, error = null)
         }
         viewModelScope.launch {
-            val (nodeResult, rrdResult, taskResult) = coroutineScope {
-                Triple(
-                    async { cluster.getNode(serverId, nodeName) },
-                    async { getRrd(serverId, nodeName, _state.value.timeframe) },
-                    async { taskRepo.listTasks(serverId, nodeName, limit = 50) }
-                ).let { Triple(it.first.await(), it.second.await(), it.third.await()) }
+            val nodeResult: ApiResult<Node>
+            val rrdResult: ApiResult<List<RrdPoint>>
+            val taskResult: ApiResult<List<de.kiefer_networks.proxmoxopen.domain.model.ProxmoxTask>>
+            val aptResult: ApiResult<List<de.kiefer_networks.proxmoxopen.domain.model.AptUpdate>>
+            coroutineScope {
+                val n = async { cluster.getNode(serverId, nodeName) }
+                val r = async { getRrd(serverId, nodeName, _state.value.timeframe) }
+                val t = async { taskRepo.listTasks(serverId, nodeName, limit = 50) }
+                val a = async { aptRepo.listUpdates(serverId, nodeName) }
+                nodeResult = n.await()
+                rrdResult = r.await()
+                taskResult = t.await()
+                aptResult = a.await()
             }
             _state.update {
                 it.copy(
@@ -101,6 +110,7 @@ class NodeDetailViewModel @Inject constructor(
                     node = (nodeResult as? ApiResult.Success)?.value ?: it.node,
                     rrd = (rrdResult as? ApiResult.Success)?.value ?: it.rrd,
                     tasks = (taskResult as? ApiResult.Success)?.value ?: it.tasks,
+                    pendingUpdates = (aptResult as? ApiResult.Success)?.value?.size ?: it.pendingUpdates,
                     error = (nodeResult as? ApiResult.Failure)?.error,
                 )
             }

@@ -90,6 +90,8 @@ fun NavGraph() {
                 onStorage = { nodeName ->
                     nav.navigate(Route.StorageOverview(route.serverId, nodeName))
                 },
+                onOpenSearch = { nav.navigate(Route.Search(route.serverId)) },
+                onOpenHa = { nav.navigate(Route.Ha(route.serverId)) },
             )
         }
         composable<Route.NodeDetail> { entry ->

@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.AlertDialog
@@ -111,6 +112,8 @@ fun DashboardScreen(
     onSettings: () -> Unit = {},
     onActivity: () -> Unit = {},
     onStorage: (String) -> Unit = {},
+    onOpenSearch: () -> Unit = {},
+    onOpenHa: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -162,6 +165,12 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenSearch) {
+                        Icon(Icons.Outlined.Search, contentDescription = "Search")
+                    }
+                    IconButton(onClick = onOpenHa) {
+                        Icon(Icons.Outlined.Shield, contentDescription = "HA")
+                    }
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Outlined.Refresh, contentDescription = "Refresh")
                     }

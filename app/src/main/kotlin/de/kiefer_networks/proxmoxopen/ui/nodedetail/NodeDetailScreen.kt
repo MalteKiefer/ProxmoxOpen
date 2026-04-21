@@ -60,6 +60,7 @@ import de.kiefer_networks.proxmoxopen.core.ui.theme.ResourceCpu
 import de.kiefer_networks.proxmoxopen.core.ui.theme.ResourceDisk
 import de.kiefer_networks.proxmoxopen.core.ui.theme.ResourceRam
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -169,6 +170,7 @@ fun NodeDetailScreen(
                     when (selectedTab) {
                         0 -> SummaryTab(
                             node = state.node,
+                            pendingUpdates = state.pendingUpdates,
                             onConsole = onConsole,
                             onStorage = onStorage,
                             onApt = { onOpenApt(viewModel.serverId, viewModel.nodeName) },
@@ -195,6 +197,7 @@ fun NodeDetailScreen(
 @Composable
 private fun SummaryTab(
     node: Node?,
+    pendingUpdates: Int,
     onConsole: () -> Unit,
     onStorage: () -> Unit,
     onApt: () -> Unit,
@@ -279,6 +282,43 @@ private fun SummaryTab(
                         if (it > 0) {
                             DetailInfoDivider()
                             DetailInfoRow("KSM Sharing", formatBytes(it))
+                        }
+                    }
+                }
+            }
+
+            if (pendingUpdates > 0) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clickable(onClick = onApt),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    ),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Outlined.SystemUpdate,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                pluralStringResource(R.plurals.apt_updates_available, pendingUpdates, pendingUpdates),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            )
+                            Text(
+                                stringResource(R.string.apt_updates_tap),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            )
                         }
                     }
                 }
