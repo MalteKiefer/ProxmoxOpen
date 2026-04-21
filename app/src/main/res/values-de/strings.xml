@@ -71,6 +71,11 @@
     <string name="search_hint">VMs und Container suchen…</string>
     <string name="setting_refresh_interval">Live-Aktualisierungsintervall</string>
 
+    <!-- Offline-Cache -->
+    <string name="offline_cache_title">Offline-Cache</string>
+    <string name="offline_cache_desc">Letzten Cluster-Snapshot auf dem Gerät behalten und anzeigen, wenn der Server nicht erreichbar ist.</string>
+    <string name="offline_banner">Offline — gecacht %1$s</string>
+
     <string name="server_list_title">Server</string>
     <string name="server_list_empty">Noch keine Server. Tippe auf + um deinen ersten Proxmox-Server hinzuzufügen.</string>
     <string name="add_server">Server hinzufügen</string>

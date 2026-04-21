@@ -55,4 +55,8 @@ class MainViewModel @Inject constructor(
     fun setTerminalTheme(theme: TerminalTheme) {
         viewModelScope.launch { preferencesRepository.setTerminalTheme(theme) }
     }
+
+    fun setOfflineCacheEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setOfflineCacheEnabled(enabled) }
+    }
 }

@@ -37,4 +37,11 @@ data class UserPreferences(
     val refreshInterval: RefreshInterval = RefreshInterval.SEC_15,
     val terminalFontSize: TerminalFontSize = TerminalFontSize.MEDIUM,
     val terminalTheme: TerminalTheme = TerminalTheme.DARK,
+    /**
+     * When true, the dashboard persists the live cluster-resource list on every
+     * successful fetch and falls back to the cached snapshot if the device goes
+     * offline. Defaults to on so users see continuity of data after a lost
+     * connection; disable to opt out of on-disk caching entirely.
+     */
+    val offlineCacheEnabled: Boolean = true,
 )

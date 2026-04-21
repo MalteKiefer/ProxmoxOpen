@@ -38,6 +38,7 @@ class UserPreferencesRepository @Inject constructor(
                 ?: TerminalFontSize.MEDIUM,
             terminalTheme = prefs[TERMINAL_THEME_KEY]?.let { runCatching { TerminalTheme.valueOf(it) }.getOrNull() }
                 ?: TerminalTheme.DARK,
+            offlineCacheEnabled = prefs[OFFLINE_CACHE_KEY] ?: true,
         )
     }
 
@@ -73,6 +74,10 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { it[TERMINAL_THEME_KEY] = theme.name }
     }
 
+    suspend fun setOfflineCacheEnabled(enabled: Boolean) {
+        dataStore.edit { it[OFFLINE_CACHE_KEY] = enabled }
+    }
+
     companion object {
         private val THEME_KEY = stringPreferencesKey("theme_mode")
         private val DYNAMIC_COLOR_KEY = booleanPreferencesKey("dynamic_color")
@@ -82,5 +87,6 @@ class UserPreferencesRepository @Inject constructor(
         private val REFRESH_KEY = stringPreferencesKey("refresh_interval")
         private val TERMINAL_FONT_KEY = stringPreferencesKey("terminal_font_size")
         private val TERMINAL_THEME_KEY = stringPreferencesKey("terminal_theme")
+        private val OFFLINE_CACHE_KEY = booleanPreferencesKey("offline_cache_enabled")
     }
 }

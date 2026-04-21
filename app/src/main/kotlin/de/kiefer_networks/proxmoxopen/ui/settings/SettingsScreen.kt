@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BrightnessMedium
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Favorite
@@ -102,7 +103,11 @@ fun SettingsScreen(
             SectionTitle(stringResource(R.string.settings_section_language))
             SettingsCard { SettingsRow(Icons.Outlined.Language, stringResource(R.string.setting_language), languageLabel(prefs.language)) { showLanguageDialog = true } }
             SectionTitle(stringResource(R.string.settings_section_data))
-            SettingsCard { SettingsRow(Icons.Outlined.Refresh, stringResource(R.string.setting_refresh_interval), prefs.refreshInterval.label) { showRefreshDialog = true } }
+            SettingsCard {
+                SettingsRow(Icons.Outlined.Refresh, stringResource(R.string.setting_refresh_interval), prefs.refreshInterval.label) { showRefreshDialog = true }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsToggle(Icons.Outlined.CloudOff, stringResource(R.string.offline_cache_title), stringResource(R.string.offline_cache_desc), prefs.offlineCacheEnabled, viewModel::setOfflineCacheEnabled)
+            }
             SectionTitle(stringResource(R.string.settings_section_terminal))
             SettingsCard {
                 SettingsRow(Icons.Outlined.Code, stringResource(R.string.setting_terminal_font_size), terminalFontLabel(prefs.terminalFontSize)) { showTerminalFontDialog = true }
