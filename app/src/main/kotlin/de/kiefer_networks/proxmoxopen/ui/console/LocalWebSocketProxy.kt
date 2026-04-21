@@ -167,12 +167,30 @@ class LocalWebSocketProxy(
     private fun handleWebSocketUpgrade(client: Socket, clientIn: InputStream, clientOut: OutputStream, originalRequest: String) {
         activeSockets.add(client)
 
-        // Validate cookie value to prevent header injection
-        if (cookie.contains("\r") || cookie.contains("\n")) {
-            Timber.e("Cookie contains invalid characters, rejecting")
-            client.close()
+        // Validate PVE ticket (cookie) against strict header-safe charset before sending upstream.
+        // Proxmox tickets look like: PVE:user@realm:HEXHASH::BASE64PAYLOAD
+        // Accept only printable ASCII, excluding ';' ',' CR LF SPACE and control chars
+        // to prevent cookie/header-injection and attribute smuggling.
+        if (!isHeaderSafeTicket(cookie)) {
+            val preview = cookie.take(4)
+            Timber.w("PVE ticket failed header-safe validation (len=%d, prefix=%s); aborting upstream", cookie.length, preview)
+            try { client.close() } catch (_: Exception) {}
             activeSockets.remove(client)
             return
+        }
+
+        // Apply the same validation to any incoming CSRFPreventionToken header from the
+        // client upgrade request; if present and malformed, refuse to forward.
+        val csrfLine = originalRequest.lineSequence()
+            .firstOrNull { it.startsWith("CSRFPreventionToken:", ignoreCase = true) }
+        if (csrfLine != null) {
+            val csrf = csrfLine.substringAfter(":").trim()
+            if (!isHeaderSafeTicket(csrf)) {
+                Timber.w("CSRF token failed header-safe validation (len=%d, prefix=%s); aborting upstream", csrf.length, csrf.take(4))
+                try { client.close() } catch (_: Exception) {}
+                activeSockets.remove(client)
+                return
+            }
         }
 
         val uri = URI(targetUrl)
@@ -284,5 +302,21 @@ class LocalWebSocketProxy(
 
         upToClient.start()
         clientToUp.start()
+    }
+
+    /**
+     * Header-safe validator for PVE tickets / CSRF tokens.
+     * Accept only printable ASCII (0x21..0x7E) and explicitly exclude ';' ',' which
+     * could smuggle extra cookies/attributes. Rejects empty strings and anything with
+     * CR, LF, SPACE, TAB, or other control characters.
+     */
+    private fun isHeaderSafeTicket(value: String): Boolean {
+        if (value.isEmpty()) return false
+        for (c in value) {
+            val code = c.code
+            if (code < 0x21 || code > 0x7E) return false
+            if (c == ';' || c == ',') return false
+        }
+        return true
     }
 }

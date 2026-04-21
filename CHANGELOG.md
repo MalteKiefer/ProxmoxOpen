@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-04-21
+
+### Security
+
+- **TLS trust manager hardening** — `TofuTrustManager.checkClientTrusted` now throws `CertificateException` per the `X509TrustManager` contract instead of returning silently. The constructor rejects pins that are not exactly 64 hex characters with `IllegalArgumentException`, preventing malformed pins from being silently accepted.
+- **Token-login auth verification** — API-token login no longer infers success from an exception-free `/nodes` call. The login flow now explicitly rejects empty node lists and issues a second, resource-scoped probe (`getNodeStatus`) that trips per-path ACLs, catching revoked or under-privileged tokens that `/nodes` alone would miss.
+- **Session refresh** — added `refreshTicket` and `ensureValidSession` helpers on the auth repository. PAM/PVE sessions can now be re-issued before the 2-hour PVE ticket expires (10-minute skew); API-token sessions are passed through since tokens do not expire on a TTL.
+- **Console proxy ticket validation** — `LocalWebSocketProxy` now rejects tickets or CSRF tokens that contain anything outside printable ASCII minus `;` `,` CR LF SP. The existing CRLF-only check was a strict subset and missed cookie-attribute smuggling. Logs never print the ticket contents — only its length and 4-character prefix.
+- **Console log filter** — the WebView `onConsoleMessage` handler is now gated behind `BuildConfig.DEBUG`, truncates messages to 200 characters, and redacts any line mentioning `password` or `token` (case-insensitive) to `[redacted]`. Prevents accidental credential leaks into logcat on debug builds.
+- **AES-GCM AAD binding (versioned)** — locally persisted encrypted blobs (SQLCipher DB-key wrap + each entry in `KeystoreSecretStore`) now bind the ciphertext to its storage context via `updateAAD`: the DB wrapping blob to the keystore alias, each secret to its logical key name. New blobs are prefixed `v2.`; legacy `v1` blobs still decrypt without AAD and are silently re-encrypted to `v2.` on first read — no data loss for existing users.
+
 ## [1.2.0] — 2026-04-21
 
 ### Added

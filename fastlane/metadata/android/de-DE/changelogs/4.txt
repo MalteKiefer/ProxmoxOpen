@@ -1,0 +1,7 @@
+Sicherheits-Härtung:
+- TLS-Trust-Manager: checkClientTrusted wirft jetzt vertragskonform; Pins müssen exakt 64 Hex-Zeichen sein
+- API-Token-Login: explizite Auth-Prüfung statt "keine Exception = Erfolg"
+- Neue Session-Refresh-Helfer für die 2h-PVE-Tickets mit 10-Minuten-Toleranz
+- Konsolen-WebSocket-Proxy: strenge Validierung der Ticket-/CSRF-Header, Ticket-Inhalte werden nie geloggt
+- WebView-JS-Konsole: nur in DEBUG-Builds, gekürzt, Password-/Token-Strings werden redigiert
+- Verschlüsselte lokale Blobs: AES-GCM mit pro-Eintrag AAD-Bindung und stiller v1 -> v2 Migration

@@ -1,0 +1,7 @@
+Security hardening:
+- TLS trust manager: checkClientTrusted now throws per contract; pins must be exactly 64 hex characters
+- API-token login: explicit auth verification instead of inferring success from the node list
+- New session-refresh helpers for 2h PVE tickets with a 10-minute skew
+- Console WebSocket proxy: strict ticket/CSRF header validation and never logs ticket contents
+- WebView JS console logs: DEBUG-only, truncated, and password/token strings are redacted
+- Encrypted local blobs: AES-GCM with per-entry AAD binding and a silent v1 -> v2 migration

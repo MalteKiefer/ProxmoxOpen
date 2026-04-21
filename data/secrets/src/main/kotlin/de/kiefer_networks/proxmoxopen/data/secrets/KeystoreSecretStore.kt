@@ -28,22 +28,44 @@ class KeystoreSecretStore(context: Context) : SecretStore {
     override suspend fun put(key: String, value: String) {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+        cipher.updateAAD(key.toByteArray(Charsets.UTF_8))
         val iv = cipher.iv
         val ct = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
-        val encoded = Base64.encodeToString(iv, Base64.NO_WRAP) +
+        val encoded = VERSION_PREFIX +
+            Base64.encodeToString(iv, Base64.NO_WRAP) +
             "." + Base64.encodeToString(ct, Base64.NO_WRAP)
         dataStore.edit { it[stringPreferencesKey(key)] = encoded }
     }
 
     override suspend fun get(key: String): String? {
         val encoded = dataStore.data.first()[stringPreferencesKey(key)] ?: return null
-        val parts = encoded.split(".", limit = 2)
+        val isV2 = encoded.startsWith(VERSION_PREFIX)
+        val payload = if (isV2) encoded.removePrefix(VERSION_PREFIX) else encoded
+        val parts = payload.split(".", limit = 2)
         if (parts.size != 2) return null
-        val iv = Base64.decode(parts[0], Base64.NO_WRAP)
-        val ct = Base64.decode(parts[1], Base64.NO_WRAP)
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, getKey(), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
-        return String(cipher.doFinal(ct), Charsets.UTF_8)
+        return try {
+            val iv = Base64.decode(parts[0], Base64.NO_WRAP)
+            val ct = Base64.decode(parts[1], Base64.NO_WRAP)
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.DECRYPT_MODE, getKey(), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
+            if (isV2) {
+                cipher.updateAAD(key.toByteArray(Charsets.UTF_8))
+            }
+            val plaintext = String(cipher.doFinal(ct), Charsets.UTF_8)
+            if (!isV2) {
+                // Silently migrate legacy v1 blob to v2 with AAD binding.
+                try {
+                    put(key, plaintext)
+                } catch (_: Exception) {
+                    // Migration failure is non-fatal; v1 blob remains usable.
+                }
+            }
+            plaintext
+        } catch (_: IllegalArgumentException) {
+            null
+        } catch (_: Exception) {
+            null
+        }
     }
 
     override suspend fun remove(key: String) {
@@ -100,6 +122,7 @@ class KeystoreSecretStore(context: Context) : SecretStore {
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val KEY_SIZE_BITS = 256
         private const val GCM_TAG_LENGTH_BITS = 128
+        private const val VERSION_PREFIX = "v2."
     }
 }
 

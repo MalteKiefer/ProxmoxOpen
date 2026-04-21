@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.kiefer_networks.proxmoxopen.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +88,20 @@ private fun NoVncView(url: String) {
                 }
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
-                        timber.log.Timber.d("Console-JS %s: %s", consoleMessage?.messageLevel(), consoleMessage?.message())
+                        // Gate JS console logging behind DEBUG builds; noVNC / xterm.js may echo
+                        // keystrokes (including passwords) to the console in some flows.
+                        if (BuildConfig.DEBUG && consoleMessage != null) {
+                            val raw = consoleMessage.message().orEmpty()
+                            val sanitized = if (
+                                raw.contains("password", ignoreCase = true) ||
+                                raw.contains("token", ignoreCase = true)
+                            ) {
+                                "[redacted]"
+                            } else {
+                                if (raw.length > 200) raw.substring(0, 200) else raw
+                            }
+                            timber.log.Timber.d("Console-JS %s: %s", consoleMessage.messageLevel(), sanitized)
+                        }
                         return true
                     }
                 }

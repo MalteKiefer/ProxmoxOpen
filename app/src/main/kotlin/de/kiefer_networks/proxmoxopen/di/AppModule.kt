@@ -44,13 +44,36 @@ object AppModule {
         if (existingEncrypted != null && keyStore.containsAlias(alias)) {
             // Decrypt existing key
             try {
-                val parts = existingEncrypted.split(".")
+                val aad = alias.toByteArray(Charsets.UTF_8)
+                val isV2 = existingEncrypted.startsWith("v2.")
+                val payload = if (isV2) existingEncrypted.removePrefix("v2.") else existingEncrypted
+                val parts = payload.split(".")
                 val iv = android.util.Base64.decode(parts[0], android.util.Base64.NO_WRAP)
                 val encrypted = android.util.Base64.decode(parts[1], android.util.Base64.NO_WRAP)
                 val secretKey = (keyStore.getEntry(alias, null) as java.security.KeyStore.SecretKeyEntry).secretKey
                 val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
                 cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.GCMParameterSpec(128, iv))
-                return cipher.doFinal(encrypted)
+                if (isV2) {
+                    cipher.updateAAD(aad)
+                }
+                val dbKey = cipher.doFinal(encrypted)
+                if (!isV2) {
+                    // Silently migrate legacy v1 blob to v2 with AAD.
+                    try {
+                        val reCipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+                        reCipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey)
+                        reCipher.updateAAD(aad)
+                        val reCt = reCipher.doFinal(dbKey)
+                        val reIv = reCipher.iv
+                        val reStored = "v2." +
+                            android.util.Base64.encodeToString(reIv, android.util.Base64.NO_WRAP) + "." +
+                            android.util.Base64.encodeToString(reCt, android.util.Base64.NO_WRAP)
+                        prefs.edit().putString("encrypted_db_key", reStored).apply()
+                    } catch (_: Exception) {
+                        // Migration failure is non-fatal; v1 blob remains usable.
+                    }
+                }
+                return dbKey
             } catch (_: Exception) {
                 // Key corrupted, regenerate
             }
@@ -99,9 +122,11 @@ object AppModule {
         val secretKey = (keyStore.getEntry(alias, null) as java.security.KeyStore.SecretKeyEntry).secretKey
         val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey)
+        cipher.updateAAD(alias.toByteArray(Charsets.UTF_8))
         val encryptedDbKey = cipher.doFinal(dbKey)
         val iv = cipher.iv
-        val stored = android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP) + "." +
+        val stored = "v2." +
+            android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP) + "." +
             android.util.Base64.encodeToString(encryptedDbKey, android.util.Base64.NO_WRAP)
         prefs.edit().putString("encrypted_db_key", stored).apply()
 

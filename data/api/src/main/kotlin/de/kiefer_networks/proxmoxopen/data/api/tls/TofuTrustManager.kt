@@ -1,6 +1,7 @@
 package de.kiefer_networks.proxmoxopen.data.api.tls
 
 import java.security.MessageDigest
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
@@ -14,12 +15,18 @@ class TofuTrustManager(
     private val expectedFingerprintSha256: String?,
 ) : X509TrustManager {
 
+    init {
+        require(expectedFingerprintSha256 == null || expectedFingerprintSha256.matches(Regex("^[0-9a-fA-F]{64}$"))) {
+            "expected pin must be 64 hex characters"
+        }
+    }
+
     @Volatile
     var observedFingerprint: String? = null
         private set
 
     override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
-        // client auth not used
+        throw CertificateException("client authentication not supported")
     }
 
     override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
