@@ -37,6 +37,7 @@ sealed interface Route {
     @Serializable data class Search(val serverId: Long) : Route
     @Serializable data class Ha(val serverId: Long) : Route
     @Serializable data class NodeDisks(val serverId: Long, val node: String) : Route
+    @Serializable data class NodeNetwork(val serverId: Long, val node: String) : Route
     @Serializable data class DiskSmart(
         val serverId: Long, val node: String, val disk: String,
     ) : Route

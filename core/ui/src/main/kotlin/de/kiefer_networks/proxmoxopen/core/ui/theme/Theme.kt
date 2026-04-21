@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -63,15 +64,27 @@ private val DarkColors = darkColorScheme(
 fun ProxMoxOpenTheme(
     useDarkTheme: Boolean? = null,
     dynamicColor: Boolean = false,
+    amoledBlack: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val resolvedDark = useDarkTheme ?: isSystemInDarkTheme()
     val ctx = LocalContext.current
-    val scheme = when {
+    val baseScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (resolvedDark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
         resolvedDark -> DarkColors
         else -> LightColors
+    }
+    val scheme = if (resolvedDark && amoledBlack) {
+        baseScheme.copy(
+            background = Color.Black,
+            surface = Color.Black,
+            surfaceContainerLowest = Color.Black,
+            surfaceContainerLow = Color.Black,
+            surfaceContainer = Color(0xFF0A0A0A),
+        )
+    } else {
+        baseScheme
     }
 
     val view = LocalView.current

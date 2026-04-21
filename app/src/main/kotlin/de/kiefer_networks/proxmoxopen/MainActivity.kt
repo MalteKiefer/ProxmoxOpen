@@ -56,6 +56,7 @@ class MainActivity : FragmentActivity() {
                     ThemeMode.DARK -> true
                 },
                 dynamicColor = prefs.useDynamicColor,
+                amoledBlack = prefs.amoledBlack,
             ) {
                 de.kiefer_networks.proxmoxopen.ui.applock.AppLockGate(enabled = prefs.appLockEnabled) {
                     NavGraph()

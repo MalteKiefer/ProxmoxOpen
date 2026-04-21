@@ -31,6 +31,7 @@ enum class TerminalTheme {
 data class UserPreferences(
     val themeMode: ThemeMode = ThemeMode.DARK,
     val useDynamicColor: Boolean = false,
+    val amoledBlack: Boolean = false,
     val language: LanguageOption = LanguageOption.SYSTEM,
     val appLockEnabled: Boolean = false,
     val blockScreenshots: Boolean = false,

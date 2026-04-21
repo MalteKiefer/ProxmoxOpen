@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.PowerSettingsNew
@@ -94,6 +95,7 @@ fun NodeDetailScreen(
     onStorage: () -> Unit = {},
     onOpenApt: (serverId: Long, node: String) -> Unit = { _, _ -> },
     onOpenDisks: () -> Unit = {},
+    onOpenNetwork: () -> Unit = {},
     onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
@@ -171,6 +173,7 @@ fun NodeDetailScreen(
                             onStorage = onStorage,
                             onApt = { onOpenApt(viewModel.serverId, viewModel.nodeName) },
                             onOpenDisks = onOpenDisks,
+                            onOpenNetwork = onOpenNetwork,
                             viewModel = viewModel,
                         )
                         1 -> ChartsTab(
@@ -196,6 +199,7 @@ private fun SummaryTab(
     onStorage: () -> Unit,
     onApt: () -> Unit,
     onOpenDisks: () -> Unit,
+    onOpenNetwork: () -> Unit,
     viewModel: NodeDetailViewModel,
 ) {
     Column(
@@ -362,6 +366,11 @@ private fun SummaryTab(
                         Icons.Outlined.Storage,
                         stringResource(R.string.nav_disks),
                         onClick = onOpenDisks,
+                    )
+                    DetailActionRow(
+                        Icons.Outlined.Lan,
+                        stringResource(R.string.nav_network),
+                        onClick = onOpenNetwork,
                     )
 
                     HorizontalDivider(

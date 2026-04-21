@@ -26,6 +26,7 @@ import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
 import de.kiefer_networks.proxmoxopen.ui.ha.HaScreen
 import de.kiefer_networks.proxmoxopen.ui.nodedisks.DiskSmartScreen
 import de.kiefer_networks.proxmoxopen.ui.nodedisks.NodeDisksScreen
+import de.kiefer_networks.proxmoxopen.ui.nodenetwork.NodeNetworkScreen
 import de.kiefer_networks.proxmoxopen.ui.search.SearchScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
 import de.kiefer_networks.proxmoxopen.ui.taskdetail.TaskDetailScreen
@@ -106,6 +107,9 @@ fun NavGraph() {
                 },
                 onOpenDisks = {
                     nav.navigate(Route.NodeDisks(route.serverId, route.node))
+                },
+                onOpenNetwork = {
+                    nav.navigate(Route.NodeNetwork(route.serverId, route.node))
                 },
                 onOpenTask = { node, upid -> nav.navigate(Route.TaskDetail(route.serverId, node, upid)) },
             )
@@ -228,6 +232,9 @@ fun NavGraph() {
         }
         composable<Route.DiskSmart> {
             DiskSmartScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.NodeNetwork> {
+            NodeNetworkScreen(onBack = { nav.popBackStack() })
         }
     }
 }

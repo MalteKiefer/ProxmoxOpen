@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Node network interfaces (read-only view) -->
+    <string name="network_title">Network</string>
+    <string name="network_type_bridge">Bridge</string>
+    <string name="network_type_bond">Bond</string>
+    <string name="network_type_eth">Physical NIC</string>
+    <string name="network_type_vlan">VLAN</string>
+    <string name="network_active">Active</string>
+    <string name="network_inactive">Inactive</string>
+    <string name="network_address">Address</string>
+    <string name="network_gateway">Gateway</string>
+    <string name="network_members">Members</string>
+    <string name="network_empty">No network interfaces found.</string>
+    <string name="nav_network">Network</string>
+</resources>

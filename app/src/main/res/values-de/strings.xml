@@ -168,6 +168,8 @@
     <string name="settings_title">Einstellungen</string>
     <string name="setting_dynamic_color">Dynamische Farben</string>
     <string name="setting_dynamic_color_desc">Systemfarbpalette verwenden (Android 12+).</string>
+    <string name="setting_amoled_black">AMOLED-Schwarz</string>
+    <string name="setting_amoled_black_desc">Reine Schwarztöne im Dunkelmodus für OLED-Displays verwenden.</string>
     <string name="setting_biometric_lock">App-Sperre</string>
     <string name="setting_biometric_lock_desc">Biometrische Entsperrung zum Öffnen der App erfordern.</string>
     <string name="setting_block_screenshots">Screenshots blockieren</string>

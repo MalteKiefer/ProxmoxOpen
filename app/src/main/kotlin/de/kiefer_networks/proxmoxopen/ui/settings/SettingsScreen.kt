@@ -103,6 +103,8 @@ fun SettingsScreen(
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsToggle(Icons.Outlined.Palette, stringResource(R.string.setting_dynamic_color), stringResource(R.string.setting_dynamic_color_desc), prefs.useDynamicColor, viewModel::setDynamicColor)
                 }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsToggle(Icons.Outlined.BrightnessMedium, stringResource(R.string.setting_amoled_black), stringResource(R.string.setting_amoled_black_desc), prefs.amoledBlack, viewModel::setAmoledBlack)
             }
             SectionTitle(stringResource(R.string.settings_section_language))
             SettingsCard { SettingsRow(Icons.Outlined.Language, stringResource(R.string.setting_language), languageLabel(prefs.language)) { showLanguageDialog = true } }

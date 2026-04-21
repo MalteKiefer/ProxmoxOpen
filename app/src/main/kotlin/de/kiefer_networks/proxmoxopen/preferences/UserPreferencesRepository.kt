@@ -28,6 +28,7 @@ class UserPreferencesRepository @Inject constructor(
             themeMode = prefs[THEME_KEY]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: ThemeMode.DARK,
             useDynamicColor = prefs[DYNAMIC_COLOR_KEY] ?: false,
+            amoledBlack = prefs[AMOLED_BLACK_KEY] ?: false,
             language = prefs[LANGUAGE_KEY]?.let { runCatching { LanguageOption.valueOf(it) }.getOrNull() }
                 ?: LanguageOption.SYSTEM,
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,
@@ -48,6 +49,10 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun setDynamicColor(enabled: Boolean) {
         dataStore.edit { it[DYNAMIC_COLOR_KEY] = enabled }
+    }
+
+    suspend fun setAmoledBlack(enabled: Boolean) {
+        dataStore.edit { it[AMOLED_BLACK_KEY] = enabled }
     }
 
     suspend fun setLanguage(language: LanguageOption) {
@@ -81,6 +86,7 @@ class UserPreferencesRepository @Inject constructor(
     companion object {
         private val THEME_KEY = stringPreferencesKey("theme_mode")
         private val DYNAMIC_COLOR_KEY = booleanPreferencesKey("dynamic_color")
+        private val AMOLED_BLACK_KEY = booleanPreferencesKey("amoled_black")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val APP_LOCK_KEY = booleanPreferencesKey("app_lock")
         private val BLOCK_SCREENSHOTS_KEY = booleanPreferencesKey("block_screenshots")

@@ -32,6 +32,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { preferencesRepository.setDynamicColor(enabled) }
     }
 
+    fun setAmoledBlack(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setAmoledBlack(enabled) }
+    }
+
     fun setLanguage(language: LanguageOption) {
         viewModelScope.launch { preferencesRepository.setLanguage(language) }
     }

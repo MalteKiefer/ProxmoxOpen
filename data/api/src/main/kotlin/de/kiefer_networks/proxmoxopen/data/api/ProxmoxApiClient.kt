@@ -20,6 +20,7 @@ import de.kiefer_networks.proxmoxopen.data.api.dto.VmCurrentStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.VncProxyDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.GuestStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.NodeDiskDto
+import de.kiefer_networks.proxmoxopen.data.api.dto.NodeNetworkIfaceDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.NodeListDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.NodeStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.RrdPointDto
@@ -96,6 +97,9 @@ class ProxmoxApiClient(
 
     suspend fun getNodeRrd(node: String, timeframe: String): List<RrdPointDto> =
         http.getJson<List<RrdPointDto>>("$baseUrl/api2/json/nodes/$node/rrddata?timeframe=$timeframe")
+
+    suspend fun getNodeNetwork(node: String): List<NodeNetworkIfaceDto> =
+        http.getJson<List<NodeNetworkIfaceDto>>("$baseUrl/api2/json/nodes/$node/network")
 
     // --- HA (read-only) ----------------------------------------------------
 
