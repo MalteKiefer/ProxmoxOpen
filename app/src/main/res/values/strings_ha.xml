@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- HA Manager -->
+    <string name="ha_title">HA Manager</string>
+    <string name="ha_tab_status">Status</string>
+    <string name="ha_tab_resources">Resources</string>
+    <string name="ha_tab_groups">Groups</string>
+    <string name="ha_state">State</string>
+    <string name="ha_master">Master</string>
+    <string name="ha_node">Node</string>
+    <string name="ha_quorum">Quorum</string>
+    <string name="ha_empty">Nothing to show.</string>
+    <string name="nav_ha">HA Manager</string>
+</resources>

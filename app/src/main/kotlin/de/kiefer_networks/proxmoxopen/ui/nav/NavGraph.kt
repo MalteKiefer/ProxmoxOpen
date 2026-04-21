@@ -20,6 +20,7 @@ import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
 import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
+import de.kiefer_networks.proxmoxopen.ui.ha.HaScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
 import de.kiefer_networks.proxmoxopen.ui.taskdetail.TaskDetailScreen
 
@@ -168,6 +169,9 @@ fun NavGraph() {
         }
         composable<Route.StorageOverview> {
             StorageScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.Ha> {
+            HaScreen(onBack = { nav.popBackStack() })
         }
     }
 }
