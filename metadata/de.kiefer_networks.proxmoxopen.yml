@@ -94,7 +94,15 @@ Builds:
       - yes
     output: build/outputs/apk/release/app-release-unsigned.apk
 
+  - versionName: "1.4.2"
+    versionCode: 7
+    commit: v1.4.2
+    subdir: app
+    gradle:
+      - yes
+    output: build/outputs/apk/release/app-release-unsigned.apk
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: "1.4.1"
-CurrentVersionCode: 6
+CurrentVersion: "1.4.2"
+CurrentVersionCode: 7

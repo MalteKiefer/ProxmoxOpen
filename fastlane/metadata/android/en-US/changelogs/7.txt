@@ -1,0 +1,1 @@
+Fixed crash when opening the node detail screen. The APT updates list could contain entries without an OldVersion field, which was not tolerated by the DTO and crashed the app.

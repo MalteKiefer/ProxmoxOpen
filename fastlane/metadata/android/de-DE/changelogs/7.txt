@@ -1,0 +1,1 @@
+Absturz beim Öffnen der Node-Detailansicht behoben. Die APT-Update-Liste konnte Einträge ohne OldVersion-Feld enthalten; das DTO hat das nicht toleriert und die App ist abgestürzt.
