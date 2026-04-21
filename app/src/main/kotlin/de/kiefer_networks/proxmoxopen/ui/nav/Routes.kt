@@ -34,4 +34,5 @@ sealed interface Route {
         val serverId: Long, val node: String, val vmid: Int, val type: String,
     ) : Route
     @Serializable data class AptUpdates(val serverId: Long, val node: String) : Route
+    @Serializable data class Search(val serverId: Long) : Route
 }

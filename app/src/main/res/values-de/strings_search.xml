@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Globale Cluster-Suche -->
+    <string name="search_title">Suche</string>
+    <string name="search_empty">VM-Name, VMID, Tag oder Node eingeben</string>
+    <string name="search_no_results">Keine Treffer</string>
+    <string name="search_type_vm">VMs</string>
+    <string name="search_type_lxc">LXC</string>
+    <string name="search_type_node">Nodes</string>
+    <string name="search_type_storage">Speicher</string>
+    <string name="nav_search">Suche</string>
+</resources>
