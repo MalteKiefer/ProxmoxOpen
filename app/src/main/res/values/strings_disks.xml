@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="disks_title">Disks</string>
+    <string name="disks_health_passed">PASSED</string>
+    <string name="disks_health_failed">FAILED</string>
+    <string name="disks_health_unknown">UNKNOWN</string>
+    <string name="disks_model">Model</string>
+    <string name="disks_serial">Serial</string>
+    <string name="disks_size">Size</string>
+    <string name="disks_type_ssd">SSD</string>
+    <string name="disks_type_hdd">HDD</string>
+    <string name="disks_type_nvme">NVMe</string>
+    <string name="disks_type_usb">USB</string>
+    <string name="disks_wearout">Wearout</string>
+    <string name="disks_smart_title">SMART report</string>
+    <string name="disks_smart_attributes">Attributes</string>
+    <string name="disks_empty">No disks reported for this node.</string>
+    <string name="nav_disks">Disks</string>
+</resources>

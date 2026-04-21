@@ -93,6 +93,7 @@ fun NodeDetailScreen(
     onConsole: () -> Unit = {},
     onStorage: () -> Unit = {},
     onOpenApt: (serverId: Long, node: String) -> Unit = { _, _ -> },
+    onOpenDisks: () -> Unit = {},
     onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
@@ -169,6 +170,7 @@ fun NodeDetailScreen(
                             onConsole = onConsole,
                             onStorage = onStorage,
                             onApt = { onOpenApt(viewModel.serverId, viewModel.nodeName) },
+                            onOpenDisks = onOpenDisks,
                             viewModel = viewModel,
                         )
                         1 -> ChartsTab(
@@ -193,6 +195,7 @@ private fun SummaryTab(
     onConsole: () -> Unit,
     onStorage: () -> Unit,
     onApt: () -> Unit,
+    onOpenDisks: () -> Unit,
     viewModel: NodeDetailViewModel,
 ) {
     Column(
@@ -354,6 +357,11 @@ private fun SummaryTab(
                         Icons.Outlined.SystemUpdate,
                         stringResource(R.string.nav_apt_updates),
                         onClick = onApt,
+                    )
+                    DetailActionRow(
+                        Icons.Outlined.Storage,
+                        stringResource(R.string.nav_disks),
+                        onClick = onOpenDisks,
                     )
 
                     HorizontalDivider(
