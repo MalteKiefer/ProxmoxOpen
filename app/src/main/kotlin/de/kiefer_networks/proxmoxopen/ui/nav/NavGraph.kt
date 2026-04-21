@@ -21,6 +21,7 @@ import de.kiefer_networks.proxmoxopen.ui.apt.AptUpdatesScreen
 import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
+import de.kiefer_networks.proxmoxopen.ui.ha.HaScreen
 import de.kiefer_networks.proxmoxopen.ui.search.SearchScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
 import de.kiefer_networks.proxmoxopen.ui.taskdetail.TaskDetailScreen
@@ -197,6 +198,9 @@ fun NavGraph() {
                     nav.navigate(Route.StorageOverview(route.serverId, node))
                 },
             )
+        }
+        composable<Route.Ha> {
+            HaScreen(onBack = { nav.popBackStack() })
         }
     }
 }

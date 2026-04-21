@@ -6,6 +6,9 @@ import de.kiefer_networks.proxmoxopen.data.api.dto.ClusterResourceDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.ClusterStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.GuestConfigDto
+import de.kiefer_networks.proxmoxopen.data.api.dto.HaGroupDto
+import de.kiefer_networks.proxmoxopen.data.api.dto.HaResourceDto
+import de.kiefer_networks.proxmoxopen.data.api.dto.HaStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.InterfaceDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.SnapshotDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.AgentNetworkResult
@@ -90,6 +93,17 @@ class ProxmoxApiClient(
 
     suspend fun getNodeRrd(node: String, timeframe: String): List<RrdPointDto> =
         http.getJson<List<RrdPointDto>>("$baseUrl/api2/json/nodes/$node/rrddata?timeframe=$timeframe")
+
+    // --- HA (read-only) ----------------------------------------------------
+
+    suspend fun getHaStatus(): List<HaStatusDto> =
+        http.getJson<List<HaStatusDto>>("$baseUrl/api2/json/cluster/ha/status/current")
+
+    suspend fun getHaResources(): List<HaResourceDto> =
+        http.getJson<List<HaResourceDto>>("$baseUrl/api2/json/cluster/ha/resources")
+
+    suspend fun getHaGroups(): List<HaGroupDto> =
+        http.getJson<List<HaGroupDto>>("$baseUrl/api2/json/cluster/ha/groups")
 
     // --- Guests ------------------------------------------------------------
 
