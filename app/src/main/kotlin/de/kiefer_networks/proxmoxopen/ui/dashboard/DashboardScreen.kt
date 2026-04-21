@@ -196,6 +196,11 @@ fun DashboardScreen(
                 val totalNodes = state.cluster?.nodes?.size ?: 0
 
                 Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+                    // Offline banner — rendered whenever the dashboard is serving a
+                    // cached snapshot instead of live data.
+                    state.fromCacheCapturedAt?.let { capturedAt ->
+                        OfflineCacheBanner(capturedAt = capturedAt)
+                    }
                     // Summary Cards Row
                     Row(
                         modifier = Modifier
@@ -319,6 +324,33 @@ fun DashboardScreen(
                 }
             }
         }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Offline banner
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun OfflineCacheBanner(capturedAt: Long) {
+    val formatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    val timestamp = remember(capturedAt) { formatter.format(Date(capturedAt)) }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        ),
+    ) {
+        Text(
+            text = stringResource(R.string.offline_banner, timestamp),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
     }
 }
 
