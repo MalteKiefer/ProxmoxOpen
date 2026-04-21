@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="apt_title">APT Updates</string>
+    <string name="apt_refresh">Refresh</string>
+    <string name="apt_upgrade">Upgrade all</string>
+    <string name="apt_upgrade_confirm_title">Upgrade all packages?</string>
+    <string name="apt_upgrade_confirm_message">This will run apt-get dist-upgrade on the node. Services may restart during the upgrade. Continue?</string>
+    <string name="apt_empty">System is up to date.</string>
+    <string name="apt_loading">Loading updates\u2026</string>
+    <string name="nav_apt_updates">APT Updates</string>
+</resources>

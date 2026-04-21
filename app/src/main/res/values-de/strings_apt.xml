@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="apt_title">APT-Updates</string>
+    <string name="apt_refresh">Aktualisieren</string>
+    <string name="apt_upgrade">Alles aktualisieren</string>
+    <string name="apt_upgrade_confirm_title">Alle Pakete aktualisieren?</string>
+    <string name="apt_upgrade_confirm_message">Dies führt apt-get dist-upgrade auf dem Knoten aus. Dienste können während des Upgrades neu gestartet werden. Fortfahren?</string>
+    <string name="apt_empty">Das System ist aktuell.</string>
+    <string name="apt_loading">Updates werden geladen\u2026</string>
+    <string name="nav_apt_updates">APT-Updates</string>
+</resources>
