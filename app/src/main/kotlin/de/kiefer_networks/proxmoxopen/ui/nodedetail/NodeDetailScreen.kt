@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -91,6 +92,7 @@ fun NodeDetailScreen(
     onActivity: () -> Unit = {},
     onConsole: () -> Unit = {},
     onStorage: () -> Unit = {},
+    onOpenApt: (serverId: Long, node: String) -> Unit = { _, _ -> },
     onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
@@ -166,6 +168,7 @@ fun NodeDetailScreen(
                             node = state.node,
                             onConsole = onConsole,
                             onStorage = onStorage,
+                            onApt = { onOpenApt(viewModel.serverId, viewModel.nodeName) },
                             viewModel = viewModel,
                         )
                         1 -> ChartsTab(
@@ -189,6 +192,7 @@ private fun SummaryTab(
     node: Node?,
     onConsole: () -> Unit,
     onStorage: () -> Unit,
+    onApt: () -> Unit,
     viewModel: NodeDetailViewModel,
 ) {
     Column(
@@ -346,6 +350,11 @@ private fun SummaryTab(
                 Column {
                     DetailActionRow(Icons.Outlined.Terminal, stringResource(R.string.console_title), onClick = onConsole)
                     DetailActionRow(Icons.Outlined.Storage, "Storage", onClick = onStorage)
+                    DetailActionRow(
+                        Icons.Outlined.SystemUpdate,
+                        stringResource(R.string.nav_apt_updates),
+                        onClick = onApt,
+                    )
 
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),

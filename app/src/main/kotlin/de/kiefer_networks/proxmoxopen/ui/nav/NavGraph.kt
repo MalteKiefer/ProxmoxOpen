@@ -17,6 +17,7 @@ import de.kiefer_networks.proxmoxopen.ui.serverlist.EditServerScreen
 import de.kiefer_networks.proxmoxopen.ui.settings.SettingsScreen
 import de.kiefer_networks.proxmoxopen.ui.about.AboutScreen
 import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
+import de.kiefer_networks.proxmoxopen.ui.apt.AptUpdatesScreen
 import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
@@ -94,6 +95,9 @@ fun NavGraph() {
                 onStorage = {
                     nav.navigate(Route.StorageOverview(route.serverId, route.node))
                 },
+                onOpenApt = { serverId, node ->
+                    nav.navigate(Route.AptUpdates(serverId, node))
+                },
                 onOpenTask = { node, upid -> nav.navigate(Route.TaskDetail(route.serverId, node, upid)) },
             )
         }
@@ -168,6 +172,15 @@ fun NavGraph() {
         }
         composable<Route.StorageOverview> {
             StorageScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.AptUpdates> { entry ->
+            val route = entry.toRoute<Route.AptUpdates>()
+            AptUpdatesScreen(
+                onBack = { nav.popBackStack() },
+                onOpenTask = { node, upid ->
+                    nav.navigate(Route.TaskDetail(route.serverId, node, upid))
+                },
+            )
         }
     }
 }

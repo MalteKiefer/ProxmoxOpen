@@ -1,6 +1,7 @@
 package de.kiefer_networks.proxmoxopen.data.api
 
 import de.kiefer_networks.proxmoxopen.data.api.dto.ApiResponse
+import de.kiefer_networks.proxmoxopen.data.api.dto.AptUpdateDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.ClusterResourceDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.ClusterStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.ContainerCurrentStatusDto
@@ -442,6 +443,25 @@ class ProxmoxApiClient(
             url = "$baseUrl/api2/json/nodes/$node/$type/$vmid/clone",
             formParameters = form,
         ) { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    // --- APT updates --------------------------------------------------------
+
+    suspend fun listAptUpdates(node: String): List<AptUpdateDto> =
+        http.getJson<List<AptUpdateDto>>("$baseUrl/api2/json/nodes/$node/apt/update")
+
+    /** Refresh the package database. Returns the UPID of the triggered task. */
+    suspend fun refreshApt(node: String): String {
+        val response = http.post("$baseUrl/api2/json/nodes/$node/apt/update") { applyAuth() }
+        return response.body<ApiResponse<String>>().data
+            ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
+    }
+
+    /** Start a dist-upgrade of all pending packages. Returns the UPID of the triggered task. */
+    suspend fun upgradeApt(node: String): String {
+        val response = http.post("$baseUrl/api2/json/nodes/$node/apt/upgrade") { applyAuth() }
         return response.body<ApiResponse<String>>().data
             ?: throw ProxmoxHttpException(response.status.value, "empty UPID")
     }
