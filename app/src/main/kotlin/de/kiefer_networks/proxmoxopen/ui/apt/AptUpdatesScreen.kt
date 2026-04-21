@@ -201,7 +201,7 @@ private fun AptUpdateCard(update: AptUpdate) {
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                "${update.currentVersion} \u2192 ${update.candidateVersion}",
+                "${update.currentVersion ?: "?"} \u2192 ${update.candidateVersion ?: "?"}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

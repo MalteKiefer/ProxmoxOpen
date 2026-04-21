@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AptUpdateDto(
-    @SerialName("Package") val packageName: String,
-    @SerialName("Version") val version: String,
-    @SerialName("OldVersion") val oldVersion: String,
+    @SerialName("Package") val packageName: String? = null,
+    @SerialName("Version") val version: String? = null,
+    @SerialName("OldVersion") val oldVersion: String? = null,
     @SerialName("Origin") val origin: String? = null,
     @SerialName("Priority") val priority: String? = null,
     @SerialName("Title") val title: String? = null,

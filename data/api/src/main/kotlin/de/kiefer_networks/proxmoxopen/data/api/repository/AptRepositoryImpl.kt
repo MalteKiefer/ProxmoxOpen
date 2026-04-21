@@ -22,18 +22,20 @@ class AptRepositoryImpl @Inject constructor(
         serverId: Long,
         node: String,
     ): ApiResult<List<AptUpdate>> = execute(serverId) { api ->
-        api.listAptUpdates(node).map { dto ->
-            AptUpdate(
-                packageName = dto.packageName,
-                currentVersion = dto.oldVersion,
-                candidateVersion = dto.version,
-                origin = dto.origin,
-                priority = dto.priority,
-                title = dto.title,
-                description = dto.description,
-                section = dto.section,
-            )
-        }
+        api.listAptUpdates(node)
+            .filter { !it.packageName.isNullOrBlank() }
+            .map { dto ->
+                AptUpdate(
+                    packageName = dto.packageName.orEmpty(),
+                    currentVersion = dto.oldVersion,
+                    candidateVersion = dto.version,
+                    origin = dto.origin,
+                    priority = dto.priority,
+                    title = dto.title,
+                    description = dto.description,
+                    section = dto.section,
+                )
+            }
     }
 
     override suspend fun refresh(serverId: Long, node: String): ApiResult<String> =
