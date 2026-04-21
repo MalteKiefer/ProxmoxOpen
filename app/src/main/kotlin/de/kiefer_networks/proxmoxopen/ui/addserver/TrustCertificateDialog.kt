@@ -60,10 +60,6 @@ fun TrustCertificateDialog(
                     stringResource(R.string.trust_sha256),
                     probe.sha256Fingerprint.chunked(2).joinToString(":").uppercase(),
                 )
-                FieldMono(
-                    stringResource(R.string.trust_sha1),
-                    probe.sha1Fingerprint.chunked(2).joinToString(":").uppercase(),
-                )
             }
         },
         confirmButton = {

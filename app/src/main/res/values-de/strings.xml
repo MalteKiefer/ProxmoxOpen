@@ -96,7 +96,6 @@
     <string name="trust_valid_from">Gültig ab</string>
     <string name="trust_valid_to">Gültig bis</string>
     <string name="trust_sha256">SHA-256-Fingerabdruck</string>
-    <string name="trust_sha1">SHA-1-Fingerabdruck</string>
     <string name="trust_button">Diesem Server vertrauen</string>
     <string name="trust_warning">Vergleiche den Fingerabdruck mit dem, den dein Proxmox-Server anzeigt, bevor du vertraust.</string>
 
@@ -166,6 +165,8 @@
     <string name="setting_dynamic_color_desc">Systemfarbpalette verwenden (Android 12+).</string>
     <string name="setting_biometric_lock">App-Sperre</string>
     <string name="setting_biometric_lock_desc">Biometrische Entsperrung zum Öffnen der App erfordern.</string>
+    <string name="setting_block_screenshots">Screenshots blockieren</string>
+    <string name="setting_block_screenshots_desc">Screenshots verhindern und App-Inhalte in der Übersicht der letzten Apps verbergen.</string>
     <string name="setting_language">Sprache</string>
     <string name="setting_language_system">System</string>
     <string name="about">Über</string>

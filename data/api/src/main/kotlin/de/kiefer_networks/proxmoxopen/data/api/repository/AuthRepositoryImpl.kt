@@ -109,7 +109,6 @@ class AuthRepositoryImpl @Inject constructor(
                     val chain = it.session.peerCertificates
                     val leaf = chain[0] as X509Certificate
                     val sha256 = leaf.encoded.sha256Hex()
-                    val sha1 = MessageDigest.getInstance("SHA-1").digest(leaf.encoded).toHex()
                     ApiResult.Success(
                         ServerProbe(
                             host = host,
@@ -119,7 +118,6 @@ class AuthRepositoryImpl @Inject constructor(
                             validFrom = leaf.notBefore.time,
                             validTo = leaf.notAfter.time,
                             sha256Fingerprint = sha256,
-                            sha1Fingerprint = sha1,
                         ),
                     )
                 }

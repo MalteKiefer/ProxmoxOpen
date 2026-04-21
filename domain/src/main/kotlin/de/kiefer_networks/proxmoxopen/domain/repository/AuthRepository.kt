@@ -22,5 +22,4 @@ data class ServerProbe(
     val validFrom: Long,
     val validTo: Long,
     val sha256Fingerprint: String,
-    val sha1Fingerprint: String,
 )

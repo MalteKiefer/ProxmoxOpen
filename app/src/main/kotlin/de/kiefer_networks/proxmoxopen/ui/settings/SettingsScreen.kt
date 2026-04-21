@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
@@ -109,7 +110,11 @@ fun SettingsScreen(
                 SettingsRow(Icons.Outlined.Code, stringResource(R.string.setting_terminal_theme), terminalThemeLabel(prefs.terminalTheme)) { showTerminalThemeDialog = true }
             }
             SectionTitle(stringResource(R.string.settings_section_security))
-            SettingsCard { SettingsToggle(Icons.Outlined.Fingerprint, stringResource(R.string.setting_biometric_lock), stringResource(R.string.setting_biometric_lock_desc), prefs.appLockEnabled, viewModel::setAppLock) }
+            SettingsCard {
+                SettingsToggle(Icons.Outlined.Fingerprint, stringResource(R.string.setting_biometric_lock), stringResource(R.string.setting_biometric_lock_desc), prefs.appLockEnabled, viewModel::setAppLock)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsToggle(Icons.Outlined.Security, stringResource(R.string.setting_block_screenshots), stringResource(R.string.setting_block_screenshots_desc), prefs.blockScreenshots, viewModel::setBlockScreenshots)
+            }
             SectionTitle(stringResource(R.string.settings_section_about))
             SettingsCard {
                 SettingsRow(Icons.Outlined.Info, stringResource(R.string.about), stringResource(R.string.about_version, BuildConfig.VERSION_NAME)) { onAbout?.invoke() }

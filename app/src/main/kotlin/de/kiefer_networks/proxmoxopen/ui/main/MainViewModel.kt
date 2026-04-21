@@ -40,6 +40,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { preferencesRepository.setAppLockEnabled(enabled) }
     }
 
+    fun setBlockScreenshots(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setBlockScreenshots(enabled) }
+    }
+
     fun setRefreshInterval(interval: RefreshInterval) {
         viewModelScope.launch { preferencesRepository.setRefreshInterval(interval) }
     }

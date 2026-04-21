@@ -62,7 +62,15 @@ Builds:
       - yes
     output: build/outputs/apk/release/app-release-unsigned.apk
 
+  - versionName: "1.2.0"
+    versionCode: 3
+    commit: v1.2.0
+    subdir: app
+    gradle:
+      - yes
+    output: build/outputs/apk/release/app-release-unsigned.apk
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: "1.1.0"
-CurrentVersionCode: 2
+CurrentVersion: "1.2.0"
+CurrentVersionCode: 3

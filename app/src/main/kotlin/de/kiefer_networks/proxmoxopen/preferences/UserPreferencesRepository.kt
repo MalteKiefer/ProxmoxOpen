@@ -31,6 +31,7 @@ class UserPreferencesRepository @Inject constructor(
             language = prefs[LANGUAGE_KEY]?.let { runCatching { LanguageOption.valueOf(it) }.getOrNull() }
                 ?: LanguageOption.SYSTEM,
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,
+            blockScreenshots = prefs[BLOCK_SCREENSHOTS_KEY] ?: false,
             refreshInterval = prefs[REFRESH_KEY]?.let { runCatching { RefreshInterval.valueOf(it) }.getOrNull() }
                 ?: RefreshInterval.SEC_15,
             terminalFontSize = prefs[TERMINAL_FONT_KEY]?.let { runCatching { TerminalFontSize.valueOf(it) }.getOrNull() }
@@ -56,6 +57,10 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { it[APP_LOCK_KEY] = enabled }
     }
 
+    suspend fun setBlockScreenshots(enabled: Boolean) {
+        dataStore.edit { it[BLOCK_SCREENSHOTS_KEY] = enabled }
+    }
+
     suspend fun setRefreshInterval(interval: RefreshInterval) {
         dataStore.edit { it[REFRESH_KEY] = interval.name }
     }
@@ -73,6 +78,7 @@ class UserPreferencesRepository @Inject constructor(
         private val DYNAMIC_COLOR_KEY = booleanPreferencesKey("dynamic_color")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val APP_LOCK_KEY = booleanPreferencesKey("app_lock")
+        private val BLOCK_SCREENSHOTS_KEY = booleanPreferencesKey("block_screenshots")
         private val REFRESH_KEY = stringPreferencesKey("refresh_interval")
         private val TERMINAL_FONT_KEY = stringPreferencesKey("terminal_font_size")
         private val TERMINAL_THEME_KEY = stringPreferencesKey("terminal_theme")

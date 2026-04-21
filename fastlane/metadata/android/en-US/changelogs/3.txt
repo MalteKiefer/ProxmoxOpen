@@ -1,0 +1,7 @@
+New:
+- "Block screenshots" setting. Hides app contents in the recents overview and prevents screenshots.
+
+Security hardening:
+- Tighter WebView settings for the noVNC console
+- AndroidKeystore keys now request StrongBox when available, with a safe fallback
+- Removed SHA-1 certificate fingerprint from the trust dialog (SHA-256 only)

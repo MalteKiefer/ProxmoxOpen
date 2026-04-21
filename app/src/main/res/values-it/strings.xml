@@ -104,7 +104,6 @@
     <string name="trust_valid_from">Valido dal</string>
     <string name="trust_valid_to">Valido fino al</string>
     <string name="trust_sha256">Impronta SHA-256</string>
-    <string name="trust_sha1">Impronta SHA-1</string>
     <string name="trust_button">Considera attendibile questo server</string>
     <string name="trust_warning">Verifica che l\'impronta corrisponda a quella mostrata dal tuo server Proxmox prima di concedere la fiducia.</string>
 
@@ -182,6 +181,8 @@
     <string name="setting_dynamic_color_desc">Usa la tavolozza colori del sistema (Android 12+).</string>
     <string name="setting_biometric_lock">Blocco app</string>
     <string name="setting_biometric_lock_desc">Richiedi l\'autenticazione biometrica per aprire l\'app.</string>
+    <string name="setting_block_screenshots">Blocca screenshot</string>
+    <string name="setting_block_screenshots_desc">Impedisci screenshot e nascondi i contenuti dell\'app nella panoramica delle app recenti.</string>
     <string name="setting_language">Lingua</string>
     <string name="setting_language_system">Sistema</string>
     <string name="about">Informazioni</string>

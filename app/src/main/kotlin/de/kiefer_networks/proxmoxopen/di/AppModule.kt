@@ -64,16 +64,35 @@ object AppModule {
             val keyGen = javax.crypto.KeyGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
             )
-            keyGen.init(
-                KeyGenParameterSpec.Builder(
+            val specBuilder = KeyGenParameterSpec.Builder(
+                alias,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .setRandomizedEncryptionRequired(true)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                val pm = context.packageManager
+                if (pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+                    specBuilder.setIsStrongBoxBacked(true)
+                }
+            }
+            try {
+                keyGen.init(specBuilder.build())
+                keyGen.generateKey()
+            } catch (_: java.security.ProviderException) {
+                // StrongBox may be advertised but unavailable; retry without it.
+                val fallback = KeyGenParameterSpec.Builder(
                     alias,
                     KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
                 ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setKeySize(256)
+                    .setRandomizedEncryptionRequired(true)
                     .build()
-            )
-            keyGen.generateKey()
+                keyGen.init(fallback)
+                keyGen.generateKey()
+            }
         }
 
         // Encrypt db key with AndroidKeyStore key

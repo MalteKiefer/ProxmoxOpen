@@ -1,0 +1,7 @@
+Neu:
+- Einstellung "Screenshots blockieren". Verbirgt App-Inhalte in der Übersicht der letzten Apps und verhindert Screenshots.
+
+Sicherheits-Härtung:
+- Strengere WebView-Einstellungen für die noVNC-Konsole
+- AndroidKeystore-Schlüssel nutzen StrongBox, wenn verfügbar, mit sicherem Fallback
+- SHA-1-Fingerabdruck aus dem Trust-Dialog entfernt (nur noch SHA-256)

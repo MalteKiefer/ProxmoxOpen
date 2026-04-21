@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-04-21
+
+### Added
+
+- New security setting **Block screenshots** (off by default). When enabled, `FLAG_SECURE` is set on the main window to prevent screenshots and hide the app contents in the recent apps overview. Translated into all 5 supported languages.
+
+### Security
+
+- Hardened WebView configuration for the noVNC console: `allowFileAccess`, `allowContentAccess`, `allowFileAccessFromFileURLs`, and `allowUniversalAccessFromFileURLs` are now explicitly set to `false`.
+- AndroidKeystore AES keys for the SQLCipher wrapping key and the secret store are now created with `setRandomizedEncryptionRequired(true)` and try to be `setIsStrongBoxBacked(true)` on devices advertising `FEATURE_STRONGBOX_KEYSTORE`, with a safe fallback to TEE-backed keys if StrongBox is unavailable.
+- Removed the deprecated SHA-1 certificate fingerprint from the TOFU trust dialog; only the SHA-256 fingerprint is shown.
+
 ## [1.1.0] — 2026-04-20
 
 ### Fixed

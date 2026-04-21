@@ -54,16 +54,38 @@ class KeystoreSecretStore(context: Context) : SecretStore {
         val existing = getKey()
         if (existing != null) return existing
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-        val spec = KeyGenParameterSpec.Builder(
+        val builder = KeyGenParameterSpec.Builder(
             KEY_ALIAS,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(KEY_SIZE_BITS)
-            .build()
-        generator.init(spec)
-        return generator.generateKey()
+            .setRandomizedEncryptionRequired(true)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            if (appContext.packageManager.hasSystemFeature(
+                    android.content.pm.PackageManager.FEATURE_STRONGBOX_KEYSTORE,
+                )
+            ) {
+                builder.setIsStrongBoxBacked(true)
+            }
+        }
+        return try {
+            generator.init(builder.build())
+            generator.generateKey()
+        } catch (_: java.security.ProviderException) {
+            val fallback = KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(KEY_SIZE_BITS)
+                .setRandomizedEncryptionRequired(true)
+                .build()
+            generator.init(fallback)
+            generator.generateKey()
+        }
     }
 
     private fun getKey(): SecretKey? {

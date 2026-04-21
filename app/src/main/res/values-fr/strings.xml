@@ -104,7 +104,6 @@
     <string name="trust_valid_from">Valide à partir du</string>
     <string name="trust_valid_to">Valide jusqu\'au</string>
     <string name="trust_sha256">Empreinte SHA-256</string>
-    <string name="trust_sha1">Empreinte SHA-1</string>
     <string name="trust_button">Faire confiance à ce serveur</string>
     <string name="trust_warning">Vérifiez que l\'empreinte correspond à celle affichée par votre serveur Proxmox avant de faire confiance.</string>
 
@@ -182,6 +181,8 @@
     <string name="setting_dynamic_color_desc">Utiliser la palette de couleurs du système (Android 12+).</string>
     <string name="setting_biometric_lock">Verrouillage de l\'application</string>
     <string name="setting_biometric_lock_desc">Exiger l\'authentification biométrique pour ouvrir l\'application.</string>
+    <string name="setting_block_screenshots">Bloquer les captures d\'écran</string>
+    <string name="setting_block_screenshots_desc">Empêcher les captures d\'écran et masquer le contenu de l\'application dans l\'aperçu des applications récentes.</string>
     <string name="setting_language">Langue</string>
     <string name="setting_language_system">Système</string>
     <string name="about">À propos</string>
