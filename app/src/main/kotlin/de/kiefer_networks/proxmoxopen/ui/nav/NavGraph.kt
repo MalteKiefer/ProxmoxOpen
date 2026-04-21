@@ -19,6 +19,8 @@ import de.kiefer_networks.proxmoxopen.ui.about.AboutScreen
 import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
 import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
+import de.kiefer_networks.proxmoxopen.ui.configbackup.ConfigExportScreen
+import de.kiefer_networks.proxmoxopen.ui.configbackup.ConfigImportScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
 import de.kiefer_networks.proxmoxopen.ui.taskdetail.TaskDetailScreen
@@ -154,8 +156,16 @@ fun NavGraph() {
             SettingsScreen(
                 onBack = { nav.popBackStack() },
                 onAbout = { nav.navigate(Route.About) },
+                onExportConfig = { nav.navigate(Route.ConfigExport) },
+                onImportConfig = { nav.navigate(Route.ConfigImport) },
                 showBackButton = true,
             )
+        }
+        composable<Route.ConfigExport> {
+            ConfigExportScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.ConfigImport> {
+            ConfigImportScreen(onBack = { nav.popBackStack() })
         }
         composable<Route.About> {
             AboutScreen(onBack = { nav.popBackStack() })

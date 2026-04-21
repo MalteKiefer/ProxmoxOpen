@@ -19,8 +19,10 @@ import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -63,6 +65,8 @@ fun SettingsScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onBack: (() -> Unit)? = null,
     onAbout: (() -> Unit)? = null,
+    onExportConfig: (() -> Unit)? = null,
+    onImportConfig: (() -> Unit)? = null,
     showBackButton: Boolean = false,
 ) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
@@ -114,6 +118,20 @@ fun SettingsScreen(
                 SettingsToggle(Icons.Outlined.Fingerprint, stringResource(R.string.setting_biometric_lock), stringResource(R.string.setting_biometric_lock_desc), prefs.appLockEnabled, viewModel::setAppLock)
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsToggle(Icons.Outlined.Security, stringResource(R.string.setting_block_screenshots), stringResource(R.string.setting_block_screenshots_desc), prefs.blockScreenshots, viewModel::setBlockScreenshots)
+            }
+            SectionTitle(stringResource(R.string.backup_section))
+            SettingsCard {
+                SettingsRow(
+                    Icons.Outlined.Upload,
+                    stringResource(R.string.backup_export),
+                    stringResource(R.string.backup_export_desc),
+                ) { onExportConfig?.invoke() }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    Icons.Outlined.Download,
+                    stringResource(R.string.backup_import),
+                    stringResource(R.string.backup_import_desc),
+                ) { onImportConfig?.invoke() }
             }
             SectionTitle(stringResource(R.string.settings_section_about))
             SettingsCard {
