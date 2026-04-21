@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_section">Sicherung</string>
+    <string name="backup_export">Konfiguration exportieren</string>
+    <string name="backup_export_desc">Server und Einstellungen in einer verschlüsselten Datei speichern. Passwörter und API-Token-Geheimnisse verlassen das Gerät nicht.</string>
+    <string name="backup_import">Konfiguration importieren</string>
+    <string name="backup_import_desc">Server und Einstellungen aus einer verschlüsselten Sicherungsdatei wiederherstellen. Zugangsdaten müssen erneut eingegeben werden.</string>
+    <string name="backup_passphrase">Passphrase</string>
+    <string name="backup_passphrase_confirm">Passphrase bestätigen</string>
+    <string name="backup_passphrase_too_short">Die Passphrase muss mindestens 8 Zeichen lang sein.</string>
+    <string name="backup_passphrase_mismatch">Die Passphrasen stimmen nicht überein.</string>
+    <string name="backup_bad_file">Diese Datei ist keine gültige ProxMoxOpen-Sicherung.</string>
+    <string name="backup_wrong_passphrase">Falsche Passphrase.</string>
+    <string name="backup_export_success">Sicherung gespeichert.</string>
+    <string name="backup_import_success">Sicherung importiert.</string>
+    <string name="backup_merge">Zusammenführen</string>
+    <string name="backup_replace">Vorhandene Daten ersetzen</string>
+    <string name="backup_cancel">Abbrechen</string>
+</resources>

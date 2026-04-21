@@ -40,4 +40,6 @@ sealed interface Route {
     @Serializable data class DiskSmart(
         val serverId: Long, val node: String, val disk: String,
     ) : Route
+    @Serializable data object ConfigExport : Route
+    @Serializable data object ConfigImport : Route
 }
