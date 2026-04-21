@@ -92,8 +92,14 @@ class ProxmoxApiClient(
 
     // --- Guests ------------------------------------------------------------
 
-    suspend fun listClusterResources(): List<ClusterResourceDto> =
-        http.getJson<List<ClusterResourceDto>>("$baseUrl/api2/json/cluster/resources?type=vm")
+    suspend fun listClusterResources(type: String? = "vm"): List<ClusterResourceDto> {
+        val url = if (type.isNullOrBlank()) {
+            "$baseUrl/api2/json/cluster/resources"
+        } else {
+            "$baseUrl/api2/json/cluster/resources?type=$type"
+        }
+        return http.getJson<List<ClusterResourceDto>>(url)
+    }
 
     suspend fun getGuestStatus(node: String, type: String, vmid: Int): GuestStatusDto =
         http.getJson<GuestStatusDto>("$baseUrl/api2/json/nodes/$node/$type/$vmid/status/current")

@@ -1,0 +1,16 @@
+package de.kiefer_networks.proxmoxopen.di
+
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import de.kiefer_networks.proxmoxopen.data.api.repository.SearchRepositoryImpl
+import de.kiefer_networks.proxmoxopen.domain.repository.SearchRepository
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class SearchModule {
+    @Binds @Singleton
+    abstract fun bindSearchRepository(impl: SearchRepositoryImpl): SearchRepository
+}

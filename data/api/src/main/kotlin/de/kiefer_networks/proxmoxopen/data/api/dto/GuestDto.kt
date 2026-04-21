@@ -2,7 +2,7 @@ package de.kiefer_networks.proxmoxopen.data.api.dto
 
 import kotlinx.serialization.Serializable
 
-/** Entry from `/cluster/resources?type=vm`. */
+/** Entry from `/cluster/resources`. */
 @Serializable
 data class ClusterResourceDto(
     val id: String,
@@ -20,6 +20,8 @@ data class ClusterResourceDto(
     val uptime: Long? = null,
     val tags: String? = null,
     val template: Int? = null,
+    val storage: String? = null,
+    val content: String? = null,
 )
 
 /** Per-guest `/status/current`. */
