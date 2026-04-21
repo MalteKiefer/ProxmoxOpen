@@ -101,6 +101,7 @@ import de.kiefer_networks.proxmoxopen.domain.model.PowerAction
 import de.kiefer_networks.proxmoxopen.domain.model.RrdTimeframe
 import de.kiefer_networks.proxmoxopen.domain.model.TaskState
 import de.kiefer_networks.proxmoxopen.domain.result.ApiError
+import de.kiefer_networks.proxmoxopen.domain.util.parseTags
 import de.kiefer_networks.proxmoxopen.ui.common.FingerprintMismatchDialog
 import de.kiefer_networks.proxmoxopen.ui.format.formatBytes
 import de.kiefer_networks.proxmoxopen.ui.format.formatUptime
@@ -355,6 +356,15 @@ private fun SummaryTab(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         if (vm != null) {
+            // ===== TAGS SECTION =====
+            val tagList = parseTags(vm.tags ?: cfg?.tags)
+            if (tagList.isNotEmpty()) {
+                DetailSectionHeader(stringResource(R.string.tags_label).uppercase())
+                SectionCard {
+                    TagChips(tagList)
+                }
+            }
+
             // ===== INFOS SECTION =====
             DetailSectionHeader("INFOS")
             val statusColor = when (vm.status) {

@@ -30,6 +30,8 @@ data class ContainerStatus(
     val diskWrite: Long,
     // IPs (from /interfaces endpoint or config)
     val ipAddresses: List<InterfaceIp>,
+    // Raw PVE tag string (semicolon/comma separated); null when unset.
+    val tags: String? = null,
 )
 
 data class InterfaceIp(

@@ -30,4 +30,6 @@ data class VmStatus(
     // VM-specific
     val runningMachine: String?,
     val runningQemu: String?,
+    // Raw PVE tag string (semicolon/comma separated); null when unset.
+    val tags: String? = null,
 )

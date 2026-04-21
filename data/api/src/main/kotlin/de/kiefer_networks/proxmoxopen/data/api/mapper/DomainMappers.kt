@@ -226,6 +226,7 @@ fun ContainerCurrentStatusDto.toContainerStatus(
             inet6 = iface.inet6,
         )
     },
+    tags = tags,
 )
 
 private fun String?.toTaskState(exit: String?): TaskState = when {
@@ -284,6 +285,7 @@ fun de.kiefer_networks.proxmoxopen.data.api.dto.VmCurrentStatusDto.toVmStatus(
     },
     runningMachine = running_machine,
     runningQemu = running_qemu,
+    tags = tags,
 )
 
 fun de.kiefer_networks.proxmoxopen.data.api.dto.VmConfigDto.toVmConfig(): de.kiefer_networks.proxmoxopen.domain.model.VmConfig {

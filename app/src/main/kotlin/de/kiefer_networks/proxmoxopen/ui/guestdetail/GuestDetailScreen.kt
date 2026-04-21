@@ -3,6 +3,8 @@ package de.kiefer_networks.proxmoxopen.ui.guestdetail
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,6 +52,8 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -97,6 +101,7 @@ import de.kiefer_networks.proxmoxopen.domain.model.GuestStatus
 import de.kiefer_networks.proxmoxopen.domain.model.RrdTimeframe
 import de.kiefer_networks.proxmoxopen.domain.model.TaskState
 import de.kiefer_networks.proxmoxopen.domain.result.ApiError
+import de.kiefer_networks.proxmoxopen.domain.util.parseTags
 import de.kiefer_networks.proxmoxopen.ui.common.FingerprintMismatchDialog
 import de.kiefer_networks.proxmoxopen.ui.format.formatBytes
 import de.kiefer_networks.proxmoxopen.ui.format.formatUptime
@@ -294,6 +299,21 @@ private fun SummaryTab(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        // ===== TAGS SECTION =====
+        val tagList = parseTags(ct.tags)
+        if (tagList.isNotEmpty()) {
+            DetailSectionHeader(stringResource(R.string.tags_label).uppercase())
+            Card(
+                Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            ) {
+                TagChips(tagList, Modifier.padding(12.dp))
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+
         // ===== INFOS SECTION =====
         DetailSectionHeader("INFOS")
         val tone = when (ct.status) {
@@ -859,3 +879,33 @@ private fun BackupDialog(
 }
 
 private fun cLabel(v: String) = when (v) { "zstd" -> "ZSTD"; "lzo" -> "LZO"; "gzip" -> "GZIP"; "0" -> "None"; else -> v }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun TagChips(tags: List<String>, modifier: Modifier = Modifier) {
+    if (tags.isEmpty()) {
+        Text(
+            stringResource(R.string.tags_none),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier,
+        )
+        return
+    }
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        tags.forEach { tag ->
+            SuggestionChip(
+                onClick = { /* display-only */ },
+                label = { Text(tag, style = MaterialTheme.typography.labelSmall) },
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+            )
+        }
+    }
+}
