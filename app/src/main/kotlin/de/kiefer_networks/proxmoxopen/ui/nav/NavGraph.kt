@@ -20,6 +20,8 @@ import de.kiefer_networks.proxmoxopen.ui.activity.ActivityScreen
 import de.kiefer_networks.proxmoxopen.ui.console.ConsoleScreen
 import de.kiefer_networks.proxmoxopen.ui.clone.CloneScreen
 import de.kiefer_networks.proxmoxopen.ui.migrate.MigrateScreen
+import de.kiefer_networks.proxmoxopen.ui.nodedisks.DiskSmartScreen
+import de.kiefer_networks.proxmoxopen.ui.nodedisks.NodeDisksScreen
 import de.kiefer_networks.proxmoxopen.ui.storage.StorageScreen
 import de.kiefer_networks.proxmoxopen.ui.taskdetail.TaskDetailScreen
 
@@ -93,6 +95,9 @@ fun NavGraph() {
                 onConsole = { nav.navigate(Route.Console(route.serverId, route.node, type = "node")) },
                 onStorage = {
                     nav.navigate(Route.StorageOverview(route.serverId, route.node))
+                },
+                onOpenDisks = {
+                    nav.navigate(Route.NodeDisks(route.serverId, route.node))
                 },
                 onOpenTask = { node, upid -> nav.navigate(Route.TaskDetail(route.serverId, node, upid)) },
             )
@@ -168,6 +173,18 @@ fun NavGraph() {
         }
         composable<Route.StorageOverview> {
             StorageScreen(onBack = { nav.popBackStack() })
+        }
+        composable<Route.NodeDisks> { entry ->
+            val route = entry.toRoute<Route.NodeDisks>()
+            NodeDisksScreen(
+                onBack = { nav.popBackStack() },
+                onOpenDisk = { devpath ->
+                    nav.navigate(Route.DiskSmart(route.serverId, route.node, devpath))
+                },
+            )
+        }
+        composable<Route.DiskSmart> {
+            DiskSmartScreen(onBack = { nav.popBackStack() })
         }
     }
 }

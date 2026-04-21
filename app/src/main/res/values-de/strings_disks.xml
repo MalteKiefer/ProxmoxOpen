@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="disks_title">Festplatten</string>
+    <string name="disks_health_passed">BESTANDEN</string>
+    <string name="disks_health_failed">FEHLER</string>
+    <string name="disks_health_unknown">UNBEKANNT</string>
+    <string name="disks_model">Modell</string>
+    <string name="disks_serial">Seriennummer</string>
+    <string name="disks_size">Größe</string>
+    <string name="disks_type_ssd">SSD</string>
+    <string name="disks_type_hdd">HDD</string>
+    <string name="disks_type_nvme">NVMe</string>
+    <string name="disks_type_usb">USB</string>
+    <string name="disks_wearout">Abnutzung</string>
+    <string name="disks_smart_title">SMART-Bericht</string>
+    <string name="disks_smart_attributes">Attribute</string>
+    <string name="disks_empty">Für diesen Node wurden keine Festplatten gemeldet.</string>
+    <string name="nav_disks">Festplatten</string>
+</resources>

@@ -91,6 +91,7 @@ fun NodeDetailScreen(
     onActivity: () -> Unit = {},
     onConsole: () -> Unit = {},
     onStorage: () -> Unit = {},
+    onOpenDisks: () -> Unit = {},
     onOpenTask: (node: String, upid: String) -> Unit = { _, _ -> },
     viewModel: NodeDetailViewModel = hiltViewModel(),
 ) {
@@ -166,6 +167,7 @@ fun NodeDetailScreen(
                             node = state.node,
                             onConsole = onConsole,
                             onStorage = onStorage,
+                            onOpenDisks = onOpenDisks,
                             viewModel = viewModel,
                         )
                         1 -> ChartsTab(
@@ -189,6 +191,7 @@ private fun SummaryTab(
     node: Node?,
     onConsole: () -> Unit,
     onStorage: () -> Unit,
+    onOpenDisks: () -> Unit,
     viewModel: NodeDetailViewModel,
 ) {
     Column(
@@ -346,6 +349,11 @@ private fun SummaryTab(
                 Column {
                     DetailActionRow(Icons.Outlined.Terminal, stringResource(R.string.console_title), onClick = onConsole)
                     DetailActionRow(Icons.Outlined.Storage, "Storage", onClick = onStorage)
+                    DetailActionRow(
+                        Icons.Outlined.Storage,
+                        stringResource(R.string.nav_disks),
+                        onClick = onOpenDisks,
+                    )
 
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),

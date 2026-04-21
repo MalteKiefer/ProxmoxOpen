@@ -33,4 +33,8 @@ sealed interface Route {
     @Serializable data class CloneGuest(
         val serverId: Long, val node: String, val vmid: Int, val type: String,
     ) : Route
+    @Serializable data class NodeDisks(val serverId: Long, val node: String) : Route
+    @Serializable data class DiskSmart(
+        val serverId: Long, val node: String, val disk: String,
+    ) : Route
 }

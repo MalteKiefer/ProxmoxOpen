@@ -15,9 +15,11 @@ import de.kiefer_networks.proxmoxopen.data.api.dto.VmConfigDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.VmCurrentStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.VncProxyDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.GuestStatusDto
+import de.kiefer_networks.proxmoxopen.data.api.dto.NodeDiskDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.NodeListDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.NodeStatusDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.RrdPointDto
+import de.kiefer_networks.proxmoxopen.data.api.dto.SmartDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.TaskDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.TaskLogLineDto
 import de.kiefer_networks.proxmoxopen.data.api.dto.TaskStatusDto
@@ -37,6 +39,7 @@ import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
 import io.ktor.http.ContentType
+import io.ktor.http.encodeURLParameter
 
 /**
  * Thin wrapper over a [HttpClient] pre-configured for one Proxmox server. Callers supply
@@ -456,6 +459,21 @@ class ProxmoxApiClient(
         ) { applyAuth() }
         return response.body<ApiResponse<VncProxyDto>>().data
             ?: throw ProxmoxHttpException(response.status.value, "empty vncproxy response")
+    }
+
+    // --- Node disks + SMART -----------------------------------------------
+
+    /** Read-only disk inventory for a node (`/nodes/{n}/disks/list`). */
+    suspend fun listNodeDisks(node: String): List<NodeDiskDto> =
+        http.getJson<List<NodeDiskDto>>("$baseUrl/api2/json/nodes/$node/disks/list")
+
+    /**
+     * SMART report for a single disk. The `disk` argument must be a devpath like
+     * `/dev/sda`; we URL-encode the slashes so the query string stays well formed.
+     */
+    suspend fun getDiskSmart(node: String, disk: String): SmartDto {
+        val encoded = disk.encodeURLParameter()
+        return http.getJson<SmartDto>("$baseUrl/api2/json/nodes/$node/disks/smart?disk=$encoded")
     }
 
     // --- Helpers -----------------------------------------------------------
