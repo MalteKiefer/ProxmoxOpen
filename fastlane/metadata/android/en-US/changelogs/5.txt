@@ -1,0 +1,10 @@
+New features:
+- APT updates per node with upgrade-all confirmation
+- Global search over cluster resources (name, VMID, node, tag, type)
+- Guest tag chips on detail + tag editor on config
+- Read-only HA manager (status / resources / groups)
+- Read-only node network interfaces view
+- Node disks inventory + SMART report
+- Offline dashboard cache with staleness banner
+- Encrypted config export / import (passphrase-protected .pmoconfig)
+- AMOLED black theme toggle for OLED displays

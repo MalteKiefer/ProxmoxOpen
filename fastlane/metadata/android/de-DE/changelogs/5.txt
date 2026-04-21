@@ -1,0 +1,10 @@
+Neue Funktionen:
+- APT-Updates pro Node mit Bestätigungs-Dialog für Upgrade-All
+- Globale Suche über Cluster-Ressourcen (Name, VMID, Node, Tag, Typ)
+- Tag-Chips am Gast-Detail + Tag-Editor am Gast-Config
+- HA-Manager (Status / Ressourcen / Gruppen), nur lesend
+- Node-Netzwerk-Ansicht, nur lesend
+- Node-Disks-Inventar + SMART-Report
+- Offline-Dashboard-Cache mit Alters-Banner
+- Verschlüsselter Config-Export / -Import (Passphrase-geschützt, .pmoconfig)
+- AMOLED-Schwarz-Thema für OLED-Displays
