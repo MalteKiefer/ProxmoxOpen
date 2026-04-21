@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] — 2026-04-21
+
+### Added
+
+- Dashboard top app bar now exposes two new actions: a magnifying-glass icon that opens the Search screen for the current server and a shield icon that opens the HA manager.
+- Node Detail summary shows an "N updates available" badge above the RESOURCES card whenever the APT pending-updates list is non-empty. Tapping the badge jumps straight to the APT Updates screen.
+
 ## [1.4.0] — 2026-04-21
 
 ### Added

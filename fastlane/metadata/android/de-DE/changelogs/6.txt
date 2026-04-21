@@ -1,0 +1,2 @@
+- Dashboard-Topbar: neue Such- und HA-Icons
+- Node-Detail: "N Updates verfügbar"-Badge über der Ressourcen-Karte, zum Öffnen der APT-Updates tippen

@@ -1,0 +1,2 @@
+- Dashboard top bar: new search and HA icons
+- Node Detail: "N updates available" badge above the resources card, tap to jump to APT Updates
