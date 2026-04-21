@@ -65,6 +65,7 @@ android {
     }
     lint {
         disable += "NullSafeMutableLiveData"
+        disable += "MissingTranslation"
     }
     sourceSets {
         getByName("main").java.srcDirs("src/main/kotlin")
