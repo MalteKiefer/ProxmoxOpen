@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tags_label">Tags</string>
+    <string name="tags_hint">Tags (comma-separated)</string>
+    <string name="tags_none">No tags</string>
+</resources>

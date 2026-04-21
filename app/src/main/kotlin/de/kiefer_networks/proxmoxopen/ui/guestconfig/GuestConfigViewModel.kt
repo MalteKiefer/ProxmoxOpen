@@ -10,6 +10,8 @@ import de.kiefer_networks.proxmoxopen.domain.model.NetworkInterface
 import de.kiefer_networks.proxmoxopen.domain.repository.GuestRepository
 import de.kiefer_networks.proxmoxopen.domain.result.ApiError
 import de.kiefer_networks.proxmoxopen.domain.result.ApiResult
+import de.kiefer_networks.proxmoxopen.domain.util.formatTags
+import de.kiefer_networks.proxmoxopen.domain.util.parseTags
 import de.kiefer_networks.proxmoxopen.ui.nav.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -40,6 +42,8 @@ data class GuestConfigUiState(
     val searchdomain: String = "",
     // Network
     val nets: List<NetworkInterface> = emptyList(),
+    // Tags (comma/semicolon separated raw input)
+    val tags: String = "",
 )
 
 @HiltViewModel
@@ -81,6 +85,7 @@ class GuestConfigViewModel @Inject constructor(
                             nameserver = c.nameserver ?: "",
                             searchdomain = c.searchdomain ?: "",
                             nets = c.networkInterfaces,
+                            tags = parseTags(c.tags).joinToString(", "),
                         )
                     }
                 }
@@ -105,6 +110,9 @@ class GuestConfigViewModel @Inject constructor(
     // DNS
     fun onNameserver(v: String) = _state.update { it.copy(nameserver = v) }
     fun onSearchdomain(v: String) = _state.update { it.copy(searchdomain = v) }
+
+    // Tags
+    fun onTags(v: String) = _state.update { it.copy(tags = v) }
 
     // Network
     fun onNetField(index: Int, field: NetField, value: String) {
@@ -186,6 +194,9 @@ class GuestConfigViewModel @Inject constructor(
         s.swap.toIntOrNull()?.let { if (it != orig.swap) params["swap"] = it.toString() }
         if (s.nameserver != (orig.nameserver ?: "")) params["nameserver"] = s.nameserver
         if (s.searchdomain != (orig.searchdomain ?: "")) params["searchdomain"] = s.searchdomain
+        val newTags = formatTags(parseTags(s.tags))
+        val origTags = formatTags(parseTags(orig.tags))
+        if (newTags != origTags) params["tags"] = newTags ?: ""
         s.nets.forEachIndexed { i, net ->
             val origNet = orig.networkInterfaces.getOrNull(i)
             if (origNet == null || net != origNet) {

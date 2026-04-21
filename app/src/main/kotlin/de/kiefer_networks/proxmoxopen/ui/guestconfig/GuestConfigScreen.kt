@@ -125,6 +125,7 @@ fun GuestConfigScreen(
 private fun GeneralTab(state: GuestConfigUiState, vm: GuestConfigViewModel) {
     Compact(state.hostname, vm::onHostname, "Hostname")
     Compact(state.description, vm::onDescription, stringResource(R.string.config_description), singleLine = false)
+    Compact(state.tags, vm::onTags, stringResource(R.string.tags_hint))
     Toggle(stringResource(R.string.config_onboot), state.onboot, vm::onOnboot)
     Toggle(stringResource(R.string.config_protection), state.protection, vm::onProtection)
     Compact(state.startup, vm::onStartup, stringResource(R.string.config_startup))
