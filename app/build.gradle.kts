@@ -35,8 +35,8 @@ android {
         applicationId = "de.kiefer_networks.proxmoxopen"
         minSdk = 31
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.4.2"
+        versionCode = 8
+        versionName = "1.5.0"
     }
 
     compileOptions {

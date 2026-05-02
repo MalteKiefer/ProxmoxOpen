@@ -4,6 +4,53 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-05-02
+
+### Security
+
+This release ships the post-audit hardening pass. Every finding from the static security audit (F-001..F-024) and the self-review follow-ups (NF-1..NF-6) is resolved.
+
+#### Critical / High
+
+- **Console loopback authentication** — `LocalWebSocketProxy` now requires a per-session 256-bit secret as the first URL path segment. Co-resident apps can no longer ride an active PVE session by dialling `127.0.0.1:<port>`. Path also URL-decoded and validated against a static asset allowlist; `..`, backslash, and space are rejected (F-001 / F-016).
+- **Console ticket no longer in WebView URL** — the one-time vncproxy / xterm ticket is injected post-load via `window.__pxo` instead of being placed in the URL query (F-014).
+- **Keystore key bound to user authentication** — both the secret-store key and the SQLCipher wrapping key are created with `setUserAuthenticationRequired(true)`, a 300-second validity window, `BIOMETRIC_STRONG | DEVICE_CREDENTIAL`, and `setInvalidatedByBiometricEnrollment(true)`. Aliases bumped to v2 (one-time reset on upgrade — users re-enter token secrets) (F-004).
+- **AppLockGate fails closed** — when `BiometricManager.canAuthenticate(...)` does not return `BIOMETRIC_SUCCESS`, the gate now blocks instead of unlocking. Re-locks on `Lifecycle.ON_STOP`, re-prompts on `ON_RESUME`. Lock state survives configuration changes via `rememberSaveable` (F-002 / F-003).
+- **Passwords no longer persisted at rest** — PAM / PVE realm passwords are kept in memory only for the duration of the login screen. `ServerRepository.add()` no longer accepts a `password` parameter; legacy entries are defensively deleted on add and on server removal (F-006).
+- **`FLAG_SECURE` on by default** — `blockScreenshots` defaults to `true`; sensitive screens (Login, AddServer, EditServer, Console, ConfigExport, ConfigImport) additionally pin `FLAG_SECURE` per-screen so the global toggle never accidentally exposes them (F-005).
+
+#### Medium / Low
+
+- **Destructive guest delete requires typed confirmation** — `purge` and `destroy-unreferenced-disks` default OFF; the dialog requires the user to type the guest name or VMID before the confirm button enables. `ProxmoxApiClient.deleteGuest` defaults removed (F-007).
+- **PBKDF2 iterations bumped to 600 000** — `ConfigBackupCrypto` now writes `PMOCFG2` envelopes with the iteration count carried inline so future bumps stay backward-compatible. `PMOCFG1` envelopes still decrypt at 200 000 iterations (F-008). Derived raw key bytes wiped post-`SecretKeySpec` (F-019).
+- **HTTP retry policy excludes `/access/ticket`** — eliminates the fail2ban lockout window that a flaky network during password login could trigger (F-013).
+- **Logger redaction widened** — Ktor logging interceptor now redacts `Set-Cookie`, `CSRFPreventionToken`, and `Proxy-Authorization` in addition to the existing `Authorization` / `Cookie` patterns; inline `PVEAPIToken=...` is also redacted. `LogLevel.NONE` set explicitly for release (F-012).
+- **TLS pin comparison** — `TofuTrustManager` now uses `MessageDigest.isEqual` (constant-time); observed fingerprint is recorded only after a successful trust decision (F-017 / F-018).
+- **Room migration** `MIGRATION_1_2` replaces `fallbackToDestructiveMigration`. Schema 2 (`cached_cluster_resource`) committed under `data/db/schemas/` and verified byte-identical to the in-code migration SQL (F-015).
+- **`SecretStoreLockedException` recovery** — new `AuthGate` (`@Singleton`, Hilt) suspends until `BiometricPrompt` resolves; `LoginViewModel`, `AddServerViewModel`, and `ConsoleViewModel` wrap their secret-store calls in a catch-prompt-retry helper (NF-3).
+- **`androidx.biometric`** pinned to stable `1.1.0` (was `1.2.0-alpha05`) (F-011).
+
+#### Build / supply chain
+
+- **Gradle dependency-verification metadata** committed (`gradle/verification-metadata.xml`); SHA-256 hashes for every resolved artifact are now enforced on every build (F-009).
+- **GitHub Actions SHA-pinned** in both `ci.yml` and `release.yml`; `dependabot.yml` watches the `github-actions` ecosystem (F-010).
+- **Release workflow wipes** `app/keystore.jks` and `keystore.properties` after build (`if: always`). Top-level workflow permissions narrowed to `contents: read`; only the `release` job has `contents: write` (F-022).
+- **`xterm.js` bumped** from 5.3.0 to `@xterm/xterm` 5.5.0 (+ `@xterm/addon-fit` 0.10.0); `app/src/main/assets/xterm/VERSION` carries the pin (NF-5).
+- **noVNC stamped** as v1.7.0 in `app/src/main/assets/novnc/VERSION`; CI fails the build if older than v1.5.0 (F-024).
+- **`data_extraction_rules.xml`** declared — both cloud backup and device transfer excluded (F-021).
+- **CSP `<meta>`** added to bundled `console.html` and `terminal.html` (F-020).
+- **`SECURITY.md` placeholder removed** — disclosure goes through GitHub Security Advisories (F-023). README and SECURITY hardening sections refreshed (NF-2).
+
+### Changed
+
+- `ConfigBackupCrypto` documents and enforces a versioned envelope (PMOCFG2 default, PMOCFG1 decode-only).
+- `domain.repository.GuestRepository.deleteGuest` no longer carries default-`true` defaults for destructive booleans (NF-6).
+- `ServerRepository.add(server, tokenSecret)` — `password` parameter removed.
+
+### Removed
+
+- `ServerRepository.getPassword(serverId)` — see security note above.
+
 ## [1.4.2] — 2026-04-21
 
 ### Fixed
