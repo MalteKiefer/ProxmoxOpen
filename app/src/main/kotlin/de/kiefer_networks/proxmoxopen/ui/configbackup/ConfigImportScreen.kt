@@ -1,7 +1,9 @@
 package de.kiefer_networks.proxmoxopen.ui.configbackup
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
+import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -192,6 +195,20 @@ fun ConfigImportScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
+
+    DisposableEffect(Unit) {
+        val window = (context as? Activity)?.window
+        val previouslySet = window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_SECURE) != 0
+        window?.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE,
+        )
+        onDispose {
+            if (window != null && !previouslySet) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            }
+        }
+    }
 
     val openLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),

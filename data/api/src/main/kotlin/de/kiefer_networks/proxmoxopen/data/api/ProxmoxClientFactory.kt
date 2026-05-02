@@ -9,6 +9,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import okhttp3.ConnectionPool
 import java.util.concurrent.TimeUnit
@@ -68,24 +69,35 @@ class ProxmoxClientFactory(
             }
             // Retry transient failures (broken pipe, end of stream, 5xx).
             install(HttpRequestRetry) {
-                maxRetries = 3
-                retryOnExceptionIf { _, cause ->
-                    cause is java.io.IOException
+                maxRetries = 2
+                retryOnExceptionIf { req, cause ->
+                    val isAuth = req.url.encodedPath.endsWith("/access/ticket")
+                    !isAuth && cause is java.io.IOException
                 }
-                retryOnServerErrors(maxRetries = 2)
+                retryIf { req, resp ->
+                    val isAuth = req.url.encodedPath.endsWith("/access/ticket")
+                    if (isAuth) return@retryIf false
+                    val code = resp.status.value
+                    if (code in 400..499) return@retryIf false
+                    code in 500..599
+                }
                 exponentialDelay(base = 2.0, maxDelayMs = 5_000)
             }
             install(Logging) {
+                val sensitiveHeaderRegex = Regex(
+                    "(?i)^(Authorization|Cookie|Set-Cookie|CSRFPreventionToken|Proxy-Authorization): [^\\r\\n]+",
+                    RegexOption.MULTILINE,
+                )
+                val tokenInBodyRegex = Regex("PVEAPIToken=[^\\s\"',]+")
                 logger = object : Logger {
                     override fun log(message: String) {
                         val sanitized = message
-                            .replace(Regex("Authorization: [^\\r\\n]+"), "Authorization: ***")
-                            .replace(Regex("PVEAPIToken=[^\\r\\n]+"), "PVEAPIToken=***")
-                            .replace(Regex("Cookie: [^\\r\\n]+"), "Cookie: ***")
+                            .replace(sensitiveHeaderRegex) { "${it.value.substringBefore(":")}: ***" }
+                            .replace(tokenInBodyRegex, "PVEAPIToken=***")
                         Timber.tag("PxoHttp").v(sanitized)
                     }
                 }
-                level = LogLevel.HEADERS
+                level = LogLevel.NONE
             }
         }
     }

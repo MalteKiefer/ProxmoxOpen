@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import de.kiefer_networks.proxmoxopen.auth.AuthGate
+import de.kiefer_networks.proxmoxopen.data.secrets.SecretStoreLockedException
 import de.kiefer_networks.proxmoxopen.domain.model.Credentials
 import de.kiefer_networks.proxmoxopen.domain.model.Realm
 import de.kiefer_networks.proxmoxopen.domain.model.Server
@@ -20,13 +22,28 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private suspend fun <T> AuthGate.withSecretAuth(
+    title: String,
+    subtitle: String? = null,
+    block: suspend () -> T,
+): T {
+    return try {
+        block()
+    } catch (_: SecretStoreLockedException) {
+        if (ensureFreshAuth(title, subtitle)) {
+            block()
+        } else {
+            throw SecretStoreLockedException()
+        }
+    }
+}
+
 data class LoginUiState(
     val serverName: String = "",
     val username: String = "",
     val realm: Realm = Realm.PAM,
     val password: String = "",
     val totp: String = "",
-    val hasStoredPassword: Boolean = false,
     val isSigningIn: Boolean = false,
     val error: ApiError? = null,
     val signedIn: Boolean = false,
@@ -38,6 +55,7 @@ class LoginViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
     private val authRepository: AuthRepository,
     private val loginUseCase: LoginUseCase,
+    private val authGate: AuthGate,
 ) : ViewModel() {
 
     val serverId: Long = savedStateHandle.toRoute<Route.Login>().serverId
@@ -48,14 +66,11 @@ class LoginViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val server = serverRepository.getById(serverId) ?: return@launch
-            val storedPassword = serverRepository.getPassword(serverId)
             _state.update {
                 it.copy(
                     serverName = server.name,
                     username = server.username ?: "",
                     realm = server.realm,
-                    password = storedPassword.orEmpty(),
-                    hasStoredPassword = storedPassword != null,
                 )
             }
 
@@ -66,20 +81,25 @@ class LoginViewModel @Inject constructor(
                 return@launch
             }
 
-            // Token-based servers log in automatically with the stored secret.
+            // Token-based servers attempt login automatically when a token secret is
+            // available; otherwise the password form is shown so the user can re-enter
+            // (passwords are never persisted, F-006).
             if (server.realm == Realm.PVE_TOKEN) {
-                val tokenSecret = serverRepository.getTokenSecret(serverId)
-                if (tokenSecret == null) {
-                    _state.update { it.copy(error = ApiError.Auth("token secret missing")) }
+                val tokenSecret = try {
+                    authGate.withSecretAuth(
+                        title = "ProxMoxOpen",
+                        subtitle = "Authenticate to load token for ${server.name}",
+                    ) { serverRepository.getTokenSecret(serverId) }
+                } catch (_: SecretStoreLockedException) {
+                    _state.update {
+                        it.copy(error = ApiError.Auth("Authentication required to load token"))
+                    }
                     return@launch
                 }
-                attemptTokenLogin(server, tokenSecret)
+                if (tokenSecret != null) {
+                    attemptTokenLogin(server, tokenSecret)
+                }
                 return@launch
-            }
-
-            // If we have a stored password and no TOTP is required, try auto-login.
-            if (storedPassword != null) {
-                attemptLogin(server, storedPassword, totp = null)
             }
         }
     }
@@ -121,7 +141,8 @@ class LoginViewModel @Inject constructor(
         )
         when (val result = loginUseCase(serverId, creds)) {
             is ApiResult.Success ->
-                _state.update { it.copy(isSigningIn = false, signedIn = true) }
+                // Wipe plaintext password from UI state immediately after success (F-006).
+                _state.update { it.copy(isSigningIn = false, signedIn = true, password = "") }
             is ApiResult.Failure ->
                 _state.update { it.copy(isSigningIn = false, error = result.error) }
         }

@@ -34,7 +34,7 @@ data class UserPreferences(
     val amoledBlack: Boolean = false,
     val language: LanguageOption = LanguageOption.SYSTEM,
     val appLockEnabled: Boolean = false,
-    val blockScreenshots: Boolean = false,
+    val blockScreenshots: Boolean = true,
     val refreshInterval: RefreshInterval = RefreshInterval.SEC_15,
     val terminalFontSize: TerminalFontSize = TerminalFontSize.MEDIUM,
     val terminalTheme: TerminalTheme = TerminalTheme.DARK,

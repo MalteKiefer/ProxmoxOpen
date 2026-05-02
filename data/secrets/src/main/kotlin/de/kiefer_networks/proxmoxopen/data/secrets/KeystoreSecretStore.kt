@@ -1,8 +1,21 @@
+/*
+ * KeystoreSecretStore — AES-256-GCM secret store backed by AndroidKeyStore.
+ *
+ * SECURITY NOTE (F-004): the wrapping key is bound to user authentication (biometric
+ * STRONG or device credential) with a 300s validity window. The Keystore alias has
+ * been bumped from v1 -> v2 to introduce this binding. v1 blobs (if any) are NOT
+ * migrated; they remain under the old alias until the OS prunes them. This is a
+ * one-time reset: on first launch after the upgrade containing this change, users
+ * will need to re-add their servers (token secrets / passwords are not transferred).
+ * The trade-off is acceptable because the v1 alias was unbound and the secret-set is
+ * small (server token secrets only — passwords are no longer persisted, see F-006).
+ */
 package de.kiefer_networks.proxmoxopen.data.secrets
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.security.keystore.UserNotAuthenticatedException
 import android.util.Base64
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -27,14 +40,18 @@ class KeystoreSecretStore(context: Context) : SecretStore {
 
     override suspend fun put(key: String, value: String) {
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
-        cipher.updateAAD(key.toByteArray(Charsets.UTF_8))
-        val iv = cipher.iv
-        val ct = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
-        val encoded = VERSION_PREFIX +
-            Base64.encodeToString(iv, Base64.NO_WRAP) +
-            "." + Base64.encodeToString(ct, Base64.NO_WRAP)
-        dataStore.edit { it[stringPreferencesKey(key)] = encoded }
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+            cipher.updateAAD(key.toByteArray(Charsets.UTF_8))
+            val iv = cipher.iv
+            val ct = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+            val encoded = VERSION_PREFIX +
+                Base64.encodeToString(iv, Base64.NO_WRAP) +
+                "." + Base64.encodeToString(ct, Base64.NO_WRAP)
+            dataStore.edit { it[stringPreferencesKey(key)] = encoded }
+        } catch (e: UserNotAuthenticatedException) {
+            throw SecretStoreLockedException(e)
+        }
     }
 
     override suspend fun get(key: String): String? {
@@ -61,6 +78,8 @@ class KeystoreSecretStore(context: Context) : SecretStore {
                 }
             }
             plaintext
+        } catch (e: UserNotAuthenticatedException) {
+            throw SecretStoreLockedException(e)
         } catch (_: IllegalArgumentException) {
             null
         } catch (_: Exception) {
@@ -84,6 +103,12 @@ class KeystoreSecretStore(context: Context) : SecretStore {
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(KEY_SIZE_BITS)
             .setRandomizedEncryptionRequired(true)
+            .setUserAuthenticationRequired(true)
+            .setUserAuthenticationParameters(
+                /* timeoutSeconds = */ AUTH_VALIDITY_SECONDS,
+                KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
+            )
+            .setInvalidatedByBiometricEnrollment(true)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
             if (appContext.packageManager.hasSystemFeature(
                     android.content.pm.PackageManager.FEATURE_STRONGBOX_KEYSTORE,
@@ -104,6 +129,12 @@ class KeystoreSecretStore(context: Context) : SecretStore {
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setKeySize(KEY_SIZE_BITS)
                 .setRandomizedEncryptionRequired(true)
+                .setUserAuthenticationRequired(true)
+                .setUserAuthenticationParameters(
+                    /* timeoutSeconds = */ AUTH_VALIDITY_SECONDS,
+                    KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
+                )
+                .setInvalidatedByBiometricEnrollment(true)
                 .build()
             generator.init(fallback)
             generator.generateKey()
@@ -118,11 +149,12 @@ class KeystoreSecretStore(context: Context) : SecretStore {
 
     companion object {
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        private const val KEY_ALIAS = "proxmoxopen_secret_store_v1"
+        private const val KEY_ALIAS = "proxmoxopen_secret_store_v2"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val KEY_SIZE_BITS = 256
         private const val GCM_TAG_LENGTH_BITS = 128
         private const val VERSION_PREFIX = "v2."
+        private const val AUTH_VALIDITY_SECONDS = 300
     }
 }
 

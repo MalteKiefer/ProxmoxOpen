@@ -406,8 +406,8 @@ class ProxmoxApiClient(
         node: String,
         type: String,
         vmid: Int,
-        purge: Boolean = true,
-        destroyUnreferencedDisks: Boolean = true,
+        purge: Boolean,
+        destroyUnreferencedDisks: Boolean,
     ): String {
         val params = buildString {
             val parts = mutableListOf<String>()

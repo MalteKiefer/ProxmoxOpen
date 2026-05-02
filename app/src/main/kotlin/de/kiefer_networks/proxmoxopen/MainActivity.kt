@@ -10,15 +10,29 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.kiefer_networks.proxmoxopen.auth.AuthGate
 import de.kiefer_networks.proxmoxopen.core.ui.theme.ProxMoxOpenTheme
 import de.kiefer_networks.proxmoxopen.preferences.LanguageOption
 import de.kiefer_networks.proxmoxopen.preferences.ThemeMode
 import de.kiefer_networks.proxmoxopen.ui.main.MainViewModel
 import de.kiefer_networks.proxmoxopen.ui.nav.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
+    @Inject lateinit var authGate: AuthGate
+
+    override fun onResume() {
+        super.onResume()
+        authGate.bindActivity(this)
+    }
+
+    override fun onPause() {
+        authGate.unbindActivity(this)
+        super.onPause()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

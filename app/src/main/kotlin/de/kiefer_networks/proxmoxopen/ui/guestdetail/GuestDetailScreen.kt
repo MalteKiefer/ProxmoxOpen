@@ -271,6 +271,8 @@ fun GuestDetailScreen(
     if (deleteDialog) DeleteGuestDialog(
         guestTypeLabel = stringResource(R.string.guest_type_lxc),
         vmid = viewModel.vmid,
+        expectedName = state.containerStatus?.name?.takeIf { it.isNotBlank() }
+            ?: viewModel.vmid.toString(),
         onDismiss = { deleteDialog = false },
         onConfirm = { purge, destroyDisks ->
             deleteDialog = false

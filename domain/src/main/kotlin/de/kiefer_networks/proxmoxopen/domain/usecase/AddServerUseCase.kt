@@ -17,7 +17,6 @@ class AddServerUseCase @Inject constructor(
         tokenId: String?,
         fingerprintSha256: String,
         tokenSecret: String?,
-        password: String?,
     ): Long {
         val server = Server(
             id = 0,
@@ -31,6 +30,6 @@ class AddServerUseCase @Inject constructor(
             createdAt = System.currentTimeMillis(),
             lastConnectedAt = null,
         )
-        return servers.add(server, tokenSecret, password)
+        return servers.add(server, tokenSecret)
     }
 }

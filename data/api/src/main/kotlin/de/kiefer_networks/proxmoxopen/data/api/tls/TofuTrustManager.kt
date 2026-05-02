@@ -33,11 +33,12 @@ class TofuTrustManager(
         require(chain.isNotEmpty()) { "empty server cert chain" }
         val leaf = chain[0]
         val actual = sha256Hex(leaf.encoded)
-        observedFingerprint = actual
-        val expected = expectedFingerprintSha256 ?: return
-        if (!actual.equals(expected, ignoreCase = true)) {
+        val expected = expectedFingerprintSha256
+        if (expected != null && !constantTimeHexEquals(actual, expected)) {
+            // Do not record observed fingerprint for rejected certs.
             throw FingerprintMismatchException(expected, actual)
         }
+        observedFingerprint = actual
     }
 
     override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
@@ -48,4 +49,25 @@ class TofuTrustManager(
             return digest.joinToString("") { "%02x".format(it) }
         }
     }
+}
+
+private fun constantTimeHexEquals(a: String, b: String): Boolean {
+    if (a.length != b.length) return false
+    return try {
+        MessageDigest.isEqual(hexDecode(a), hexDecode(b))
+    } catch (_: IllegalArgumentException) {
+        false
+    }
+}
+
+private fun hexDecode(hex: String): ByteArray {
+    require(hex.length % 2 == 0) { "odd-length hex string" }
+    val out = ByteArray(hex.length / 2)
+    for (i in out.indices) {
+        val hi = Character.digit(hex[i * 2], 16)
+        val lo = Character.digit(hex[i * 2 + 1], 16)
+        if (hi < 0 || lo < 0) throw IllegalArgumentException("non-hex char")
+        out[i] = ((hi shl 4) or lo).toByte()
+    }
+    return out
 }

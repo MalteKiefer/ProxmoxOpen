@@ -2,6 +2,8 @@ package de.kiefer_networks.proxmoxopen.ui.addserver
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import de.kiefer_networks.proxmoxopen.auth.AuthGate
+import de.kiefer_networks.proxmoxopen.data.secrets.SecretStoreLockedException
 import de.kiefer_networks.proxmoxopen.domain.model.Realm
 import de.kiefer_networks.proxmoxopen.domain.repository.ServerProbe
 import de.kiefer_networks.proxmoxopen.domain.result.ApiError
@@ -14,6 +16,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private suspend fun <T> AuthGate.withSecretAuth(
+    title: String,
+    subtitle: String? = null,
+    block: suspend () -> T,
+): T {
+    return try {
+        block()
+    } catch (_: SecretStoreLockedException) {
+        if (ensureFreshAuth(title, subtitle)) {
+            block()
+        } else {
+            throw SecretStoreLockedException()
+        }
+    }
+}
 
 data class AddServerUiState(
     val name: String = "",
@@ -34,6 +52,7 @@ data class AddServerUiState(
 class AddServerViewModel @Inject constructor(
     private val probeServer: ProbeServerUseCase,
     private val addServer: AddServerUseCase,
+    private val authGate: AuthGate,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddServerUiState())
@@ -69,18 +88,30 @@ class AddServerViewModel @Inject constructor(
         val probe = s.probe ?: return
         val port = s.port.toIntOrNull() ?: return
         viewModelScope.launch {
-            val id = addServer(
-                name = s.name.ifBlank { s.host },
-                host = s.host,
-                port = port,
-                realm = s.realm,
-                username = s.username.ifBlank { null },
-                tokenId = s.tokenId.ifBlank { null },
-                fingerprintSha256 = probe.sha256Fingerprint,
-                tokenSecret = s.tokenSecret.ifBlank { null },
-                password = s.password.ifBlank { null },
-            )
-            _state.update { it.copy(savedServerId = id, probe = null) }
+            val id = try {
+                authGate.withSecretAuth(
+                    title = "ProxMoxOpen",
+                    subtitle = "Authenticate to save server credentials",
+                ) {
+                    addServer(
+                        name = s.name.ifBlank { s.host },
+                        host = s.host,
+                        port = port,
+                        realm = s.realm,
+                        username = s.username.ifBlank { null },
+                        tokenId = s.tokenId.ifBlank { null },
+                        fingerprintSha256 = probe.sha256Fingerprint,
+                        tokenSecret = s.tokenSecret.ifBlank { null },
+                    )
+                }
+            } catch (_: SecretStoreLockedException) {
+                _state.update {
+                    it.copy(error = ApiError.Auth("Authentication required to save server"))
+                }
+                return@launch
+            }
+            // Clear plaintext password from UI state immediately after save (F-006).
+            _state.update { it.copy(savedServerId = id, probe = null, password = "") }
         }
     }
 

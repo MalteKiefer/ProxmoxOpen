@@ -107,8 +107,8 @@ interface GuestRepository {
         node: String,
         vmid: Int,
         type: GuestType,
-        purge: Boolean = true,
-        destroyUnreferencedDisks: Boolean = true,
+        purge: Boolean,
+        destroyUnreferencedDisks: Boolean,
     ): ApiResult<String>
 
     suspend fun getGuestRrd(

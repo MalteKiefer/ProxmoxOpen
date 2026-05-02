@@ -59,14 +59,17 @@ ProxMoxOpen is a native Android client for managing Proxmox VE clusters. It conn
 
 | Layer | Implementation |
 |-------|---------------|
-| Credentials | AES-256-GCM, Android Keystore (hardware-backed) |
-| Database | SQLCipher 4.5, key wrapped with AndroidKeyStore |
-| TLS | TOFU certificate pinning with SHA-256 fingerprints |
-| Network | Cleartext blocked globally (localhost exception for WebSocket proxy) |
-| WebView | MIXED_CONTENT_NEVER_ALLOW, URL validation, onRelease destroy |
-| Proxy | Path traversal blocked, header size limit (16KB), cookie injection prevention |
-| Logging | Timber (stripped in release), no sensitive data logged |
-| Manifest | allowBackup=false, no exported components except launcher |
+| Credentials | AES-256-GCM, Android Keystore (hardware-backed); key bound to user auth (BIOMETRIC_STRONG or DEVICE_CREDENTIAL, 300s validity, invalidated on biometric enrollment) |
+| Database | SQLCipher 4.6, key wrapped with AndroidKeyStore (also user-auth-bound) |
+| TLS | TOFU certificate pinning with SHA-256 fingerprints (constant-time comparison) |
+| Network | Cleartext blocked globally (loopback exception for the local WebSocket proxy only) |
+| Console proxy | Per-session 256-bit secret authenticates loopback access; ticket never in WebView URL (injected via `window.__pxo`) |
+| WebView | MIXED_CONTENT_NEVER_ALLOW, URL allowlist, CSP `<meta>` in bundled HTML, onRelease destroy |
+| App lock | Fails closed when biometric/credential unavailable; re-locks on background |
+| Screenshots | `FLAG_SECURE` on by default + per-screen pinning on login/console/credential/export screens |
+| Logging | Timber stripped in release; sensitive headers (Set-Cookie, CSRFPreventionToken, Authorization, Cookie, Proxy-Authorization) redacted |
+| Manifest | `allowBackup=false`, `dataExtractionRules` excludes both cloud backup and device transfer; only LAUNCHER activity exported |
+| Build | Gradle dependency-verification metadata; CI Actions SHA-pinned; Dependabot for Actions; release keystore wiped after build |
 
 ## Architecture
 
@@ -162,8 +165,8 @@ If you find ProxMoxOpen useful, consider supporting development:
 
 ## Security Contact
 
-- Report vulnerabilities to: security@kiefer-networks.de
-- General contact: info@kiefer-networks.de
+- Report vulnerabilities via GitHub Security Advisories: https://github.com/MalteKiefer/ProxmoxOpen/security/advisories/new
+- See [SECURITY.md](SECURITY.md) for the full disclosure policy.
 
 ## License
 

@@ -32,7 +32,7 @@ class UserPreferencesRepository @Inject constructor(
             language = prefs[LANGUAGE_KEY]?.let { runCatching { LanguageOption.valueOf(it) }.getOrNull() }
                 ?: LanguageOption.SYSTEM,
             appLockEnabled = prefs[APP_LOCK_KEY] ?: false,
-            blockScreenshots = prefs[BLOCK_SCREENSHOTS_KEY] ?: false,
+            blockScreenshots = prefs[BLOCK_SCREENSHOTS_KEY] ?: true,
             refreshInterval = prefs[REFRESH_KEY]?.let { runCatching { RefreshInterval.valueOf(it) }.getOrNull() }
                 ?: RefreshInterval.SEC_15,
             terminalFontSize = prefs[TERMINAL_FONT_KEY]?.let { runCatching { TerminalFontSize.valueOf(it) }.getOrNull() }

@@ -12,6 +12,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,11 +30,15 @@ import de.kiefer_networks.proxmoxopen.R
 fun DeleteGuestDialog(
     guestTypeLabel: String,
     vmid: Int,
+    expectedName: String,
     onDismiss: () -> Unit,
     onConfirm: (purge: Boolean, destroyDisks: Boolean) -> Unit,
 ) {
-    var purge by remember { mutableStateOf(true) }
-    var destroyDisks by remember { mutableStateOf(true) }
+    var purge by remember { mutableStateOf(false) }
+    var destroyDisks by remember { mutableStateOf(false) }
+    var typed by remember { mutableStateOf("") }
+
+    val confirmEnabled = typed == expectedName || typed == vmid.toString()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -73,6 +78,15 @@ fun DeleteGuestDialog(
                         modifier = Modifier.padding(start = 4.dp),
                     )
                 }
+                OutlinedTextField(
+                    value = typed,
+                    onValueChange = { typed = it },
+                    label = {
+                        Text(stringResource(R.string.delete_type_to_confirm, expectedName))
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Text(
                     text = stringResource(R.string.delete_guest_warning),
                     style = MaterialTheme.typography.bodyMedium,
@@ -82,10 +96,17 @@ fun DeleteGuestDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(purge, destroyDisks) }) {
+            TextButton(
+                onClick = { onConfirm(purge, destroyDisks) },
+                enabled = confirmEnabled,
+            ) {
                 Text(
                     stringResource(R.string.delete_confirm),
-                    color = MaterialTheme.colorScheme.error,
+                    color = if (confirmEnabled) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
             }
         },

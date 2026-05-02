@@ -13,12 +13,20 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * AES-256-GCM envelope helpers keyed by a user passphrase via PBKDF2WithHmacSHA256.
  *
- * Outer text format:
+ * Produces V2 envelopes (PMOCFG2). Decrypt accepts V1 (PMOCFG1) for backward compatibility.
+ *
+ * V2 outer text format (5 lines):
+ *
+ *     PMOCFG2\n<iterations>\n<base64(salt)>\n<base64(iv)>\n<base64(ciphertext+tag)>
+ *
+ * V1 (legacy, decode-only) outer text format (4 lines):
  *
  *     PMOCFG1\n<base64(salt)>\n<base64(iv)>\n<base64(ciphertext+tag)>
  *
- * Security parameters (non-negotiable):
- *  - PBKDF2WithHmacSHA256, 200_000 iterations
+ * Security parameters:
+ *  - PBKDF2WithHmacSHA256 — V1 uses 200_000 iterations (legacy decode); V2 writes 600_000
+ *    (OWASP 2023 baseline) with the iteration count carried inside the envelope so future
+ *    bumps stay backward-compatible.
  *  - 256-bit derived key
  *  - 96-bit (12 byte) IV from SecureRandom
  *  - 128-bit GCM tag
@@ -29,9 +37,13 @@ import javax.crypto.spec.SecretKeySpec
 object ConfigBackupCrypto {
 
     const val MAGIC: String = "PMOCFG1"
+    const val MAGIC_V2: String = "PMOCFG2"
 
     private const val PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA256"
-    private const val PBKDF2_ITERATIONS = 200_000
+    private const val PBKDF2_ITERATIONS_V1 = 200_000
+    private const val PBKDF2_ITERATIONS_DEFAULT = 600_000
+    private const val PBKDF2_ITERATIONS_MIN = 1_000
+    private const val PBKDF2_ITERATIONS_MAX = 10_000_000
     private const val KEY_LENGTH_BITS = 256
     private const val SALT_LENGTH_BYTES = 32
     private const val IV_LENGTH_BYTES = 12
@@ -60,7 +72,8 @@ object ConfigBackupCrypto {
         val salt = ByteArray(SALT_LENGTH_BYTES).also { random.nextBytes(it) }
         val iv = ByteArray(IV_LENGTH_BYTES).also { random.nextBytes(it) }
 
-        val key = deriveKey(passphrase, salt)
+        val iterations = PBKDF2_ITERATIONS_DEFAULT
+        val key = deriveKey(passphrase, salt, iterations)
         val ciphertext = try {
             val cipher = Cipher.getInstance(CIPHER_TRANSFORMATION)
             cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
@@ -71,7 +84,8 @@ object ConfigBackupCrypto {
 
         val b64 = java.util.Base64.getEncoder().withoutPadding()
         val envelope = buildString {
-            append(MAGIC).append('\n')
+            append(MAGIC_V2).append('\n')
+            append(iterations).append('\n')
             append(b64.encodeToString(salt)).append('\n')
             append(b64.encodeToString(iv)).append('\n')
             append(b64.encodeToString(ciphertext))
@@ -88,26 +102,56 @@ object ConfigBackupCrypto {
             throw BadFileException("Envelope is not valid UTF-8", e)
         }
         val lines = text.split('\n')
-        if (lines.size < 4) {
-            throw BadFileException("Envelope has fewer than 4 lines")
+        if (lines.isEmpty()) {
+            throw BadFileException("Envelope is empty")
         }
-        if (lines[0].trim() != MAGIC) {
-            throw BadFileException("Missing magic header $MAGIC")
+        val magic = lines[0].trim()
+        val iterations: Int
+        val saltLine: String
+        val ivLine: String
+        val ctLine: String
+        when (magic) {
+            MAGIC -> {
+                if (lines.size < 4) {
+                    throw BadFileException("Envelope has fewer than 4 lines")
+                }
+                iterations = PBKDF2_ITERATIONS_V1
+                saltLine = lines[1]
+                ivLine = lines[2]
+                ctLine = lines[3]
+            }
+            MAGIC_V2 -> {
+                if (lines.size < 5) {
+                    throw BadFileException("Envelope has fewer than 5 lines")
+                }
+                iterations = try {
+                    lines[1].trim().toInt()
+                } catch (e: NumberFormatException) {
+                    throw BadFileException("Invalid iteration count", e)
+                }
+                if (iterations < PBKDF2_ITERATIONS_MIN || iterations > PBKDF2_ITERATIONS_MAX) {
+                    throw BadFileException("Iteration count out of range: $iterations")
+                }
+                saltLine = lines[2]
+                ivLine = lines[3]
+                ctLine = lines[4]
+            }
+            else -> throw BadFileException("Missing magic header $MAGIC or $MAGIC_V2")
         }
 
         val decoder = java.util.Base64.getDecoder()
         val salt = try {
-            decoder.decode(lines[1].trim())
+            decoder.decode(saltLine.trim())
         } catch (e: IllegalArgumentException) {
             throw BadFileException("Invalid base64 salt", e)
         }
         val iv = try {
-            decoder.decode(lines[2].trim())
+            decoder.decode(ivLine.trim())
         } catch (e: IllegalArgumentException) {
             throw BadFileException("Invalid base64 iv", e)
         }
         val ciphertext = try {
-            decoder.decode(lines[3].trim())
+            decoder.decode(ctLine.trim())
         } catch (e: IllegalArgumentException) {
             throw BadFileException("Invalid base64 ciphertext", e)
         }
@@ -118,7 +162,7 @@ object ConfigBackupCrypto {
             throw BadFileException("IV must be $IV_LENGTH_BYTES bytes, got ${iv.size}")
         }
 
-        val key = deriveKey(passphrase, salt)
+        val key = deriveKey(passphrase, salt, iterations)
         return try {
             val cipher = Cipher.getInstance(CIPHER_TRANSFORMATION)
             cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
@@ -132,9 +176,13 @@ object ConfigBackupCrypto {
         }
     }
 
-    /** Returns true if [bytes] begins with the PMOCFG1 magic header. */
+    /** Returns true if [bytes] begins with the PMOCFG1 or PMOCFG2 magic header. */
     fun looksLikeEnvelope(bytes: ByteArray): Boolean {
-        val header = MAGIC.toByteArray(StandardCharsets.UTF_8)
+        return startsWith(bytes, MAGIC) || startsWith(bytes, MAGIC_V2)
+    }
+
+    private fun startsWith(bytes: ByteArray, magic: String): Boolean {
+        val header = magic.toByteArray(StandardCharsets.UTF_8)
         if (bytes.size < header.size) return false
         for (i in header.indices) {
             if (bytes[i] != header[i]) return false
@@ -142,14 +190,16 @@ object ConfigBackupCrypto {
         return true
     }
 
-    private fun deriveKey(passphrase: CharArray, salt: ByteArray): SecretKeySpec {
-        val spec = PBEKeySpec(passphrase, salt, PBKDF2_ITERATIONS, KEY_LENGTH_BITS)
+    private fun deriveKey(passphrase: CharArray, salt: ByteArray, iterations: Int): SecretKeySpec {
+        val spec = PBEKeySpec(passphrase, salt, iterations, KEY_LENGTH_BITS)
+        var raw: ByteArray? = null
         return try {
             val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
-            val raw = factory.generateSecret(spec).encoded
-            SecretKeySpec(raw, "AES")
+            raw = factory.generateSecret(spec).encoded
+            SecretKeySpec(raw, "AES") // wipe source bytes; SecretKeySpec keeps its own clone
         } finally {
             spec.clearPassword()
+            raw?.fill(0)
         }
     }
 

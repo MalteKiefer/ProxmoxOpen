@@ -22,10 +22,12 @@ class ServerRepositoryImpl @Inject constructor(
 
     override suspend fun getById(id: Long): Server? = dao.getById(id)?.toDomain()
 
-    override suspend fun add(server: Server, tokenSecret: String?, password: String?): Long {
+    override suspend fun add(server: Server, tokenSecret: String?): Long {
         val id = dao.insert(server.toEntity())
         tokenSecret?.let { secrets.put(tokenKey(id), it) }
-        password?.let { secrets.put(passwordKey(id), it) }
+        // Defensive: passwords are no longer persisted (F-006). Clear any stale entry
+        // that might be present from a previous install or earlier app version.
+        secrets.remove(passwordKey(id))
         return id
     }
 
@@ -35,6 +37,7 @@ class ServerRepositoryImpl @Inject constructor(
 
     override suspend fun delete(server: Server) {
         secrets.remove(tokenKey(server.id))
+        // Cleanup: remove any historical password blob from older app versions.
         secrets.remove(passwordKey(server.id))
         dao.delete(server.toEntity())
     }
@@ -45,10 +48,11 @@ class ServerRepositoryImpl @Inject constructor(
 
     override suspend fun getTokenSecret(serverId: Long): String? = secrets.get(tokenKey(serverId))
 
-    override suspend fun getPassword(serverId: Long): String? = secrets.get(passwordKey(serverId))
-
     companion object {
         private fun tokenKey(id: Long) = "server_${id}_token"
+
+        // Retained for cleanup of legacy stored passwords on add()/delete(). Do not
+        // reintroduce password persistence — see F-006.
         private fun passwordKey(id: Long) = "server_${id}_password"
     }
 }

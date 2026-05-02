@@ -10,6 +10,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.net.URI
+import java.net.URLDecoder
 import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLContext
@@ -24,6 +25,10 @@ import javax.net.ssl.X509TrustManager
  *    forwards it to Proxmox over TLS, and then bridges raw bytes bidirectionally.
  *
  * The WebSocket handshake happens end-to-end between Chrome and Proxmox.
+ *
+ * All requests must include a per-instance random session-secret prefix as the first
+ * path segment, e.g. `/<sessionSecret>/console.html`. This prevents other apps that
+ * happen to discover the loopback port from accessing the proxy.
  */
 class LocalWebSocketProxy(
     private val targetUrl: String,
@@ -39,6 +44,33 @@ class LocalWebSocketProxy(
     private val activeSockets = java.util.Collections.synchronizedList(mutableListOf<Socket>())
     var localPort: Int = 0
         private set
+
+    /**
+     * Per-instance random secret that must appear as the first path segment of every
+     * incoming HTTP/WS request. Generated once at construction with SecureRandom.
+     * 32 random bytes => 64 lowercase hex characters.
+     *
+     * NEVER log this value.
+     */
+    val sessionSecret: String = run {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        val sb = StringBuilder(64)
+        for (b in bytes) {
+            val v = b.toInt() and 0xFF
+            sb.append(HEX[v ushr 4])
+            sb.append(HEX[v and 0x0F])
+        }
+        sb.toString()
+    }
+
+    private val secretPrefix: String = "/$sessionSecret"
+
+    /** Static allowlist for terminal (xterm) HTTP asset serving. */
+    private val terminalAllowed = setOf(
+        "/", "/terminal.html", "/xterm.css",
+        "/xterm.min.js", "/xterm-addon-fit.min.js", "/LICENSE",
+    )
 
     fun start(): Int {
         serverSocket = ServerSocket(0, 5, java.net.InetAddress.getByName("127.0.0.1"))
@@ -82,14 +114,110 @@ class LocalWebSocketProxy(
         val headerBytes = readUntilHeaderEnd(input) ?: run { client.close(); return }
         val request = String(headerBytes)
 
+        // Parse request line: METHOD <path> HTTP/<ver>
+        val firstLine = request.lineSequence().firstOrNull().orEmpty()
+        val parts = firstLine.split(" ")
+        val rawPath = if (parts.size >= 2) parts[1] else "/"
+        val pathOnly = rawPath.substringBefore("?")
+
+        // F-001: enforce session-secret prefix on EVERY request (HTTP + WS upgrade).
+        // The secret must appear as the first path segment, followed by '/' or end-of-string.
+        if (!(pathOnly == secretPrefix || pathOnly.startsWith("$secretPrefix/"))) {
+            try {
+                output.write("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n".toByteArray())
+                output.flush()
+            } catch (_: Exception) {}
+            try { client.close() } catch (_: Exception) {}
+            return
+        }
+
+        // Strip the session-secret prefix; downstream code only sees the asset/WS path.
+        val strippedPath = pathOnly.removePrefix(secretPrefix).ifEmpty { "/" }
+
+        // F-016: URL-decode and validate.
+        val decodedPath = try {
+            URLDecoder.decode(strippedPath, "UTF-8")
+        } catch (_: IllegalArgumentException) {
+            try {
+                output.write("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n".toByteArray())
+                output.flush()
+            } catch (_: Exception) {}
+            try { client.close() } catch (_: Exception) {}
+            return
+        }
+
+        if (!decodedPath.startsWith("/") ||
+            decodedPath.contains("..") ||
+            decodedPath.contains("\\") ||
+            decodedPath.contains(" ")
+        ) {
+            try {
+                output.write("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n".toByteArray())
+                output.flush()
+            } catch (_: Exception) {}
+            try { client.close() } catch (_: Exception) {}
+            return
+        }
+
         val isUpgrade = request.contains("Upgrade: websocket", ignoreCase = true)
 
         if (isUpgrade) {
-            handleWebSocketUpgrade(client, input, output, request)
+            // For WS: rebuild request line with the stripped path before forwarding logic.
+            // The upstream rewriter ignores the incoming path anyway, but we also need to make
+            // sure no session secret leaks upstream.
+            val rebuiltRequest = rebuildRequestWithPath(request, decodedPath)
+            handleWebSocketUpgrade(client, input, output, rebuiltRequest)
         } else {
-            val firstLine = request.lineSequence().firstOrNull() ?: ""
-            handleHttpRequest(client, output, firstLine)
+            // F-016: enforce static asset allowlist for HTTP serving.
+            if (!isAssetPathAllowed(decodedPath)) {
+                val body = "404 Not Found"
+                val headers = "HTTP/1.1 404 Not Found\r\n" +
+                    "Content-Length: ${body.length}\r\n" +
+                    "Connection: close\r\n" +
+                    "\r\n"
+                try {
+                    output.write(headers.toByteArray())
+                    output.write(body.toByteArray())
+                    output.flush()
+                } catch (_: Exception) {}
+                try { client.close() } catch (_: Exception) {}
+                return
+            }
+            handleHttpRequest(client, output, decodedPath)
         }
+    }
+
+    private fun isAssetPathAllowed(decodedPath: String): Boolean {
+        return if (isTerminal) {
+            decodedPath in terminalAllowed
+        } else {
+            // noVNC: allow index ("/" or "/console.html"), LICENSE.txt, and core/vendor subtrees.
+            decodedPath == "/" ||
+                decodedPath == "/console.html" ||
+                decodedPath == "/LICENSE.txt" ||
+                decodedPath.startsWith("/core/") ||
+                decodedPath.startsWith("/vendor/")
+        }
+    }
+
+    /**
+     * Build a new HTTP request string with the request line's path replaced by `newPath`.
+     * Headers are preserved verbatim.
+     */
+    private fun rebuildRequestWithPath(originalRequest: String, newPath: String): String {
+        val lines = originalRequest.split("\r\n")
+        if (lines.isEmpty()) return originalRequest
+        val firstLine = lines[0]
+        val parts = firstLine.split(" ")
+        val method = parts.getOrNull(0) ?: "GET"
+        val version = parts.getOrNull(2) ?: "HTTP/1.1"
+        val sb = StringBuilder()
+        sb.append("$method $newPath $version\r\n")
+        for (i in 1 until lines.size) {
+            sb.append(lines[i])
+            if (i < lines.size - 1) sb.append("\r\n")
+        }
+        return sb.toString()
     }
 
     /** Read bytes until \r\n\r\n (end of HTTP headers), without consuming body/frame data */
@@ -112,24 +240,12 @@ class LocalWebSocketProxy(
         return buf.toByteArray()
     }
 
-    private fun handleHttpRequest(client: Socket, output: OutputStream, requestLine: String) {
-        val parts = requestLine.split(" ")
-        val rawPath = if (parts.size >= 2) parts[1] else "/"
-        val path = rawPath.substringBefore("?")
-        if (path.contains("..")) {
-            val body = "403 Forbidden"
-            val headers = "HTTP/1.1 403 Forbidden\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n"
-            output.write(headers.toByteArray())
-            output.write(body.toByteArray())
-            output.flush()
-            client.close()
-            return
-        }
-
+    private fun handleHttpRequest(client: Socket, output: OutputStream, decodedPath: String) {
+        // decodedPath has already been validated (no traversal, allowlisted) by handleConnection.
         val assetPath = when {
-            path == "/" || path == "/$indexFile" -> "$assetDir/$indexFile"
-            path.startsWith("/") -> "$assetDir${path}"
-            else -> "$assetDir/$path"
+            decodedPath == "/" || decodedPath == "/$indexFile" -> "$assetDir/$indexFile"
+            decodedPath.startsWith("/") -> "$assetDir${decodedPath}"
+            else -> "$assetDir/$decodedPath"
         }
 
         try {
@@ -198,10 +314,12 @@ class LocalWebSocketProxy(
         val port = if (uri.port > 0) uri.port else 443
         val pathAndQuery = if (uri.rawQuery != null) "${uri.rawPath}?${uri.rawQuery}" else uri.rawPath
 
-        // Rewrite the HTTP upgrade request for Proxmox
+        // Rewrite the HTTP upgrade request for Proxmox.
+        // The session secret is a local-loopback construct; it MUST NOT be forwarded upstream.
+        // We rebuild from scratch using the upstream `pathAndQuery`.
         val rewrittenRequest = buildString {
             val lines = originalRequest.trimEnd().split("\r\n")
-            // Replace first line with upstream path
+            // Replace first line with upstream path (drops any local /<secret>/... prefix)
             append("GET $pathAndQuery HTTP/1.1\r\n")
             // Replace Host, add Cookie, keep other headers
             var hasCookie = false
@@ -318,5 +436,9 @@ class LocalWebSocketProxy(
             if (c == ';' || c == ',') return false
         }
         return true
+    }
+
+    private companion object {
+        private val HEX = charArrayOf('0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f')
     }
 }
