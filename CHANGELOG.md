@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] — 2026-05-02
+
+### Fixed
+
+- CI dependency-verification metadata extended for fresh-runner resolution. The 1.5.0 release pipeline failed at preflight because `junit-bom` 5.9.2 / 5.9.3 (transitive deps of detekt's classpath) and a few AAPT2 entries were missing from `gradle/verification-metadata.xml` — local resolution had cached them from a prior build. Re-ran metadata generation across the full release task set so GitHub-hosted runners verify cleanly. No source changes.
+
 ## [1.5.0] — 2026-05-02
 
 ### Security
