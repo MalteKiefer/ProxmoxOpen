@@ -29,7 +29,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda  # v4.4.4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1  # v4.4.4
 
       - name: Detekt + Lint
         run: ./gradlew detekt :app:lintDebug --no-daemon
@@ -49,7 +49,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda  # v4.4.4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1  # v4.4.4
 
       - name: Decode keystore
         if: ${{ env.KEYSTORE_BASE64 != '' }}
